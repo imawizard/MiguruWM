@@ -1,19 +1,19 @@
-#Include common.ahk
-#Include interfaces\IApplicationView.ahk
-#Include interfaces\IApplicationViewCollection.ahk
-#Include interfaces\IObjectArray.ahk
-#Include interfaces\IVirtualDesktop.ahk
-#Include interfaces\IVirtualDesktopManager.ahk
-#Include interfaces\IVirtualDesktopManagerInternal.ahk
-#Include interfaces\IVirtualDesktopNotificationService.ahk
-#Include interfaces\IVirtualDesktopPinnedApps.ahk
-#Include wrappers\ApplicationView.ahk
-#Include wrappers\ApplicationViewCollection.ahk
-#Include wrappers\ComObject.ahk
-#Include wrappers\VirtualDesktop.ahk
-#Include wrappers\VirtualDesktopManager.ahk
-#Include wrappers\VirtualDesktopNotificationService.ahk
-#Include wrappers\VirtualDesktopPinnedApps.ahk
+#Include %A_LineFile%\..\common.ahk
+#Include %A_LineFile%\..\interfaces\IApplicationView.ahk
+#Include %A_LineFile%\..\interfaces\IApplicationViewCollection.ahk
+#Include %A_LineFile%\..\interfaces\IObjectArray.ahk
+#Include %A_LineFile%\..\interfaces\IVirtualDesktop.ahk
+#Include %A_LineFile%\..\interfaces\IVirtualDesktopManager.ahk
+#Include %A_LineFile%\..\interfaces\IVirtualDesktopManagerInternal.ahk
+#Include %A_LineFile%\..\interfaces\IVirtualDesktopNotificationService.ahk
+#Include %A_LineFile%\..\interfaces\IVirtualDesktopPinnedApps.ahk
+#Include %A_LineFile%\..\wrappers\ApplicationView.ahk
+#Include %A_LineFile%\..\wrappers\ApplicationViewCollection.ahk
+#Include %A_LineFile%\..\wrappers\ComObject.ahk
+#Include %A_LineFile%\..\wrappers\VirtualDesktop.ahk
+#Include %A_LineFile%\..\wrappers\VirtualDesktopManager.ahk
+#Include %A_LineFile%\..\wrappers\VirtualDesktopNotificationService.ahk
+#Include %A_LineFile%\..\wrappers\VirtualDesktopPinnedApps.ahk
 
 class VD {
     Static MaxDesktops := 20

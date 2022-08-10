@@ -9,7 +9,7 @@ ListLines, Off
 SetBatchLines, -1
 Process, Priority, , H
 
-#Include miguru.ahk
+#Include lib\miguru\miguru.ahk
 Miguru := new MiguruWM()
 
 log(fmt, args*) {

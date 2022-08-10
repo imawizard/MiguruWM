@@ -1,4 +1,4 @@
-#Include vd.ahk
+#Include %A_LineFile%\..\..\vd\vd.ahk
 
 Global WINEVENT_OUTOFCONTEXT   := 0
 Global WINEVENT_SKIPOWNTHREAD  := 1
