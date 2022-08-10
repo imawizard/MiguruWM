@@ -16,9 +16,7 @@
 #Include %A_LineFile%\..\wrappers\VirtualDesktopPinnedApps.ahk
 
 class VD {
-    Static MaxDesktops := 20
-
-    __New(callback := "") {
+    __New(callback := "", maxDesktops := 20) {
         CLSID_ImmersiveShell := "{C2F03A33-21F5-47FA-B4BB-156362A2F239}"
         immersiveShell := ComObjCreate(CLSID_ImmersiveShell, IID_Unknown)
 
@@ -33,6 +31,8 @@ class VD {
         this.listener := new VirtualDesktopNotificationListener(fn)
         this.notificationService.Register(this.listener)
         this.callback := callback
+
+        this.MaxDesktops := maxDesktops
     }
 
     __Delete() {
@@ -56,15 +56,15 @@ class VD {
                 , { desktop: this._desktopIndexById(args.desktop.GetId()) })
         Case "desktop_destroyed":
             this.callback.Call(event
-                , { desktop: this._desktopIndexById(args.desktop.GetId())
+                , { desktopId: args.desktop.GetId()
                 , fallback: this._desktopIndexById(args.fallback.GetId()) })
         Case "desktop_destroy_begin":
             this.callback.Call(event
-                , { desktop: this._desktopIndexById(args.desktop.GetId())
+                , { desktopId: args.desktop.GetId()
                 , fallback: this._desktopIndexById(args.fallback.GetId()) })
         Case "desktop_destroy_failed":
             this.callback.Call(event
-                , { desktop: this._desktopIndexById(args.desktop.GetId())
+                , { desktopId: args.desktop.GetId()
                 , fallback: this._desktopIndexById(args.fallback.GetId()) })
         Case "view_changed":
             this.callback.Call(event
@@ -118,6 +118,8 @@ class VD {
         this.manager.MoveViewToDesktop(view, desktop)
         Return desktop
     }
+
+    ; API ..................................................................{{{
 
     ; Returns the number of virtual desktops, or 0 on error.
     Count() {
@@ -215,4 +217,6 @@ class VD {
         guid := this.manager.GetWindowDesktopId(hwnd)
         Return this._desktopIndexById(guid)
     }
+
+    ; ......................................................................}}}
 }

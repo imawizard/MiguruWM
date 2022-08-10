@@ -27,10 +27,38 @@ Global EVENT_OBJECT_CLOAKED        := 0x8017
 Global EVENT_OBJECT_UNCLOAKED      := 0x8018
 Global EVENT_OBJECT_DRAGCOMPLETE   := 0x8023
 
+Global WM_AHK_USER := 0x1000
+Global WM_EVENT    := WM_AHK_USER + 1
+Global WM_COMMAND  := WM_AHK_USER + 2
+Global WM_QUERY    := WM_AHK_USER + 3
+
+Global EV_WINDOW_SHOWN      := 1
+Global EV_WINDOW_UNCLOAKED  := 2
+Global EV_WINDOW_RESTORED   := 3
+Global EV_WINDOW_HIDDEN     := 4
+Global EV_WINDOW_CLOAKED    := 5
+Global EV_WINDOW_MINIMIZED  := 6
+Global EV_WINDOW_CREATED    := 7
+Global EV_WINDOW_DESTROYED  := 8
+Global EV_WINDOW_FOCUSED    := 9
+Global EV_MIN_WINDOW        := EV_WINDOW_SHOWN
+Global EV_MAX_WINDOW        := EV_WINDOW_FOCUSED
+Global EV_DESKTOP_CHANGED   := 10
+Global EV_DESKTOP_RENAMED   := 11
+Global EV_DESKTOP_CREATED   := 12
+Global EV_DESKTOP_DESTROYED := 13
+Global EV_MIN_DESKTOP       := EV_DESKTOP_CHANGED
+Global EV_MAX_DESKTOP       := EV_DESKTOP_DESTROYED
+
 class MiguruWM {
     __New() {
         this.VD := new VD(this._desktopEvListener.Bind(&this))
         this._setupWinEventHooks()
+
+        msgproc := this._onMessage.Bind(&this)
+        OnMessage(WM_EVENT  , msgproc)
+        OnMessage(WM_COMMAND, msgproc)
+        OnMessage(WM_QUERY  , msgproc)
     }
 
     __Delete() {
@@ -38,7 +66,7 @@ class MiguruWM {
     }
 
     _setupWinEventHooks() {
-        this.callback := RegisterCallback(this._windowEvListener, , , &this)
+        this.callback := RegisterCallback(this._windowEvListener, F, , &this)
 
         this._registerWinEventHook(EVENT_SYSTEM_FOREGROUND)
         this._registerWinEventHook(EVENT_SYSTEM_MINIMIZESTART, EVENT_SYSTEM_MINIMIZEEND)
@@ -77,43 +105,49 @@ class MiguruWM {
     }
 
     _windowEvListener(event, hwnd, objectId, childId, threadId, timestamp) {
-        Critical
-        this := Object(A_EventInfo)
+        Critical 100
+        hook := this, this := Object(A_EventInfo)
 
         if (!hwnd || objectId != OBJID_WINDOW) {
+            ; Only listen to window events, ignore events regarding controls.
             Return
         }
 
         Switch event {
         Case EVENT_OBJECT_SHOW:
-            this._notify("Shown", hwnd)
+            PostMessage, WM_EVENT, EV_WINDOW_SHOWN, hwnd, , % "ahk_id" A_ScriptHwnd
         Case EVENT_OBJECT_UNCLOAKED:
-            this._notify("Uncloaked", hwnd)
+            PostMessage, WM_EVENT, EV_WINDOW_UNCLOAKED, hwnd, , % "ahk_id" A_ScriptHwnd
         Case EVENT_SYSTEM_MINIMIZEEND:
-            this._notify("Restored", hwnd)
+            PostMessage, WM_EVENT, EV_WINDOW_RESTORED, hwnd, , % "ahk_id" A_ScriptHwnd
         Case EVENT_OBJECT_HIDE:
-            this._notify("Hidden", hwnd)
+            PostMessage, WM_EVENT, EV_WINDOW_HIDDEN, hwnd, , % "ahk_id" A_ScriptHwnd
         Case EVENT_OBJECT_CLOAKED:
-            this._notify("Cloaked", hwnd)
+            PostMessage, WM_EVENT, EV_WINDOW_CLOAKED, hwnd, , % "ahk_id" A_ScriptHwnd
         Case EVENT_SYSTEM_MINIMIZESTART:
-            this._notify("Minimized", hwnd)
+            PostMessage, WM_EVENT, EV_WINDOW_MINIMIZED, hwnd, , % "ahk_id" A_ScriptHwnd
         Case EVENT_OBJECT_CREATE:
-            this._notify("Created", hwnd)
+            PostMessage, WM_EVENT, EV_WINDOW_CREATED, hwnd, , % "ahk_id" A_ScriptHwnd
         Case EVENT_OBJECT_DESTROY:
-            this._notify("Destroyed", hwnd)
+            PostMessage, WM_EVENT, EV_WINDOW_DESTROYED, hwnd, , % "ahk_id" A_ScriptHwnd
         Case EVENT_SYSTEM_FOREGROUND, EVENT_OBJECT_FOCUS:
-            this._notify("Focused", hwnd)
+            PostMessage, WM_EVENT, EV_WINDOW_FOCUSED, hwnd, , % "ahk_id" A_ScriptHwnd
         }
     }
 
     _desktopEvListener(event, args) {
+        Critical 100
         this := Object(this)
 
         Switch event {
         Case "desktop_changed":
-            log("Current desktop changed from {} to {}", args.was, args.now)
+            PostMessage, WM_EVENT, EV_DESKTOP_CHANGED, Object(args), , % "ahk_id" A_ScriptHwnd
         Case "desktop_renamed":
-            log("Desktop {} was renamed to {}", args.desktop, args.name)
+            PostMessage, WM_EVENT, EV_DESKTOP_RENAMED, Object(args), , % "ahk_id" A_ScriptHwnd
+        Case "desktop_created":
+            PostMessage, WM_EVENT, EV_DESKTOP_CREATED, Object(args), , % "ahk_id" A_ScriptHwnd
+        Case "desktop_destroyed":
+            PostMessage, WM_EVENT, EV_DESKTOP_DESTROYED, Object(args), , % "ahk_id" A_ScriptHwnd
         }
     }
 
@@ -126,7 +160,75 @@ class MiguruWM {
         log("Window: {:x}, Desktop: {}, Event: {}", hwnd, index, event)
     }
 
-    ; API..................................................................{{{
+
+    _onMessage(wparam, lparam, msg) {
+        Critical 100
+        this := Object(this)
+
+        Switch msg {
+        Case WM_EVENT:
+            if (wparam <= EV_MAX_WINDOW) {
+                ret := this._onWindowEvent(wparam, lparam)
+            } else if (wparam <= EV_MAX_DESKTOP) {
+                ret := this._onDesktopEvent(wparam, Object(lparam))
+                ObjRelease(lparam)
+            }
+        Case WM_COMMAND:
+            ret := this._onCommand(wparam, lparam)
+        Case WM_QUERY:
+            ret := this._onQuery(wparam, lparam)
+        }
+        Return ret
+    }
+
+    _onWindowEvent(event, hwnd) {
+        Switch event {
+        Case EV_WINDOW_SHOWN:
+            index := this.VD.DesktopByWindow(hwnd)
+            if !index {
+                Return
+            }
+            log("Window {:x} is shown on Desktop {}", hwnd, index)
+        Case EV_WINDOW_UNCLOAKED:
+            index := this.VD.DesktopByWindow(hwnd)
+            if !index {
+                Return
+            }
+            log("Window {:x} is uncloaked on Desktop {}", hwnd, index)
+        Case EV_WINDOW_RESTORED:
+        Case EV_WINDOW_HIDDEN:
+        Case EV_WINDOW_CLOAKED:
+        Case EV_WINDOW_MINIMIZED:
+        Case EV_WINDOW_CREATED:
+        Case EV_WINDOW_DESTROYED:
+        Case EV_WINDOW_FOCUSED:
+        }
+    }
+
+    _onDesktopEvent(event, args) {
+        Switch event {
+        Case EV_DESKTOP_CHANGED:
+            log("Current desktop changed from {} to {}", args.was, args.now)
+        Case EV_DESKTOP_RENAMED:
+            log("Desktop {} was renamed to {}", args.desktop, args.name)
+        Case EV_DESKTOP_CREATED:
+            log("Desktop {} was created", args.desktop)
+        Case EV_DESKTOP_DESTROYED:
+            log("Desktop {} was destroyed", args.desktopId)
+        }
+    }
+
+    _onCommand(cmd, param) {
+        Switch cmd {
+        }
+    }
+
+    _onQuery(query, param) {
+        Switch query {
+        }
+    }
+
+    ; API ..................................................................{{{
 
     FocusWorkspace(target) {
         this.VD.FocusDesktop(target)
@@ -135,4 +237,6 @@ class MiguruWM {
     SendToWorkspace(target) {
         this.VD.SendWindowToDesktop(WinExist("A"), target)
     }
+
+    ; ......................................................................}}}
 }

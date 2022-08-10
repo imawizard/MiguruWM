@@ -9,6 +9,8 @@ ListLines, Off
 SetBatchLines, -1
 Process, Priority, , H
 
+DetectHiddenWindows, On
+
 #Include lib\miguru\miguru.ahk
 Miguru := new MiguruWM()
 
