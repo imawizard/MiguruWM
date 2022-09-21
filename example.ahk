@@ -3,6 +3,8 @@
 #MaxHotkeysPerInterval 1000
 #WinActivateForce
 
+#Warn
+#Warn ClassOverwrite, Off
 #NoEnv
 #KeyHistory 0
 ListLines, Off

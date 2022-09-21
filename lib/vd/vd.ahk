@@ -68,7 +68,7 @@ class VD {
                 , fallback: this._desktopIndexById(args.fallback.GetId()) })
         Case "view_changed":
             this.callback.Call(event
-                , { view: new IApplicationView(view) })
+                , { view: args.view })
         }
     }
 
