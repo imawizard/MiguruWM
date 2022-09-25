@@ -1,74 +1,86 @@
-#Include %A_LineFile%\..\common.ahk
-#Include %A_LineFile%\..\interfaces\IApplicationView.ahk
-#Include %A_LineFile%\..\interfaces\IApplicationViewCollection.ahk
-#Include %A_LineFile%\..\interfaces\IObjectArray.ahk
-#Include %A_LineFile%\..\interfaces\IVirtualDesktop.ahk
-#Include %A_LineFile%\..\interfaces\IVirtualDesktopManager.ahk
-#Include %A_LineFile%\..\interfaces\IVirtualDesktopManagerInternal.ahk
-#Include %A_LineFile%\..\interfaces\IVirtualDesktopNotificationService.ahk
-#Include %A_LineFile%\..\interfaces\IVirtualDesktopPinnedApps.ahk
-#Include %A_LineFile%\..\wrappers\ApplicationView.ahk
-#Include %A_LineFile%\..\wrappers\ApplicationViewCollection.ahk
-#Include %A_LineFile%\..\wrappers\ComObject.ahk
-#Include %A_LineFile%\..\wrappers\VirtualDesktop.ahk
-#Include %A_LineFile%\..\wrappers\VirtualDesktopManager.ahk
-#Include %A_LineFile%\..\wrappers\VirtualDesktopNotificationService.ahk
-#Include %A_LineFile%\..\wrappers\VirtualDesktopPinnedApps.ahk
+#Include common.ahk
+#Include ComObjectImpl.ahk
+#Include InterfaceWrapper.ahk
+#Include interfaces\IApplicationView.ahk
+#Include interfaces\IApplicationViewCollection.ahk
+#Include interfaces\IInspectable.ahk
+#Include interfaces\IObjectArray.ahk
+#Include interfaces\IServiceProvider.ahk
+#Include interfaces\IUnknown.ahk
+#Include interfaces\IVirtualDesktop.ahk
+#Include interfaces\IVirtualDesktopManager.ahk
+#Include interfaces\IVirtualDesktopManagerInternal.ahk
+#Include interfaces\IVirtualDesktopNotificationService.ahk
+#Include interfaces\IVirtualDesktopPinnedApps.ahk
+#Include wrappers\ApplicationView.ahk
+#Include wrappers\ApplicationViewCollection.ahk
+#Include wrappers\VirtualDesktop.ahk
+#Include wrappers\VirtualDesktopManager.ahk
+#Include wrappers\VirtualDesktopManagerInternal.ahk
+#Include wrappers\VirtualDesktopNotificationListener.ahk
+#Include wrappers\VirtualDesktopNotificationService.ahk
+#Include wrappers\VirtualDesktopPinnedApps.ahk
 
 class VD {
     __New(callback := "", maxDesktops := 20) {
         CLSID_ImmersiveShell := "{C2F03A33-21F5-47FA-B4BB-156362A2F239}"
-        immersiveShell := ComObjCreate(CLSID_ImmersiveShell, IID_Unknown)
+        immersiveShell := ComObject(CLSID_ImmersiveShell, IUnknown.GUID)
 
-        this.viewCollection := new ApplicationViewCollection(immersiveShell)
-        this.manager := new VirtualDesktopManager(immersiveShell)
-        this.notificationService := new VirtualDesktopNotificationService(immersiveShell)
-        this.pinnedApps := new VirtualDesktopPinnedApps(immersiveShell)
+        this.viewCollection := ApplicationViewCollection(immersiveShell)
+        this.manager := VirtualDesktopManager(immersiveShell)
+        this.managerInternal := VirtualDesktopManagerInternal(immersiveShell)
+        this.notificationService := VirtualDesktopNotificationService(immersiveShell)
+        this.pinnedApps := VirtualDesktopPinnedApps(immersiveShell)
 
-        ObjRelease(immersiveShell)
-
-        fn := this._eventListener.Bind(&this)
-        this.listener := new VirtualDesktopNotificationListener(fn)
-        this.notificationService.Register(this.listener)
-        this.callback := callback
+        if callback {
+            w := (fn, self, cb, args*) => fn.Call(ObjFromPtrAddRef(self), cb, args*)
+            w := w.Bind(this._eventListener, ObjPtr(this), callback)
+            listener := VirtualDesktopNotificationListener(w)
+            this.notificationService.Register(listener)
+        }
 
         this.MaxDesktops := maxDesktops
     }
 
     __Delete() {
-        this.notificationService.Unregister(this.listener)
+        this.notificationService.UnregisterAll()
     }
 
-    _eventListener(event, args) {
-        this := Object(this)
-
+    _eventListener(callback, event, args) {
         Switch event {
         Case "desktop_changed":
-            this.callback.Call(event
-                , { now: this._desktopIndexById(args.now.GetId())
-                , was: this._desktopIndexById(args.was.GetId()) })
+            callback.Call(event, {
+                now: this._desktopIndexById(args.now.GetId()),
+                was: this._desktopIndexById(args.was.GetId()),
+            })
         Case "desktop_renamed":
-            this.callback.Call(event
-                , { desktop: this._desktopIndexById(args.desktop.GetId())
-                , name: args.name })
+            callback.Call(event, {
+                desktop: this._desktopIndexById(args.desktop.GetId()),
+                name: args.name,
+            })
         Case "desktop_created":
-            this.callback.Call(event
-                , { desktop: this._desktopIndexById(args.desktop.GetId()) })
+            callback.Call(event, {
+                desktop: this._desktopIndexById(args.desktop.GetId()),
+            })
         Case "desktop_destroyed":
-            this.callback.Call(event
-                , { desktopId: args.desktop.GetId()
-                , fallback: this._desktopIndexById(args.fallback.GetId()) })
+            callback.Call(event, {
+                desktopId: args.desktop.GetId(),
+                fallback: this._desktopIndexById(args.fallback.GetId()),
+            })
         Case "desktop_destroy_begin":
-            this.callback.Call(event
-                , { desktopId: args.desktop.GetId()
-                , fallback: this._desktopIndexById(args.fallback.GetId()) })
+            callback.Call(event, {
+                desktopId: args.desktop.GetId(),
+                fallback: this._desktopIndexById(args.fallback.GetId()),
+            })
         Case "desktop_destroy_failed":
-            this.callback.Call(event
-                , { desktopId: args.desktop.GetId()
-                , fallback: this._desktopIndexById(args.fallback.GetId()) })
+            callback.Call(event, {
+                desktopId: args.desktop.GetId(),
+                fallback: this._desktopIndexById(args.fallback.GetId()),
+            })
         Case "view_changed":
-            this.callback.Call(event
-                , { view: args.view })
+            callback.Call(event, {
+                view: args.view,
+            })
         }
     }
 
@@ -77,7 +89,7 @@ class VD {
             Return false
         }
 
-        desktops := this.manager.GetDesktops()
+        desktops := this.managerInternal.GetDesktops()
         if (index <= desktops.GetCount()) {
             Return desktops.GetAt(index)
         }
@@ -89,15 +101,15 @@ class VD {
         }
 
         last := false
-        Loop % index - desktops.GetCount() {
-            last := this.manager.CreateDesktop()
+        Loop index - desktops.GetCount() {
+            last := this.managerInternal.CreateDesktop()
         }
         Return last
     }
 
     _desktopIndexById(needle) {
-        desktops := this.manager.GetDesktops()
-        Loop % desktops.GetCount() {
+        desktops := this.managerInternal.GetDesktops()
+        Loop desktops.GetCount() {
             desktop := desktops.GetAt(A_Index)
             if (desktop.GetId() == needle) {
                 Return A_Index
@@ -108,14 +120,14 @@ class VD {
 
     _sendWindowToDesktop(hwnd, index, ensure) {
         view := this.viewCollection.GetViewForHwnd(hwnd)
-        if !view {
+        if !view.Ptr {
             Return false
         }
         desktop := this._desktop(index, ensure)
-        if !desktop {
+        if !desktop.Ptr {
             Return false
         }
-        this.manager.MoveViewToDesktop(view, desktop)
+        this.managerInternal.MoveViewToDesktop(view, desktop)
         Return desktop
     }
 
@@ -123,19 +135,19 @@ class VD {
 
     ; Returns the number of virtual desktops, or 0 on error.
     Count() {
-        desktops := this.manager.GetDesktops()
+        desktops := this.managerInternal.GetDesktops()
         Return desktops ? desktops.GetCount() : 0
     }
 
     ; Returns the 1-based index of the current desktop.
     CurrentDesktop() {
-        current := this.manager.GetCurrentDesktop()
+        current := this.managerInternal.GetCurrentDesktop()
         Return this._desktopIndexById(current.GetId())
     }
 
     ; Returns the 1-based index of the created desktop, or 0 on error.
     CreateDesktop() {
-        desktops := this.manager.GetDesktops()
+        desktops := this.managerInternal.GetDesktops()
         count := desktops.GetCount()
         if !this._desktop(count + 1, true) {
             Return 0
@@ -145,7 +157,7 @@ class VD {
 
     ; Creates desktops if needed, returns false on error.
     EnsureDesktops(count) {
-        Return this._desktop(count, true) != false
+        Return this._desktop(count, true) !== false
     }
 
     ; Returns the name of a specific desktop, or the current one's if index is 0.
@@ -153,7 +165,7 @@ class VD {
         if (index < 0) {
             Return false
         } else if (index == 0) {
-            desktop := this.manager.GetCurrentDesktop()
+            desktop := this.managerInternal.GetCurrentDesktop()
         } else {
             desktop := this._desktop(index, false)
         }
@@ -175,9 +187,9 @@ class VD {
         if (index < 0) {
             Return false
         } else if (index == 0) {
-            desktop := this.manager.GetCurrentDesktop()
+            desktop := this.managerInternal.GetCurrentDesktop()
         } else {
-            desktops := this.manager.GetDesktops()
+            desktops := this.managerInternal.GetDesktops()
             count := desktops.GetCount()
             if (index > count || count < 2) {
                 Return false
@@ -185,31 +197,31 @@ class VD {
             desktop := desktops.GetAt(index)
         }
 
-        if !desktop {
+        if !desktop.Ptr {
             Return false
         }
-        fallback := this.manager.GetAdjacentDesktop(desktop, "right")
-        if !fallback {
-            fallback := this.manager.GetAdjacentDesktop(desktop, "left")
+        fallback := this.managerInternal.GetAdjacentDesktop(desktop, "right")
+        if !fallback.Ptr {
+            fallback := this.managerInternal.GetAdjacentDesktop(desktop, "left")
         }
-        Return this.manager.RemoveDesktop(desktop, fallback)
+        Return this.managerInternal.RemoveDesktop(desktop, fallback)
     }
 
     ; Focuses a specific desktop. Creates new desktops on demand if ensure is
     ; true.
     FocusDesktop(index, ensure := true) {
         desktop := this._desktop(index, ensure)
-        if !desktop {
+        if !desktop.Ptr {
             Return false
         }
-        WinActivate, ahk_class Shell_TrayWnd
-        Return this.manager.SwitchDesktop(desktop)
+        WinActivate("ahk_class Shell_TrayWnd")
+        Return this.managerInternal.SwitchDesktop(desktop)
     }
 
     ; Sends a window to a specific desktop. Creates new desktops on demand if
     ; ensure is true.
     SendWindowToDesktop(hwnd, index, ensure := true) {
-        Return this._sendWindowToDesktop(hwnd, index, ensure) != false
+        Return this._sendWindowToDesktop(hwnd, index, ensure) !== false
     }
 
     ; Returns the 1-based index of the desktop containing a specific window.

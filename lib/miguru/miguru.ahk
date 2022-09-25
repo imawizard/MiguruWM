@@ -1,13 +1,14 @@
-#Include %A_LineFile%\..\api.ahk
-#Include %A_LineFile%\..\events.ahk
+#Include api.ahk
+#Include events.ahk
 
 class MiguruWM extends WMEvents {
     __New() {
-        base.__New()
+        super.__New()
 
-        for k, v in MiguruAPI {
-            if IsFunc(v) {
-                ObjRawSet(this, k, v)
+        api := MiguruAPI.Prototype
+        for v in api.OwnProps() {
+            if api.GetOwnPropDesc(v).HasMethod("Call") {
+                this.%v% := api.GetMethod(v)
             }
         }
     }

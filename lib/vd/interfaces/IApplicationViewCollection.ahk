@@ -1,108 +1,94 @@
-class IApplicationViewCollection_19044 {
-    __New(obj) {
-        this.ptr := ComObjQuery(obj, "{1841C6D7-4F9D-42C0-AF41-8747538F10E5}")
-        if this.ptr {
-            this.methods := MethodTable(this.ptr
-                , "GetViews"
-                , "GetViewsByZOrder"
-                , "GetViewsByAppUserModelId"
-                , "GetViewForHwnd"
-                , "GetViewForApplication"
-                , "GetViewForAppUserModelId"
-                , "GetViewInFocus"
-                , "Unknown1"
-                , "RefreshCollection"
-                , "RegisterForApplicationViewChanges"
-                , "UnregisterForApplicationViewChanges")
+class IApplicationViewCollection_19044 extends IUnknown {
+    Static GUID    := "{1841C6D7-4F9D-42C0-AF41-8747538F10E5}"
+    Static Methods := [
+        "GetViews",
+        "GetViewsByZOrder",
+        "GetViewsByAppUserModelId",
+        "GetViewForHwnd",
+        "GetViewForApplication",
+        "GetViewForAppUserModelId",
+        "GetViewInFocus",
+        "Unknown1",
+        "RefreshCollection",
+        "RegisterForApplicationViewChanges",
+        "UnregisterForApplicationViewChanges",
+    ]
+
+    GetViews(out) {
+        this._funcs["GetViews"](
+            "PtrP", out,
+            "HRESULT",
+        )
+    }
+
+    GetViewsByZOrder(out) {
+        this._funcs["GetViewsByZOrder"](
+            "PtrP", out,
+            "HRESULT",
+        )
+    }
+
+    GetViewsByAppUserModelId(out, modelId) {
+        this._funcs["GetViewsByAppUserModelId"](
+            "Ptr", modelId,
+            "PtrP", out,
+            "HRESULT",
+        )
+    }
+
+    GetViewForHwnd(out, hwnd) {
+        res := this._funcs["GetViewForHwnd"](
+            "Ptr", hwnd,
+            "PtrP", out,
+            "UInt",
+        )
+        Switch res {
+        Case E_ELEMENTNOTFOUND:
         }
     }
 
-    GetViews() {
-        views := false
-        DllCall(this.methods["GetViews"]
-            , "Ptr", this.ptr
-            , "PtrP", views
-            , "UInt")
-        Return views
+    GetViewForAppUserModelId(out, modelId) {
+        this._funcs["GetViewForAppUserModelId"](
+            "Ptr", modelId,
+            "PtrP", out,
+            "HRESULT",
+        )
     }
 
-    GetViewsByZOrder() {
-        views := false
-        DllCall(this.methods["GetViewsByZOrder"]
-            , "Ptr", this.ptr
-            , "PtrP", views
-            , "UInt")
-        Return views
+    GetViewInFocus(out) {
+        this._funcs["GetViewInFocus"](
+            "PtrP", out,
+            "HRESULT",
+        )
     }
 
-    GetViewsByAppUserModelId(modelId) {
-        views := false
-        DllCall(this.methods["GetViewsByAppUserModelId"]
-            , "Ptr", this.ptr
-            , "Ptr", modelId
-            , "PtrP", views
-            , "UInt")
-        Return views
-    }
-
-    GetViewForHwnd(hwnd) {
-        view := 0
-        DllCall(this.methods["GetViewForHwnd"]
-            , "Ptr", this.ptr
-            , "Ptr", hwnd
-            , "PtrP", view
-            , "UInt")
-        Return view
-    }
-
-    GetViewForAppUserModelId(modelId) {
-        view := 0
-        DllCall(this.methods["GetViewForAppUserModelId"]
-            , "Ptr", this.ptr
-            , "Ptr", modelId
-            , "PtrP", view
-            , "UInt")
-        Return view
-    }
-
-    GetViewInFocus() {
-        view := 0
-        DllCall(this.methods["GetViewInFocus"]
-            , "Ptr", this.ptr
-            , "PtrP", view
-            , "UInt")
-        Return view
-    }
-
-    Unknown1() {
-        view := 0
-        DllCall(this.methods["Unknown1"]
-            , "Ptr", this.ptr
-            , "PtrP", view
-            , "UInt")
-        Return view
+    Unknown1(out) {
+        this._funcs["Unknown1"](
+            "PtrP", out,
+            "HRESULT",
+        )
     }
 
     RefreshCollection() {
-        Return DllCall(this.methods["RefreshCollection"]
-            , "Ptr", this.ptr
-            , "UInt") == 0
+        this._funcs["RefreshCollection"](
+            "HRESULT",
+        )
     }
 
     RegisterForApplicationViewChanges(handler) {
         cookie := 0
-        DllCall(this.methods["RegisterForApplicationViewChanges"]
-            , "Ptr", this.ptr
-            , "Ptr", handler
-            , "IntP", cookie
-            , "UInt")
+        this._funcs["RegisterForApplicationViewChanges"](
+            "Ptr", handler,
+            "IntP", &cookie,
+            "HRESULT",
+        )
         Return cookie
     }
 
     UnregisterForApplicationViewChanges(cookie) {
-        Return DllCall(this.methods["UnregisterForApplicationViewChanges"]
-            , "Ptr", this.ptr
-            , "Int", cookie
-            , "UInt") == 0
+        this._funcs["UnregisterForApplicationViewChanges"](
+            "Int", cookie,
+            "HRESULT",
+        )
     }
 }

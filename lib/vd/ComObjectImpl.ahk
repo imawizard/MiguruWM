@@ -1,0 +1,92 @@
+E_NOTIMPL         := 0x80004001
+E_NOINTERFACE     := 0x80004002
+E_ELEMENTNOTFOUND := 0x8002802b
+E_OUTOFBOUNDS     := 0x80028ca1
+E_CLASSNOTREG     := 0x80040154
+E_INVALIDARG      := 0x80070057
+E_NOT_VALID_STATE := 0x8007139f
+
+class ComObjectImpl {
+    __New() {
+        this._buf := this._createVTable()
+        this._vtables := Map(IUnknown.GUID, this._buf)
+
+        for k, v in %this.base.__Class%.VTables {
+            if v is Array {
+                this._vtables[StrUpper(k)] := this._createVTable(v*)
+            }
+        }
+        for k, v in %this.base.__Class%.VTables {
+            if v is String {
+                this._vtables[StrUpper(k)] := this._vtables[v]
+            }
+        }
+    }
+
+    __Delete() {
+        for _, v in this._vtables {
+            loop v.Size // A_PtrSize {
+                A_Index += A_PtrSize - 1
+                callback := NumGet(v.Ptr, A_Index, "Ptr")
+                if callback {
+                    CallbackFree(callback)
+                    NumPut("Ptr", 0, v.Ptr, A_Index)
+                }
+            }
+        }
+    }
+
+    _createVTable(methods*) {
+        methods := ["QueryInterface", "AddRef", "Release", methods*]
+
+        vtable := Buffer((methods.Length + 2) * A_PtrSize)
+        NumPut("Ptr", vtable.Ptr + A_PtrSize, vtable)
+        NumPut("Ptr", 0, vtable, (methods.Length + 1) * A_PtrSize)
+
+        for i, name in methods {
+            ; Swallows COM Objects' thisptr and restore `this` (ObjFromPtr takes
+            ; ownership, so we increment the reference counter here)
+            w := (fn, self, thisptr, args*) => fn.Call(ObjFromPtrAddRef(self), args*)
+
+            ; Bind `method` instead of closing over it, because we're in a loop
+            method := this.%name%
+            ; Bind `this` without incrementing its reference counter
+            self := ObjPtr(this)
+            b := w.Bind(method, self)
+
+            callback := CallbackCreate(b, , method.MinParams)
+            NumPut("Ptr", callback, vtable, i * A_PtrSize)
+        }
+        Return vtable
+    }
+
+    Ptr {
+        get => this._buf.Ptr
+    }
+
+    QueryInterface(iid, out) {
+        if !out {
+            Return E_INVALIDARG
+        }
+
+        guid := StrUpper(StringifyGUID(iid))
+        for k, v in this._vtables {
+            if (guid == k) {
+                NumPut("Ptr", v.Ptr, out)
+                this.AddRef()
+                Return 0
+            }
+        }
+
+        NumPut("Ptr", 0, out)
+        Return E_NOINTERFACE
+    }
+
+    AddRef() {
+        Return ObjAddRef(ObjPtr(this))
+    }
+
+    Release() {
+        Return ObjRelease(ObjPtr(this))
+    }
+}

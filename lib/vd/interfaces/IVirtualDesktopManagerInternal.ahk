@@ -1,281 +1,241 @@
-class IVirtualDesktopManagerInternal_19044 {
-    __New(obj) {
-        this.ptr := ComObjQuery(obj, "{F31574D6-B682-4CDC-BD56-1827860ABEC6}")
-        if this.ptr {
-            this.methods := MethodTable(this.ptr
-                , "GetCount"
-                , "MoveViewToDesktop"
-                , "CanViewMoveDesktops"
-                , "GetCurrentDesktop"
-                , "GetDesktops"
-                , "GetAdjacentDesktop"
-                , "SwitchDesktop"
-                , "CreateDesktop"
-                , "RemoveDesktop"
-                , "FindDesktop")
-        }
-    }
+class IVirtualDesktopManagerInternal_19044 extends IUnknown {
+    Static GUID    := "{F31574D6-B682-4CDC-BD56-1827860ABEC6}"
+    Static Methods := [
+        "GetCount",
+        "MoveViewToDesktop",
+        "CanViewMoveDesktops",
+        "GetCurrentDesktop",
+        "GetDesktops",
+        "GetAdjacentDesktop",
+        "SwitchDesktop",
+        "CreateDesktop",
+        "RemoveDesktop",
+        "FindDesktop",
+    ]
 
     GetCount() {
         ret := 0
-        if DllCall(this.methods["GetCount"]
-            , "Ptr", this.ptr
-            , "IntP", ret
-            , "UInt") {
-            Return -1
-        }
+        this._funcs["GetCount"](
+            "IntP", &ret,
+            "HRESULT",
+        )
         Return ret
     }
 
     MoveViewToDesktop(view, desktop) {
-        Return DllCall(this.methods["MoveViewToDesktop"]
-            , "Ptr", this.ptr
-            , "Ptr", view
-            , "Ptr", desktop
-            , "UInt") == 0
+        res := this._funcs["MoveViewToDesktop"](
+            "Ptr", view,
+            "Ptr", desktop,
+            "HRESULT",
+        )
+        Switch res {
+        Case E_NOT_VALID_STATE:
+            ; can't move window because e.g. it's a popup/child
+        }
+        Return res == 0
     }
 
     CanViewMoveDesktops(view) {
         ret := 0
-        DllCall(this.methods["CanViewMoveDesktops"]
-            , "Ptr", this.ptr
-            , "Ptr", view
-            , "IntP", ret
-            , "UInt")
+        this._funcs["CanViewMoveDesktops"](
+            "Ptr", view,
+            "IntP", &ret,
+            "HRESULT",
+        )
         Return ret > 0
     }
 
-    GetCurrentDesktop() {
-        desktop := false
-        DllCall(this.methods["GetCurrentDesktop"]
-            , "Ptr", this.ptr
-            , "PtrP", desktop
-            , "UInt")
-        Return desktop
+    GetCurrentDesktop(out) {
+        this._funcs["GetCurrentDesktop"](
+            "PtrP", out,
+            "HRESULT",
+        )
     }
 
-    GetDesktops() {
-        desktops := false
-        DllCall(this.methods["GetDesktops"]
-            , "Ptr", this.ptr
-            , "PtrP", desktops
-            , "UInt")
-        Return desktops
+    GetDesktops(out) {
+        this._funcs["GetDesktops"](
+            "PtrP", out,
+            "HRESULT",
+        )
     }
 
-    GetAdjacentDesktop(desktop, direction) {
-        if (direction == "left") {
-            direction := 3
-        } else if (direction == "right") {
-            direction := 4
+    GetAdjacentDesktop(out, desktop, direction) {
+        res := this._funcs["GetAdjacentDesktop"](
+            "Ptr", desktop,
+            "Int", direction,
+            "PtrP", out,
+            "UInt",
+        )
+        Switch res {
+        Case E_OUTOFBOUNDS:
+            ; there is no desktop on the left/right
         }
-        found := false
-        DllCall(this.methods["GetAdjacentDesktop"]
-            , "Ptr", this.ptr
-            , "Ptr", desktop
-            , "Int", direction
-            , "PtrP", found
-            , "UInt")
-        Return found
     }
 
     SwitchDesktop(desktop) {
-        Return DllCall(this.methods["SwitchDesktop"]
-            , "Ptr", this.ptr
-            , "Ptr", desktop
-            , "UInt") == 0
+        this._funcs["SwitchDesktop"](
+            "Ptr", desktop,
+            "HRESULT",
+        )
     }
 
-    CreateDesktop() {
-        desktop := false
-        DllCall(this.methods["CreateDesktop"]
-            , "Ptr", this.ptr
-            , "PtrP", desktop
-            , "UInt")
-        Return desktop
+    CreateDesktop(out) {
+        this._funcs["CreateDesktop"](
+            "PtrP", out,
+            "HRESULT",
+        )
     }
 
     RemoveDesktop(desktop, fallback) {
-        Return DllCall(this.methods["RemoveDesktop"]
-            , "Ptr", this.ptr
-            , "Ptr", desktop
-            , "Ptr", fallback
-            , "UInt") == 0
+        this._funcs["RemoveDesktop"](
+            "Ptr", desktop,
+            "Ptr", fallback,
+            "HRESULT",
+        )
     }
 
-    FindDesktop(desktopId) {
-        desktop := false
-        DllCall(this.methods["FindDesktop"]
-            , "Ptr", this.ptr
-            , "Ptr", desktopId
-            , "PtrP", desktop
-            , "UInt")
-        Return desktop
+    FindDesktop(out, desktopId) {
+        this._funcs["FindDesktop"](
+            "Ptr", desktopId,
+            "PtrP", out,
+            "HRESULT",
+        )
     }
 }
 
 class IVirtualDesktopManagerInternal2_19044 extends IVirtualDesktopManagerInternal_19044 {
-    __New(obj) {
-        this.ptr := ComObjQuery(obj, "{0F3A72B0-4566-487E-9A33-4ED302F6D6CE}")
-        if this.ptr {
-            this.methods := MethodTable(this.ptr
-                , "GetCount"
-                , "MoveViewToDesktop"
-                , "CanViewMoveDesktops"
-                , "GetCurrentDesktop"
-                , "GetDesktops"
-                , "GetAdjacentDesktop"
-                , "SwitchDesktop"
-                , "CreateDesktop"
-                , "RemoveDesktop"
-                , "FindDesktop"
-                , "Unknown1"
-                , "SetDesktopName")
-        }
-    }
+    Static GUID    := "{0F3A72B0-4566-487E-9A33-4ED302F6D6CE}"
+    Static Methods := [
+        "Unknown1",
+        "SetDesktopName",
+    ]
 
     SetDesktopName(desktop, name) {
         str := 0
-        DllCall("combase\WindowsCreateString"
-            , "Str", name
-            , "UInt", StrLen(name)
-            , "PtrP", str
-            , "UInt")
-        ret := DllCall(this.methods["SetDesktopName"]
-            , "Ptr", this.ptr
-            , "Ptr", desktop
-            , "Ptr", str
-            , "UInt")
-        DllCall("combase\WindowsDeleteString"
-            , "Ptr", str
-            , "UInt")
-        Return ret == 0
+        DllCall(
+            "combase\WindowsCreateString",
+            "Str", name,
+            "UInt", StrLen(name),
+            "PtrP", &str,
+            "HRESULT",
+        )
+        this._funcs["SetDesktopName"](
+            "Ptr", desktop,
+            "Ptr", str,
+            "HRESULT",
+        )
+        DllCall(
+            "combase\WindowsDeleteString",
+            "Ptr", str,
+            "HRESULT",
+        )
     }
 }
 
 class IVirtualDesktopManagerInternal3_19044 extends IVirtualDesktopManagerInternal2_19044 {
-    __New(obj) {
-        this.ptr := ComObjQuery(obj, "{FE538FF5-D53B-4F5A-9DAD-8E72873CB360}")
-        if this.ptr {
-            this.methods := MethodTable(this.ptr
-                , "GetCount"
-                , "MoveViewToDesktop"
-                , "CanViewMoveDesktops"
-                , "GetCurrentDesktop"
-                , "GetDesktops"
-                , "GetAdjacentDesktop"
-                , "SwitchDesktop"
-                , "CreateDesktop"
-                , "RemoveDesktop"
-                , "FindDesktop"
-                , "Unknown1"
-                , "SetDesktopName"
-                , "CopyDesktopState")
-        }
-    }
+    Static GUID    := "{FE538FF5-D53B-4F5A-9DAD-8E72873CB360}"
+    Static Methods := [
+        "CopyDesktopState",
+    ]
 
     CopyDesktopState(view1, view2) {
-        Return DllCall(this.methods["CopyDesktopState"]
-            , "Ptr", this.ptr
-            , "Ptr", view1
-            , "Ptr", view2
-            , "UInt") == 0
+        this._funcs["CopyDesktopState"](
+            "Ptr", view1,
+            "Ptr", view2,
+            "HRESULT",
+        )
     }
 }
 
 class IVirtualDesktopManagerInternal_22000 extends IVirtualDesktopManagerInternal_19044 {
-    __New(obj) {
-        this.ptr := ComObjQuery(obj, "{B2F925B9-5A0F-4D2E-9F4D-2B1507593C10}")
-        if this.ptr {
-            this.methods := MethodTable(this.ptr
-                , "GetCount"
-                , "MoveViewToDesktop"
-                , "CanViewMoveDesktops"
-                , "GetCurrentDesktop"
-                , "GetDesktops"
-                , "GetAdjacentDesktop"
-                , "SwitchDesktop"
-                , "CreateDesktop"
-                , "MoveDesktop"
-                , "RemoveDesktop"
-                , "FindDesktop")
+    Static GUID    := "{B2F925B9-5A0F-4D2E-9F4D-2B1507593C10}"
+    Static Methods := [
+        "MoveDesktop",
+        "RemoveDesktop",
+        "FindDesktop",
+    ]
+
+    Ptr {
+        set {
+            ; Build 22000 and 22489 seem to be using the same guid, so check
+            ; here explicitely, based on the build number
+            build := StrSplit(A_OSVersion, ".")[3]
+            if (build < 22489) {
+                super.Ptr := value
+            }
         }
     }
 
-    GetCurrentDesktop() {
-        desktop := false
-        DllCall(this.methods["GetCurrentDesktop"]
-            , "Ptr", this.ptr
-            , "Ptr", 0
-            , "PtrP", desktop
-            , "UInt")
-        Return desktop
+    GetCurrentDesktop(out) {
+        this._funcs["GetCurrentDesktop"](
+            "Ptr", 0,
+            "PtrP", out,
+            "HRESULT",
+        )
     }
 
-    GetDesktops() {
-        desktops := false
-        DllCall(this.methods["GetDesktops"]
-            , "Ptr", this.ptr
-            , "Ptr", 0
-            , "PtrP", desktops
-            , "UInt")
-        Return desktops
+    GetDesktops(out) {
+        this._funcs["GetDesktops"](
+            "Ptr", 0,
+            "PtrP", out,
+            "HRESULT",
+        )
     }
 
     SwitchDesktop(desktop) {
-        Return DllCall(this.methods["SwitchDesktop"]
-            , "Ptr", this.ptr
-            , "Ptr", 0
-            , "Ptr", desktop
-            , "UInt") == 0
+        this._funcs["SwitchDesktop"](
+            "Ptr", 0,
+            "Ptr", desktop
+            "HRESULT",
+        )
     }
 
-    CreateDesktop() {
-        desktop := false
-        DllCall(this.methods["CreateDesktop"]
-            , "Ptr", this.ptr
-            , "Ptr", 0
-            , "PtrP", desktop
-            , "UInt")
-        Return desktop
+    CreateDesktop(out) {
+        this._funcs["CreateDesktop"](
+            "Ptr", 0,
+            "PtrP", out,
+            "HRESULT",
+        )
     }
 
     MoveDesktop(desktop, handle, index) {
-        Return DllCall(this.methods["MoveDesktop"]
-            , "Ptr", this.ptr
-            , "Ptr", desktop
-            , "Ptr", handle
-            , "Int", index
-            , "UInt") == 0
+        this._funcs["MoveDesktop"](
+            "Ptr", desktop,
+            "Ptr", handle,
+            "Int", index,
+            "HRESULT",
+        )
     }
 }
 
 class IVirtualDesktopManagerInternal_22489 extends IVirtualDesktopManagerInternal_22000 {
-    __New(obj) {
-        this.ptr := ComObjQuery(obj, "{B2F925B9-5A0F-4D2E-9F4D-2B1507593C10}")
-        if this.ptr {
-            this.methods := MethodTable(this.ptr
-                , "GetCount"
-                , "MoveViewToDesktop"
-                , "CanViewMoveDesktops"
-                , "GetCurrentDesktop"
-                , "GetAllCurrentDesktops"
-                , "GetDesktops"
-                , "GetAdjacentDesktop"
-                , "SwitchDesktop"
-                , "CreateDesktop"
-                , "MoveDesktop"
-                , "RemoveDesktop"
-                , "FindDesktop")
+    Static GUID    := "{B2F925B9-5A0F-4D2E-9F4D-2B1507593C10}"
+    Static Methods := [
+        "GetAllCurrentDesktops",
+        "GetDesktops",
+        "GetAdjacentDesktop",
+        "SwitchDesktop",
+        "CreateDesktop",
+        "MoveDesktop",
+        "RemoveDesktop",
+        "FindDesktop",
+    ]
+
+    Ptr {
+        set {
+            ; Build 22000 and 22489 seem to be using the same guid, so check
+            ; here explicitely, based on the build number
+            build := StrSplit(A_OSVersion, ".")[3]
+            if (build >= 22489) {
+                super.Ptr := value
+            }
         }
     }
 
-    GetAllCurrentDesktops() {
-        desktops := false
-        DllCall(this.methods["GetAllCurrentDesktops"]
-            , "Ptr", this.ptr
-            , "PtrP", desktops
-            , "UInt")
-        Return desktops
+    GetAllCurrentDesktops(out) {
+        this._funcs["GetAllCurrentDesktops"](
+            "PtrP", out,
+            "HRESULT",
+        )
     }
 }

@@ -1,29 +1,24 @@
-class IVirtualDesktopNotificationService_19044 {
-    __New(obj) {
-        this.ptr := ComObjQuery(obj, "{0CD45E71-D927-4F15-8B0A-8FEF525337BF}")
-        if this.ptr {
-            this.methods := MethodTable(this.ptr
-                , "Register"
-                , "Unregister")
-        }
-    }
+class IVirtualDesktopNotificationService_19044 extends IUnknown {
+    Static GUID    := "{0CD45E71-D927-4F15-8B0A-8FEF525337BF}"
+    Static Methods := [
+        "Register",
+        "Unregister",
+    ]
 
     Register(handler) {
         cookie := 0
-        if DllCall(this.methods["Register"]
-            , "Ptr", this.ptr
-            , "Ptr", handler
-            , "IntP", cookie
-            , "UInt") {
-            Return false
-        }
+        this._funcs["Register"](
+            "Ptr", handler,
+            "IntP", &cookie,
+            "HRESULT",
+        )
         Return cookie
     }
 
     Unregister(cookie) {
-        Return DllCall(this.methods["Unregister"]
-            , "Ptr", this.ptr
-            , "Int", cookie
-            , "UInt") == 0
+        this._funcs["Unregister"](
+            "Int", cookie,
+            "HRESULT",
+        )
     }
 }

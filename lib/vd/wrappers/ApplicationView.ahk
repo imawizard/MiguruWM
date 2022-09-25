@@ -1,54 +1,29 @@
-class ApplicationView {
-    __New(obj) {
-        this.view := ConstructInterface(obj
-            , IApplicationView_19044
-            , "")
-        this.view2 := ConstructInterface(obj
-            , IApplicationView2_19044
-            , "")
-        if !this.view || !this.view2 {
-            Throw "Could not find IApplicationView"
-        }
-    }
-
-    __Delete() {
-        ObjRelease(this.view.ptr)
-        ObjRelease(this.view2.ptr)
-    }
-
-    Ptr() {
-        Return this.view.ptr
-    }
+class ApplicationView extends InterfaceWrapper {
+    Static Interfaces := [
+        IApplicationView_19044,
+    ]
 
     SetFocus() {
-        Return this.view.SetFocus()
+        Return this.wrapped.SetFocus()
     }
 
     SwitchTo() {
-        Return this.view.SwitchTo()
+        Return this.wrapped.SwitchTo()
     }
 
     TryInvokeBack(callback) {
-        Return this.view.TryInvokeBack(callback)
+        Return this.wrapped.TryInvokeBack(callback)
     }
 
     GetThumbnailWindow() {
-        Return this.view.GetThumbnailWindow()
+        Return this.wrapped.GetThumbnailWindow()
     }
 
     GetMonitor() {
-        Return this.view.GetMonitor()
+        Return this.wrapped.GetMonitor()
     }
 
     GetVisibility() {
-        Return this.view.GetVisibility()
-    }
-
-    Unknown1() {
-        Return this.view2.Unknown1()
-    }
-
-    Unknown2(param) {
-        Return this.view2.Unknown2(param)
+        Return this.wrapped.GetVisibility()
     }
 }

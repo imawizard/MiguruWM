@@ -1,48 +1,40 @@
-Global SID_IVirtualDesktopPinnedApps_19044 := "{B5A399E7-1C87-46B8-88E9-FC5747B171BD}"
+SID_IVirtualDesktopPinnedApps_19044 := "{B5A399E7-1C87-46B8-88E9-FC5747B171BD}"
 
-class VirtualDesktopPinnedApps {
+class VirtualDesktopPinnedApps extends InterfaceWrapper {
+    Static Interfaces := [
+        IVirtualDesktopPinnedApps_19044,
+    ]
+
     __New(immersiveShell) {
-        pinnedAppsObj := CreateFromSIDs(immersiveShell
-            , SID_IVirtualDesktopPinnedApps_19044
-            , "")
-        if !pinnedAppsObj {
-            Throw "Could not create VirtualDesktopPinnedApps"
-        }
-
-        this.pinnedApps := ConstructInterface(pinnedAppsObj
-            , IVirtualDesktopPinnedApps_19044
-            , "")
-        ObjRelease(pinnedAppsObj)
-        if !this.pinnedApps {
-            Throw "Could not find IVirtualDesktopPinnedApps"
-        }
-    }
-
-    __Delete() {
-        ObjRelease(this.pinnedApps.ptr)
+        super.__New()
+        IUnknown.FromSID(
+            this,
+            immersiveShell,
+            SID_IVirtualDesktopPinnedApps_19044,
+        )
     }
 
     IsAppIdPinned(appId) {
-        Return this.pinnedApps.IsAppIdPinned(appId)
+        Return this.wrapped.IsAppIdPinned(appId)
     }
 
     PinAppID(appId) {
-        Return this.pinnedApps.PinAppID(appId)
+        Return this.wrapped.PinAppID(appId)
     }
 
     UnpinAppID(appId) {
-        Return this.pinnedApps.UnpinAppID(appId)
+        Return this.wrapped.UnpinAppID(appId)
     }
 
     IsViewPinned(view) {
-        Return this.pinnedApps.IsViewPinned(view)
+        Return this.wrapped.IsViewPinned(view)
     }
 
     PinView(view) {
-        Return this.pinnedApps.PinView(view)
+        Return this.wrapped.PinView(view)
     }
 
     UnpinView(view) {
-        Return this.pinnedApps.UnpinView(view)
+        Return this.wrapped.UnpinView(view)
     }
 }

@@ -8,7 +8,7 @@
             "type": "autohotkey",
             "request": "launch",
             "name": "AutoHotkey Debugger",
-            "runtime": "${userHome}/scoop/apps/autohotkey/current/AutoHotkeyU64.exe",
+            "runtime": "${userHome}/scoop/apps/autohotkey2/current/AutoHotkey64.exe",
             "program": "${workspaceFolder}/example.ahk",
             "stopOnEntry": false
         },

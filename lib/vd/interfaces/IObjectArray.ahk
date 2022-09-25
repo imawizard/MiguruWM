@@ -1,37 +1,27 @@
-class IObjectArray {
-    __New(ptr) {
-        this.ptr := ptr
-        if this.ptr {
-            this.methods := MethodTable(this.ptr
-                , "GetCount"
-                , "GetAt")
-        }
-        this.unknownGUID := ParseGUID(IID_Unknown)
-    }
+class IObjectArray extends IUnknown {
+    Static GUID    := "{92CA9DCD-5622-4BBA-A805-5E9F541BD8C9}"
+    Static Methods := [
+        "GetCount",
+        "GetAt",
+    ]
 
-    __Delete() {
-        DllCall("GlobalFree"
-            , "Ptr", this.unknownGUID
-            , "Int")
-    }
+    Static IID_Unknown := ParseGUID(IUnknown.GUID)
 
     GetCount() {
         ret := -1
-        DllCall(this.methods["GetCount"]
-            , "Ptr", this.ptr
-            , "UIntP", ret
-            , "UInt")
+        this._funcs["GetCount"](
+            "UIntP", &ret,
+            "HRESULT",
+        )
         Return ret
     }
 
-    GetAt(index, guid := "") {
-        ret := false
-        DllCall(this.methods["GetAt"]
-            , "Ptr", this.ptr
-            , "UInt", index - 1
-            , "Ptr", guid ? guid : this.unknownGUID
-            , "PtrP", ret
-            , "UInt")
-        Return ret
+    GetAt(out, index) {
+        this._funcs["GetAt"](
+            "UInt", index - 1,
+            "Ptr", IObjectArray.IID_Unknown,
+            "PtrP", out,
+            "HRESULT",
+        )
     }
 }

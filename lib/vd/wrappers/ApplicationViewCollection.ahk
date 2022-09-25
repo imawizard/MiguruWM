@@ -1,71 +1,63 @@
-Global SID_ApplicationViewCollection_19044 := "{1841C6D7-4F9D-42C0-AF41-8747538F10E5}"
+SID_ApplicationViewCollection_19044 := "{1841C6D7-4F9D-42C0-AF41-8747538F10E5}"
 
-class ApplicationViewCollection {
+class ApplicationViewCollection extends InterfaceWrapper {
+    Static Interfaces := [
+        IApplicationViewCollection_19044,
+    ]
+
     __New(immersiveShell) {
-        collectionObj := CreateFromSIDs(immersiveShell
-            , SID_ApplicationViewCollection_19044
-            , "")
-        if !collectionObj {
-            Throw "Could not create ApplicationViewCollection"
-        }
-
-        this.collection := ConstructInterface(collectionObj
-            , IApplicationViewCollection_19044
-            , "")
-        ObjRelease(collectionObj)
-        if !this.collection {
-            Throw "Could not find IApplicationViewCollection"
-        }
-
+        super.__New()
+        IUnknown.FromSID(
+            this,
+            immersiveShell,
+            SID_ApplicationViewCollection_19044,
+        )
         this.handlers := {}
     }
 
-    __Delete() {
-        ObjRelease(this.collection.ptr)
-    }
-
     GetViews() {
-        views := this.collection.GetViews()
-        Return views ? new ApplicationViewArray(views) : false
+        views := ApplicationViewArray()
+        this.wrapped.GetViews(views)
+        Return views
     }
 
     GetViewsByZOrder() {
-        views := this.collection.GetViewsByZOrder()
-        Return views ? new ApplicationViewArray(views) : false
+        views := ApplicationViewArray()
+        this.wrapped.GetViewsByZOrder(views)
+        Return views
     }
 
     GetViewsByAppUserModelId(modelId) {
-        views := this.collection.GetViewsByAppUserModelId(modelId)
-        Return views ? new ApplicationViewArray(views) : false
+        views := ApplicationViewArray()
+        this.wrapped.GetViewsByAppUserModelId(views, modelId)
+        Return views
     }
 
     GetViewForHwnd(hwnd) {
-        view := this.collection.GetViewForHwnd(hwnd)
-        Return view ? new ApplicationView(view) : false
+        view := ApplicationView()
+        this.wrapped.GetViewForHwnd(view, hwnd)
+        Return view
     }
 
     GetViewForAppUserModelId(modelId) {
-        view := this.collection.GetViewForAppUserModelId(modelId)
-        Return view ? new ApplicationView(view) : false
+        view := ApplicationView()
+        this.wrapped.GetViewForAppUserModelId(view, modelId)
+        Return view
     }
 
     GetViewInFocus() {
-        view := this.collection.GetViewInFocus()
-        Return view ? new ApplicationView(view) : false
-   }
-
-    Unknown1() {
-        view := this.collection.Unknown1()
-        Return view ? new ApplicationView(view) : false
+        view := ApplicationView()
+        this.wrapped.GetViewInFocus(view)
+        Return view
     }
 
     RefreshCollection() {
-        Return this.collection.RefreshCollection()
+        Return this.wrapped.RefreshCollection()
     }
 
     RegisterForApplicationViewChanges(listener) {
         handler := listener.ptr
-        cookie := this.collection.RegisterForApplicationViewChanges(handler)
+        cookie := this.wrapped.RegisterForApplicationViewChanges(handler)
         this.handlers[handler] := cookie
         Return cookie > 0
     }
@@ -73,54 +65,36 @@ class ApplicationViewCollection {
     UnregisterForApplicationViewChanges(listener) {
         handler := listener.ptr
         cookie := this.handlers[handler]
-        Return this.collection.UnregisterForApplicationViewChanges(cookie)
+        Return this.wrapped.UnregisterForApplicationViewChanges(cookie)
     }
 }
 
-class ApplicationViewArray {
-    __New(ptr) {
-        this.a := new IObjectArray(ptr)
-    }
-
-    __Delete() {
-        ObjRelease(this.a.ptr)
-    }
-
-    Ptr() {
-        Return this.a.ptr
-    }
-
-    GetCount() {
-        Return this.a.GetCount()
-    }
-
+class ApplicationViewArray extends IObjectArray {
     GetAt(index) {
-        obj := this.a.GetAt(index)
-        if !obj {
+        view := ApplicationView()
+
+        super.GetAt(view, index)
+        if !view.Ptr {
             Return false
         }
-
-        view := new ApplicationView(obj)
-        ObjRelease(obj)
         Return view
     }
 }
 
-Global IID_IApplicationViewChangeListener_19044 := "{727F9E97-76EE-497B-A942-B6371328485C}"
+IID_IApplicationViewChangeListener_19044 := "{727F9E97-76EE-497B-A942-B6371328485C}"
 
-class ApplicationViewChangeListener extends ComObject {
+class ApplicationViewChangeListener extends ComObjectImpl {
     __New(callback) {
-        base.__New([""
-            , IID_IApplicationViewChangeListener_19044
-            , ""], [""
-            , "OnEvent"
-            , ""])
-        this.fn := callback
+        super.__New([
+            IID_IApplicationViewChangeListener_19044,
+        ], [
+            "OnEvent",
+        ])
+        this.callback := callback
     }
 
     OnEvent(view, state, unknown) {
         this := Object(A_EventInfo)
-        this.fn.Call(new ApplicationView(view), state, unknown)
-        ObjRelease(unknown)
+        this.callback.Call(ApplicationView(view), state, unknown)
     }
 }
