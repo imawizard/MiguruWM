@@ -137,10 +137,10 @@ class VD {
     CreateDesktop() {
         desktops := this.manager.GetDesktops()
         count := desktops.GetCount()
-        if !this._desktop(count, true) {
+        if !this._desktop(count + 1, true) {
             Return 0
         }
-        Return count
+        Return count + 1
     }
 
     ; Creates desktops if needed, returns false on error.
