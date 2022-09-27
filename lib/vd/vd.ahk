@@ -168,6 +168,20 @@ class VD {
         Return name
     }
 
+    ; Renames a specific desktop by its 1-based index, or the current one if
+    ; index is 0.
+    RenameDesktop(name, index := 0) {
+        if (index < 0) {
+            return false
+        } else if (index == 0) {
+            desktop := this.manager.GetCurrentDesktop()
+        } else {
+            desktop := this._desktop(index, false)
+        }
+        this.manager.SetDesktopName(desktop, name)
+        return true
+    }
+
     ; Destroys a specific desktop and places its windows if any on the next
     ; desktop to the right. Uses the one to the left if the rightmost was
     ; desktop was removed. Destroys the current desktop if index is 0.
