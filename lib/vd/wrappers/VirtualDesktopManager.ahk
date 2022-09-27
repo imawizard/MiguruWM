@@ -102,8 +102,8 @@ class VirtualDesktopManager {
         Return desktop ? new VirtualDesktop(desktop) : false
     }
 
-    SetName(desktop, name) {
-        Return this.managerInternal.SetName(desktop.Ptr(), name)
+    SetDesktopName(desktop, name) {
+        Return this.managerInternal.SetDesktopName(desktop.Ptr(), name)
     }
 }
 

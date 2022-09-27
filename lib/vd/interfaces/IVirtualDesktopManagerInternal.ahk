@@ -129,18 +129,19 @@ class IVirtualDesktopManagerInternal2_19044 extends IVirtualDesktopManagerIntern
                 , "CreateDesktop"
                 , "RemoveDesktop"
                 , "FindDesktop"
-                , "SetName")
+                , "Unknown1"
+                , "SetDesktopName")
         }
     }
 
-    SetName(desktop, name) {
+    SetDesktopName(desktop, name) {
         str := 0
         DllCall("combase\WindowsCreateString"
             , "Str", name
             , "UInt", StrLen(name)
             , "PtrP", str
             , "UInt")
-        ret := DllCall(this.methods["SetName"]
+        ret := DllCall(this.methods["SetDesktopName"]
             , "Ptr", this.ptr
             , "Ptr", desktop
             , "Ptr", str
@@ -167,7 +168,8 @@ class IVirtualDesktopManagerInternal3_19044 extends IVirtualDesktopManagerIntern
                 , "CreateDesktop"
                 , "RemoveDesktop"
                 , "FindDesktop"
-                , "SetName"
+                , "Unknown1"
+                , "SetDesktopName"
                 , "CopyDesktopState")
         }
     }
