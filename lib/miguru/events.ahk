@@ -155,7 +155,7 @@ class WinEventHooks {
     }
 
     Register(min, max := 0) {
-        this.hook.Push(DllCall("SetWinEventHook"
+        this.hooks.Push(DllCall("SetWinEventHook"
             , "UInt", min
             , "UInt", max ? max : min
             , "Ptr", 0
