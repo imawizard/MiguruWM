@@ -1,7 +1,7 @@
 SID_IVirtualDesktopPinnedApps_19044 := "{B5A399E7-1C87-46B8-88E9-FC5747B171BD}"
 
 class VirtualDesktopPinnedApps extends InterfaceWrapper {
-    Static Interfaces := [
+    static Interfaces := [
         IVirtualDesktopPinnedApps_19044,
     ]
 
@@ -15,26 +15,26 @@ class VirtualDesktopPinnedApps extends InterfaceWrapper {
     }
 
     IsAppIdPinned(appId) {
-        Return this.wrapped.IsAppIdPinned(appId)
+        return this.wrapped.IsAppIdPinned(appId)
     }
 
     PinAppID(appId) {
-        Return this.wrapped.PinAppID(appId)
+        return this.wrapped.PinAppID(appId)
     }
 
     UnpinAppID(appId) {
-        Return this.wrapped.UnpinAppID(appId)
+        return this.wrapped.UnpinAppID(appId)
     }
 
     IsViewPinned(view) {
-        Return this.wrapped.IsViewPinned(view)
+        return this.wrapped.IsViewPinned(view)
     }
 
     PinView(view) {
-        Return this.wrapped.PinView(view)
+        return this.wrapped.PinView(view)
     }
 
     UnpinView(view) {
-        Return this.wrapped.UnpinView(view)
+        return this.wrapped.UnpinView(view)
     }
 }

@@ -1,26 +1,26 @@
 class VirtualDesktop extends InterfaceWrapper {
-    Static Interfaces := [
+    static Interfaces := [
         IVirtualDesktop2_19044,
         IVirtualDesktop_19044,
         IVirtualDesktop_22000,
     ]
 
     IsViewVisible(view) {
-        Return this.wrapped.IsViewVisible(view)
+        return this.wrapped.IsViewVisible(view)
     }
 
     GetId() {
-        Return this.wrapped.GetId()
+        return this.wrapped.GetId()
     }
 
     GetName() {
         if this.wrapped.HasMethod("GetName") {
-            Return this.wrapped.GetName()
+            return this.wrapped.GetName()
         }
 
         guid := this.GetId()
         stringified := StringifyGUID(guid)
-        Return RegRead("HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VirtualDesktops\Desktops\" stringified, "Name")
+        return RegRead("HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VirtualDesktops\Desktops\" stringified, "Name")
     }
 }
 
@@ -30,8 +30,8 @@ class VirtualDesktopArray extends IObjectArray {
 
         super.GetAt(desktop, index)
         if !desktop.Ptr {
-            Return false
+            return false
         }
-        Return desktop
+        return desktop
     }
 }

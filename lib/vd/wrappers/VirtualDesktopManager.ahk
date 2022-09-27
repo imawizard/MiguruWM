@@ -2,7 +2,7 @@ CLSID_IVirtualDesktopManager_19044 := "{AA509086-5CA9-4C25-8F95-589D3C07B48A}"
 CLSID_IVirtualDesktopManager_22000 := "{B2F925B9-5A0F-4D2E-9F4D-2B1507593C10}"
 
 class VirtualDesktopManager extends InterfaceWrapper {
-    Static Interfaces := [
+    static Interfaces := [
         IVirtualDesktopManager_19044,
     ]
 
@@ -16,14 +16,14 @@ class VirtualDesktopManager extends InterfaceWrapper {
     }
 
     IsWindowOnCurrentVirtualDesktop(hwnd) {
-        Return this.wrapped.IsWindowOnCurrentVirtualDesktop(hwnd)
+        return this.wrapped.IsWindowOnCurrentVirtualDesktop(hwnd)
     }
 
     GetWindowDesktopId(hwnd) {
-        Return this.wrapped.GetWindowDesktopId(hwnd)
+        return this.wrapped.GetWindowDesktopId(hwnd)
     }
 
     MoveWindowToDesktop(desktopId, hwnd) {
-        Return this.wrapped.MoveWindowToDesktop(desktopId, hwnd)
+        return this.wrapped.MoveWindowToDesktop(desktopId, hwnd)
     }
 }

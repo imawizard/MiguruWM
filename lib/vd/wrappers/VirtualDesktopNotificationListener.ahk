@@ -2,7 +2,7 @@ IID_IVirtualDesktopNotification_19044  := "{C179334C-4295-40D3-BEA1-C654D965605A
 IID_IVirtualDesktopNotification2_19044 := "{1BA7CF30-3591-43FA-ABFA-4AAF7ABEEDB7}"
 
 class VirtualDesktopNotificationListener extends ComObjectImpl {
-    Static VTables := Map(
+    static VTables := Map(
         IID_IVirtualDesktopNotification_19044, [
             "VirtualDesktopCreated",
             "VirtualDesktopDestroyBegin",
@@ -65,7 +65,7 @@ class VirtualDesktopNotificationListener extends ComObjectImpl {
         str := DllCall(
             "combase\WindowsGetStringRawBuffer",
             "Ptr", hstr,
-            "UIntP", len,
+            "UInt*", len,
             "Ptr",
         )
         this.callback.Call("desktop_renamed", {

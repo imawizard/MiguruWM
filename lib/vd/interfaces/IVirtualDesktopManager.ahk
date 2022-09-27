@@ -1,6 +1,6 @@
 class IVirtualDesktopManager_19044 extends IUnknown {
-    Static GUID    := "{A5CD92FF-29BE-454C-8D04-D82879FB3F1B}"
-    Static Methods := [
+    static GUID    := "{A5CD92FF-29BE-454C-8D04-D82879FB3F1B}"
+    static Methods := [
         "IsWindowOnCurrentVirtualDesktop",
         "GetWindowDesktopId",
         "MoveWindowToDesktop",
@@ -10,10 +10,10 @@ class IVirtualDesktopManager_19044 extends IUnknown {
         ret := 0
         this._funcs["IsWindowOnCurrentVirtualDesktop"](
             "Ptr", hwnd,
-            "IntP", &ret,
+            "Int*", &ret,
             "HRESULT",
         )
-        Return ret > 0
+        return ret > 0
     }
 
     GetWindowDesktopId(hwnd) {
@@ -23,9 +23,9 @@ class IVirtualDesktopManager_19044 extends IUnknown {
             "Ptr", desktopId,
             "UInt",
         ) {
-            Return false
+            return false
         }
-        Return StrGet(desktopId)
+        return StrGet(desktopId)
     }
 
     MoveWindowToDesktop(desktopId, hwnd) {

@@ -1,29 +1,29 @@
 class ApplicationView extends InterfaceWrapper {
-    Static Interfaces := [
+    static Interfaces := [
         IApplicationView_19044,
     ]
 
     SetFocus() {
-        Return this.wrapped.SetFocus()
+        return this.wrapped.SetFocus()
     }
 
     SwitchTo() {
-        Return this.wrapped.SwitchTo()
+        return this.wrapped.SwitchTo()
     }
 
     TryInvokeBack(callback) {
-        Return this.wrapped.TryInvokeBack(callback)
+        return this.wrapped.TryInvokeBack(callback)
     }
 
     GetThumbnailWindow() {
-        Return this.wrapped.GetThumbnailWindow()
+        return this.wrapped.GetThumbnailWindow()
     }
 
     GetMonitor() {
-        Return this.wrapped.GetMonitor()
+        return this.wrapped.GetMonitor()
     }
 
     GetVisibility() {
-        Return this.wrapped.GetVisibility()
+        return this.wrapped.GetVisibility()
     }
 }

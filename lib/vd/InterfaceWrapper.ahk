@@ -11,7 +11,7 @@ class InterfaceWrapper {
         get => this.wrapped ? this.wrapped.Ptr : 0
         set {
             if !value {
-                Return
+                return
             }
 
             a := %this.__Class%.Interfaces
@@ -24,7 +24,7 @@ class InterfaceWrapper {
                     ; But only if its Ptr setter didn't return early
                     if v.Ptr {
                         this.wrapped := v
-                        Return
+                        return
                     }
                 } catch as err {
                     ; If it failed, we have to make sure we don't lose the
@@ -34,7 +34,7 @@ class InterfaceWrapper {
                     }
                     ; Swallow every error but E_NOINTERFACE
                     if !InStr(err.Message, Format("{:x}", E_NOINTERFACE)) {
-                        Throw
+                        throw
                     }
                 }
             }
@@ -43,7 +43,7 @@ class InterfaceWrapper {
             for t in a {
                 msg .= "`t" t.Prototype.__Class " (" t.GUID ")`n"
             }
-            Throw msg
+            throw msg
         }
     }
 }

@@ -6,7 +6,7 @@ ParseGUID(stringified) {
         "Ptr", guid,
         "HRESULT",
     )
-    Return guid
+    return guid
 }
 
 StringifyGUID(guid) {
@@ -18,7 +18,7 @@ StringifyGUID(guid) {
     } else if guid is Buffer {
         ptr := guid.Ptr
     } else {
-        Return ""
+        return ""
     }
 
     len := StrLen("{________-____-____-____-____________}") + 1
@@ -30,5 +30,5 @@ StringifyGUID(guid) {
         "Int", len,
         "Int",
     )
-    Return StrGet(StrPtr(stringified))
+    return StrGet(StrPtr(stringified))
 }

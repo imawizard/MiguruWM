@@ -1,8 +1,8 @@
 VT_UNKNOWN := 13
 
 class IUnknown {
-    Static GUID    := "{00000000-0000-0000-C000-000000000046}"
-    Static Methods := [
+    static GUID    := "{00000000-0000-0000-C000-000000000046}"
+    static Methods := [
         "QueryInterface",
         "AddRef",
         "Release",
@@ -16,7 +16,7 @@ class IUnknown {
         get => this._value.Ptr
         set {
             if value == 0 {
-                Return
+                return
             }
 
             ; Take ownership of the interface pointer
@@ -52,7 +52,7 @@ class IUnknown {
                 }
             }
             for i, m in methods {
-                if (i == uniq[m]) {
+                if i == uniq[m] {
                     filtered.Push(m)
                 }
             }
@@ -69,15 +69,15 @@ class IUnknown {
         }
     }
 
-    Static FromCLSID(out, clsids*) {
+    static FromCLSID(out, clsids*) {
         cv := ""
         for i, clsid in clsids {
             try {
                 cv := ComObject(clsid, IUnknown.GUID)
-                Break
+                break
             } catch as err {
                 if !InStr(err.Message, Format("{:x}", E_CLASSNOTREG)) {
-                    Throw Error(err.Message ": " clsid, err.What, err.Extra)
+                    throw Error(err.Message ": " clsid, err.What, err.Extra)
                 }
             }
         }
@@ -86,20 +86,20 @@ class IUnknown {
             for clsid in clsids {
                 msg .= "`n`t" clsid
             }
-            Throw msg
+            throw msg
         }
         ObjAddRef(out.Ptr := cv.Ptr)
     }
 
-    Static FromSID(out, obj, sids*) {
+    static FromSID(out, obj, sids*) {
         cv := ""
         for i, sid in sids {
             try {
                 cv := ComObjQuery(obj, sid, IUnknown.GUID)
-                Break
+                break
             } catch as err {
                 if !InStr(err.Message, Format("{:x}", E_NOTIMPL)) {
-                    Throw Error(err.Message ": " sid, err.What, err.Extra)
+                    throw Error(err.Message ": " sid, err.What, err.Extra)
                 }
             }
         }
@@ -108,7 +108,7 @@ class IUnknown {
             for sid in sids {
                 msg .= "`n`t" sid
             }
-            Throw msg
+            throw msg
         }
         ObjAddRef(out.Ptr := cv.Ptr)
     }

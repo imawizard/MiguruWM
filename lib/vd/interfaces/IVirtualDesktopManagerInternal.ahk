@@ -1,6 +1,6 @@
 class IVirtualDesktopManagerInternal_19044 extends IUnknown {
-    Static GUID    := "{F31574D6-B682-4CDC-BD56-1827860ABEC6}"
-    Static Methods := [
+    static GUID    := "{F31574D6-B682-4CDC-BD56-1827860ABEC6}"
+    static Methods := [
         "GetCount",
         "MoveViewToDesktop",
         "CanViewMoveDesktops",
@@ -16,10 +16,10 @@ class IVirtualDesktopManagerInternal_19044 extends IUnknown {
     GetCount() {
         ret := 0
         this._funcs["GetCount"](
-            "IntP", &ret,
+            "Int*", &ret,
             "HRESULT",
         )
-        Return ret
+        return ret
     }
 
     MoveViewToDesktop(view, desktop) {
@@ -28,33 +28,33 @@ class IVirtualDesktopManagerInternal_19044 extends IUnknown {
             "Ptr", desktop,
             "HRESULT",
         )
-        Switch res {
-        Case E_NOT_VALID_STATE:
+        switch res {
+        case E_NOT_VALID_STATE:
             ; can't move window because e.g. it's a popup/child
         }
-        Return res == 0
+        return res == 0
     }
 
     CanViewMoveDesktops(view) {
         ret := 0
         this._funcs["CanViewMoveDesktops"](
             "Ptr", view,
-            "IntP", &ret,
+            "Int*", &ret,
             "HRESULT",
         )
-        Return ret > 0
+        return ret > 0
     }
 
     GetCurrentDesktop(out) {
         this._funcs["GetCurrentDesktop"](
-            "PtrP", out,
+            "Ptr*", out,
             "HRESULT",
         )
     }
 
     GetDesktops(out) {
         this._funcs["GetDesktops"](
-            "PtrP", out,
+            "Ptr*", out,
             "HRESULT",
         )
     }
@@ -63,11 +63,11 @@ class IVirtualDesktopManagerInternal_19044 extends IUnknown {
         res := this._funcs["GetAdjacentDesktop"](
             "Ptr", desktop,
             "Int", direction,
-            "PtrP", out,
+            "Ptr*", out,
             "UInt",
         )
-        Switch res {
-        Case E_OUTOFBOUNDS:
+        switch res {
+        case E_OUTOFBOUNDS:
             ; there is no desktop on the left/right
         }
     }
@@ -81,7 +81,7 @@ class IVirtualDesktopManagerInternal_19044 extends IUnknown {
 
     CreateDesktop(out) {
         this._funcs["CreateDesktop"](
-            "PtrP", out,
+            "Ptr*", out,
             "HRESULT",
         )
     }
@@ -97,15 +97,15 @@ class IVirtualDesktopManagerInternal_19044 extends IUnknown {
     FindDesktop(out, desktopId) {
         this._funcs["FindDesktop"](
             "Ptr", desktopId,
-            "PtrP", out,
+            "Ptr*", out,
             "HRESULT",
         )
     }
 }
 
 class IVirtualDesktopManagerInternal2_19044 extends IVirtualDesktopManagerInternal_19044 {
-    Static GUID    := "{0F3A72B0-4566-487E-9A33-4ED302F6D6CE}"
-    Static Methods := [
+    static GUID    := "{0F3A72B0-4566-487E-9A33-4ED302F6D6CE}"
+    static Methods := [
         "Unknown1",
         "SetDesktopName",
     ]
@@ -116,7 +116,7 @@ class IVirtualDesktopManagerInternal2_19044 extends IVirtualDesktopManagerIntern
             "combase\WindowsCreateString",
             "Str", name,
             "UInt", StrLen(name),
-            "PtrP", &str,
+            "Ptr*", &str,
             "HRESULT",
         )
         this._funcs["SetDesktopName"](
@@ -133,8 +133,8 @@ class IVirtualDesktopManagerInternal2_19044 extends IVirtualDesktopManagerIntern
 }
 
 class IVirtualDesktopManagerInternal3_19044 extends IVirtualDesktopManagerInternal2_19044 {
-    Static GUID    := "{FE538FF5-D53B-4F5A-9DAD-8E72873CB360}"
-    Static Methods := [
+    static GUID    := "{FE538FF5-D53B-4F5A-9DAD-8E72873CB360}"
+    static Methods := [
         "CopyDesktopState",
     ]
 
@@ -148,8 +148,8 @@ class IVirtualDesktopManagerInternal3_19044 extends IVirtualDesktopManagerIntern
 }
 
 class IVirtualDesktopManagerInternal_22000 extends IVirtualDesktopManagerInternal_19044 {
-    Static GUID    := "{B2F925B9-5A0F-4D2E-9F4D-2B1507593C10}"
-    Static Methods := [
+    static GUID    := "{B2F925B9-5A0F-4D2E-9F4D-2B1507593C10}"
+    static Methods := [
         "MoveDesktop",
         "RemoveDesktop",
         "FindDesktop",
@@ -160,7 +160,7 @@ class IVirtualDesktopManagerInternal_22000 extends IVirtualDesktopManagerInterna
             ; Build 22000 and 22489 seem to be using the same guid, so check
             ; here explicitely, based on the build number
             build := StrSplit(A_OSVersion, ".")[3]
-            if (build < 22489) {
+            if build < 22489 {
                 super.Ptr := value
             }
         }
@@ -169,7 +169,7 @@ class IVirtualDesktopManagerInternal_22000 extends IVirtualDesktopManagerInterna
     GetCurrentDesktop(out) {
         this._funcs["GetCurrentDesktop"](
             "Ptr", 0,
-            "PtrP", out,
+            "Ptr*", out,
             "HRESULT",
         )
     }
@@ -177,7 +177,7 @@ class IVirtualDesktopManagerInternal_22000 extends IVirtualDesktopManagerInterna
     GetDesktops(out) {
         this._funcs["GetDesktops"](
             "Ptr", 0,
-            "PtrP", out,
+            "Ptr*", out,
             "HRESULT",
         )
     }
@@ -193,7 +193,7 @@ class IVirtualDesktopManagerInternal_22000 extends IVirtualDesktopManagerInterna
     CreateDesktop(out) {
         this._funcs["CreateDesktop"](
             "Ptr", 0,
-            "PtrP", out,
+            "Ptr*", out,
             "HRESULT",
         )
     }
@@ -209,8 +209,8 @@ class IVirtualDesktopManagerInternal_22000 extends IVirtualDesktopManagerInterna
 }
 
 class IVirtualDesktopManagerInternal_22489 extends IVirtualDesktopManagerInternal_22000 {
-    Static GUID    := "{B2F925B9-5A0F-4D2E-9F4D-2B1507593C10}"
-    Static Methods := [
+    static GUID    := "{B2F925B9-5A0F-4D2E-9F4D-2B1507593C10}"
+    static Methods := [
         "GetAllCurrentDesktops",
         "GetDesktops",
         "GetAdjacentDesktop",
@@ -226,7 +226,7 @@ class IVirtualDesktopManagerInternal_22489 extends IVirtualDesktopManagerInterna
             ; Build 22000 and 22489 seem to be using the same guid, so check
             ; here explicitely, based on the build number
             build := StrSplit(A_OSVersion, ".")[3]
-            if (build >= 22489) {
+            if build >= 22489 {
                 super.Ptr := value
             }
         }
@@ -234,7 +234,7 @@ class IVirtualDesktopManagerInternal_22489 extends IVirtualDesktopManagerInterna
 
     GetAllCurrentDesktops(out) {
         this._funcs["GetAllCurrentDesktops"](
-            "PtrP", out,
+            "Ptr*", out,
             "HRESULT",
         )
     }

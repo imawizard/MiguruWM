@@ -10,7 +10,7 @@ ProcessSetPriority("H")
 
 DetectHiddenWindows(true)
 
-#Include lib\miguru\miguru.ahk
+#include lib\miguru\miguru.ahk
 Miguru := MiguruWM()
 
 log(fmt, args*) {

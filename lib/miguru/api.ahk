@@ -1,6 +1,6 @@
 class MiguruAPI {
     FocusWorkspace(target) {
-        if (this.VD.CurrentDesktop() !== target) {
+        if this.VD.CurrentDesktop() !== target {
             this.VD.FocusDesktop(target)
         }
     }

@@ -1,7 +1,7 @@
 SID_IVirtualDesktopNotificationService_19044 := "{A501FDEC-4A09-464C-AE4E-1B9C21B84918}"
 
 class VirtualDesktopNotificationService extends InterfaceWrapper {
-    Static Interfaces := [
+    static Interfaces := [
         IVirtualDesktopNotificationService_19044,
     ]
 
@@ -18,7 +18,7 @@ class VirtualDesktopNotificationService extends InterfaceWrapper {
     Register(handler) {
         cookie := this.wrapped.Register(handler)
         this._handlers[handler] := cookie
-        Return cookie > 0
+        return cookie > 0
     }
 
     Unregister(handler) {

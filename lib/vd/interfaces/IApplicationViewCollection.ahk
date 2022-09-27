@@ -1,6 +1,6 @@
 class IApplicationViewCollection_19044 extends IUnknown {
-    Static GUID    := "{1841C6D7-4F9D-42C0-AF41-8747538F10E5}"
-    Static Methods := [
+    static GUID    := "{1841C6D7-4F9D-42C0-AF41-8747538F10E5}"
+    static Methods := [
         "GetViews",
         "GetViewsByZOrder",
         "GetViewsByAppUserModelId",
@@ -16,14 +16,14 @@ class IApplicationViewCollection_19044 extends IUnknown {
 
     GetViews(out) {
         this._funcs["GetViews"](
-            "PtrP", out,
+            "Ptr*", out,
             "HRESULT",
         )
     }
 
     GetViewsByZOrder(out) {
         this._funcs["GetViewsByZOrder"](
-            "PtrP", out,
+            "Ptr*", out,
             "HRESULT",
         )
     }
@@ -31,7 +31,7 @@ class IApplicationViewCollection_19044 extends IUnknown {
     GetViewsByAppUserModelId(out, modelId) {
         this._funcs["GetViewsByAppUserModelId"](
             "Ptr", modelId,
-            "PtrP", out,
+            "Ptr*", out,
             "HRESULT",
         )
     }
@@ -39,32 +39,32 @@ class IApplicationViewCollection_19044 extends IUnknown {
     GetViewForHwnd(out, hwnd) {
         res := this._funcs["GetViewForHwnd"](
             "Ptr", hwnd,
-            "PtrP", out,
+            "Ptr*", out,
             "UInt",
         )
-        Switch res {
-        Case E_ELEMENTNOTFOUND:
+        switch res {
+        case E_ELEMENTNOTFOUND:
         }
     }
 
     GetViewForAppUserModelId(out, modelId) {
         this._funcs["GetViewForAppUserModelId"](
             "Ptr", modelId,
-            "PtrP", out,
+            "Ptr*", out,
             "HRESULT",
         )
     }
 
     GetViewInFocus(out) {
         this._funcs["GetViewInFocus"](
-            "PtrP", out,
+            "Ptr*", out,
             "HRESULT",
         )
     }
 
     Unknown1(out) {
         this._funcs["Unknown1"](
-            "PtrP", out,
+            "Ptr*", out,
             "HRESULT",
         )
     }
@@ -79,10 +79,10 @@ class IApplicationViewCollection_19044 extends IUnknown {
         cookie := 0
         this._funcs["RegisterForApplicationViewChanges"](
             "Ptr", handler,
-            "IntP", &cookie,
+            "Int*", &cookie,
             "HRESULT",
         )
-        Return cookie
+        return cookie
     }
 
     UnregisterForApplicationViewChanges(cookie) {

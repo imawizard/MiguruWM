@@ -1,6 +1,6 @@
 class IVirtualDesktopPinnedApps_19044 extends IUnknown {
-    Static GUID    := "{4CE81583-1E4C-4632-A621-07A53543148F}"
-    Static Methods := [
+    static GUID    := "{4CE81583-1E4C-4632-A621-07A53543148F}"
+    static Methods := [
         "IsAppIdPinned",
         "PinAppID",
         "UnpinAppID",
@@ -13,10 +13,10 @@ class IVirtualDesktopPinnedApps_19044 extends IUnknown {
         ret := 0
         this._funcs["IsAppIdPinned"](
             "Str", appId,
-            "IntP", &ret,
+            "Int*", &ret,
             "HRESULT",
         )
-        Return ret > 0
+        return ret > 0
     }
 
     PinAppID(appId) {
@@ -37,10 +37,10 @@ class IVirtualDesktopPinnedApps_19044 extends IUnknown {
         ret := 0
         this._funcs["IsViewPinned"](
             "Ptr", view,
-            "IntP", ret,
+            "Int*", ret,
             "HRESULT",
         )
-        Return ret > 0
+        return ret > 0
     }
 
     PinView(view) {

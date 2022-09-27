@@ -1,4 +1,4 @@
-#Include ..\vd\vd.ahk
+#include ..\vd\vd.ahk
 
 WINEVENT_OUTOFCONTEXT   := 0
 WINEVENT_SKIPOWNTHREAD  := 1
@@ -80,47 +80,47 @@ class WMEvents {
     _onMessage(wparam, lparam, msg, hwnd) {
         Critical 100
 
-        Switch msg {
-        Case WM_EVENT:
-            if (wparam <= EV_MAX_WINDOW) {
+        switch msg {
+        case WM_EVENT:
+            if wparam <= EV_MAX_WINDOW {
                 ret := this._onWindowEvent(wparam, lparam)
-            } else if (wparam <= EV_MAX_DESKTOP) {
+            } else if wparam <= EV_MAX_DESKTOP {
                 ret := this._onDesktopEvent(wparam, ObjFromPtr(lparam))
             }
-        Case WM_COMMAND:
+        case WM_COMMAND:
             ret := this._onCommand(wparam, lparam)
-        Case WM_QUERY:
+        case WM_QUERY:
             ret := this._onQuery(wparam, lparam)
         }
-        Return ret
+        return ret
     }
 
     _windowEvListener(hook, event, hwnd, objectId, childId, threadId, timestamp) {
         Critical 100
 
-        if (!hwnd || objectId !== OBJID_WINDOW) {
+        if !hwnd || objectId !== OBJID_WINDOW {
             ; Only listen to window events, ignore events regarding controls.
-            Return
+            return
         }
 
-        Switch event {
-        Case EVENT_OBJECT_SHOW:
+        switch event {
+        case EVENT_OBJECT_SHOW:
             PostMessage(WM_EVENT, EV_WINDOW_SHOWN, hwnd, , "ahk_id" A_ScriptHwnd)
-        Case EVENT_OBJECT_UNCLOAKED:
+        case EVENT_OBJECT_UNCLOAKED:
             PostMessage(WM_EVENT, EV_WINDOW_UNCLOAKED, hwnd, , "ahk_id" A_ScriptHwnd)
-        Case EVENT_SYSTEM_MINIMIZEEND:
+        case EVENT_SYSTEM_MINIMIZEEND:
             PostMessage(WM_EVENT, EV_WINDOW_RESTORED, hwnd, , "ahk_id" A_ScriptHwnd)
-        Case EVENT_OBJECT_HIDE:
+        case EVENT_OBJECT_HIDE:
             PostMessage(WM_EVENT, EV_WINDOW_HIDDEN, hwnd, , "ahk_id" A_ScriptHwnd)
-        Case EVENT_OBJECT_CLOAKED:
+        case EVENT_OBJECT_CLOAKED:
             PostMessage(WM_EVENT, EV_WINDOW_CLOAKED, hwnd, , "ahk_id" A_ScriptHwnd)
-        Case EVENT_SYSTEM_MINIMIZESTART:
+        case EVENT_SYSTEM_MINIMIZESTART:
             PostMessage(WM_EVENT, EV_WINDOW_MINIMIZED, hwnd, , "ahk_id" A_ScriptHwnd)
-        Case EVENT_OBJECT_CREATE:
+        case EVENT_OBJECT_CREATE:
             PostMessage(WM_EVENT, EV_WINDOW_CREATED, hwnd, , "ahk_id" A_ScriptHwnd)
-        Case EVENT_OBJECT_DESTROY:
+        case EVENT_OBJECT_DESTROY:
             PostMessage(WM_EVENT, EV_WINDOW_DESTROYED, hwnd, , "ahk_id" A_ScriptHwnd)
-        Case EVENT_SYSTEM_FOREGROUND, EVENT_OBJECT_FOCUS:
+        case EVENT_SYSTEM_FOREGROUND, EVENT_OBJECT_FOCUS:
             PostMessage(WM_EVENT, EV_WINDOW_FOCUSED, hwnd, , "ahk_id" A_ScriptHwnd)
         }
     }
@@ -128,14 +128,14 @@ class WMEvents {
     _desktopEvListener(event, args) {
         Critical 100
 
-        Switch event {
-        Case "desktop_changed":
+        switch event {
+        case "desktop_changed":
             PostMessage(WM_EVENT, EV_DESKTOP_CHANGED, ObjPtrAddRef(args), , "ahk_id" A_ScriptHwnd)
-        Case "desktop_renamed":
+        case "desktop_renamed":
             PostMessage(WM_EVENT, EV_DESKTOP_RENAMED, ObjPtrAddRef(args), , "ahk_id" A_ScriptHwnd)
-        Case "desktop_created":
+        case "desktop_created":
             PostMessage(WM_EVENT, EV_DESKTOP_CREATED, ObjPtrAddRef(args), , "ahk_id" A_ScriptHwnd)
-        Case "desktop_destroyed":
+        case "desktop_destroyed":
             PostMessage(WM_EVENT, EV_DESKTOP_DESTROYED, ObjPtrAddRef(args), , "ahk_id" A_ScriptHwnd)
         }
     }

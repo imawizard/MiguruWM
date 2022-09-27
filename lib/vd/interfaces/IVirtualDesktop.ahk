@@ -1,6 +1,6 @@
 class IVirtualDesktop_19044 extends IUnknown {
-    Static GUID    := "{FF72FFDD-BE7E-43FC-9C03-AD81681E88E4}"
-    Static Methods := [
+    static GUID    := "{FF72FFDD-BE7E-43FC-9C03-AD81681E88E4}"
+    static Methods := [
         "IsViewVisible",
         "GetId",
     ]
@@ -9,10 +9,10 @@ class IVirtualDesktop_19044 extends IUnknown {
         ret := 0
         this._funcs["IsViewVisible"](
             "Ptr", view,
-            "IntP", &ret,
+            "Int*", &ret,
             "HRESULT",
         )
-        Return ret > 0
+        return ret > 0
     }
 
     GetId() {
@@ -21,39 +21,39 @@ class IVirtualDesktop_19044 extends IUnknown {
             "Ptr", desktopId,
             "HRESULT",
         )
-        Return StrGet(desktopId)
+        return StrGet(desktopId)
     }
 }
 
 class IVirtualDesktop2_19044 extends IVirtualDesktop_19044 {
-    Static GUID    := "{31EBDE3F-6EC3-4CBD-B9FB-0EF6D09B41F4}"
-    Static Methods := [
+    static GUID    := "{31EBDE3F-6EC3-4CBD-B9FB-0EF6D09B41F4}"
+    static Methods := [
         "GetName",
     ]
 
     GetName() {
         hstr := 0
         this._funcs["GetName"](
-            "PtrP", &hstr,
+            "Ptr*", &hstr,
             "HRESULT",
         )
         if !hstr {
-            Return ""
+            return ""
         }
         len := 0
         str := DllCall(
             "combase\WindowsGetStringRawBuffer",
             "Ptr", hstr,
-            "UIntP", &len,
+            "UInt*", &len,
             "Ptr",
         )
-        Return StrGet(str)
+        return StrGet(str)
     }
 }
 
 class IVirtualDesktop_22000 extends IVirtualDesktop2_19044 {
-    Static GUID    := "{536D3495-B208-4CC9-AE26-DE8111275BF8}"
-    Static Methods := [
+    static GUID    := "{536D3495-B208-4CC9-AE26-DE8111275BF8}"
+    static Methods := [
         "Unknown1",
         "GetName",
         "GetWallpaperPath",
@@ -62,19 +62,19 @@ class IVirtualDesktop_22000 extends IVirtualDesktop2_19044 {
     GetWallpaperPath() {
         hstr := 0
         this._funcs["GetWallpaperPath"](
-            "PtrP", &hstr,
+            "Ptr*", &hstr,
             "HRESULT",
         )
         if !hstr {
-            Return ""
+            return ""
         }
         len := 0
         str := DllCall(
             "combase\WindowsGetStringRawBuffer"
             "Ptr", hstr,
-            "UIntP", &len,
+            "UInt*", &len,
             "Ptr",
         )
-        Return StrGet(str)
+        return StrGet(str)
     }
 }

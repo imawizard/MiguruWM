@@ -1,6 +1,6 @@
 class IVirtualDesktopNotificationService_19044 extends IUnknown {
-    Static GUID    := "{0CD45E71-D927-4F15-8B0A-8FEF525337BF}"
-    Static Methods := [
+    static GUID    := "{0CD45E71-D927-4F15-8B0A-8FEF525337BF}"
+    static Methods := [
         "Register",
         "Unregister",
     ]
@@ -9,10 +9,10 @@ class IVirtualDesktopNotificationService_19044 extends IUnknown {
         cookie := 0
         this._funcs["Register"](
             "Ptr", handler,
-            "IntP", &cookie,
+            "Int*", &cookie,
             "HRESULT",
         )
-        Return cookie
+        return cookie
     }
 
     Unregister(cookie) {

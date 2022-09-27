@@ -1,7 +1,7 @@
 SID_IVirtualDesktopManagerInternal_19044 := "{C5E0CDCA-7B6E-41B2-9FC4-D93975CC467B}"
 
 class VirtualDesktopManagerInternal extends InterfaceWrapper {
-    Static Interfaces := [
+    static Interfaces := [
         IVirtualDesktopManagerInternal3_19044,
         IVirtualDesktopManagerInternal2_19044,
         IVirtualDesktopManagerInternal_19044,
@@ -19,58 +19,58 @@ class VirtualDesktopManagerInternal extends InterfaceWrapper {
     }
 
     GetCount() {
-        Return this.wrapped.GetCount()
+        return this.wrapped.GetCount()
     }
 
     MoveViewToDesktop(view, desktop) {
-        Return this.wrapped.MoveViewToDesktop(view, desktop)
+        return this.wrapped.MoveViewToDesktop(view, desktop)
     }
 
     CanViewMoveDesktops(view) {
-        Return this.wrapped.CanViewMoveDesktops(view)
+        return this.wrapped.CanViewMoveDesktops(view)
     }
 
     GetCurrentDesktop() {
         desktop := VirtualDesktop()
         this.wrapped.GetCurrentDesktop(desktop)
-        Return desktop
+        return desktop
     }
 
     GetDesktops() {
         desktops := VirtualDesktopArray()
         this.wrapped.GetDesktops(desktops)
-        Return desktops
+        return desktops
     }
 
     GetAdjacentDesktop(desktop, direction) {
-        if (direction == "left") {
+        if direction == "left" {
             direction := 3
-        } else if (direction == "right") {
+        } else if direction == "right" {
             direction := 4
         }
         adjacent := VirtualDesktop()
         this.wrapped.GetAdjacentDesktop(adjacent, desktop, direction)
-        Return adjacent
+        return adjacent
     }
 
     SwitchDesktop(desktop) {
-        Return this.wrapped.SwitchDesktop(desktop)
+        return this.wrapped.SwitchDesktop(desktop)
     }
 
     CreateDesktop() {
         desktop := VirtualDesktop()
         this.wrapped.CreateDesktop(desktop)
-        Return desktop
+        return desktop
     }
 
     RemoveDesktop(desktop, fallback) {
-        Return this.wrapped.RemoveDesktop(desktop, fallback)
+        return this.wrapped.RemoveDesktop(desktop, fallback)
     }
 
     FindDesktop(desktopId) {
         found := VirtualDesktop()
         this.wrapped.FindDesktop(found, desktopId)
-        Return found
+        return found
     }
 
     SetDesktopName(desktop, name) {

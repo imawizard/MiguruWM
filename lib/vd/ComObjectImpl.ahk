@@ -57,7 +57,7 @@ class ComObjectImpl {
             callback := CallbackCreate(b, , method.MinParams)
             NumPut("Ptr", callback, vtable, i * A_PtrSize)
         }
-        Return vtable
+        return vtable
     }
 
     Ptr {
@@ -66,27 +66,27 @@ class ComObjectImpl {
 
     QueryInterface(iid, out) {
         if !out {
-            Return E_INVALIDARG
+            return E_INVALIDARG
         }
 
         guid := StrUpper(StringifyGUID(iid))
         for k, v in this._vtables {
-            if (guid == k) {
+            if guid == k {
                 NumPut("Ptr", v.Ptr, out)
                 this.AddRef()
-                Return 0
+                return 0
             }
         }
 
         NumPut("Ptr", 0, out)
-        Return E_NOINTERFACE
+        return E_NOINTERFACE
     }
 
     AddRef() {
-        Return ObjAddRef(ObjPtr(this))
+        return ObjAddRef(ObjPtr(this))
     }
 
     Release() {
-        Return ObjRelease(ObjPtr(this))
+        return ObjRelease(ObjPtr(this))
     }
 }

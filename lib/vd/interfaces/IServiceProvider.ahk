@@ -1,6 +1,6 @@
 class IServiceProvider extends IUnknown {
-    Static GUID    := "{6D5140C1-7436-11CE-8034-00AA006009FA}"
-    Static Methods := [
+    static GUID    := "{6D5140C1-7436-11CE-8034-00AA006009FA}"
+    static Methods := [
         "QueryService",
     ]
 
@@ -12,6 +12,6 @@ class IServiceProvider extends IUnknown {
             out,
             "HRESULT",
         )
-        Return out
+        return out
     }
 }

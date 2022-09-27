@@ -1,7 +1,7 @@
 SID_ApplicationViewCollection_19044 := "{1841C6D7-4F9D-42C0-AF41-8747538F10E5}"
 
 class ApplicationViewCollection extends InterfaceWrapper {
-    Static Interfaces := [
+    static Interfaces := [
         IApplicationViewCollection_19044,
     ]
 
@@ -18,54 +18,54 @@ class ApplicationViewCollection extends InterfaceWrapper {
     GetViews() {
         views := ApplicationViewArray()
         this.wrapped.GetViews(views)
-        Return views
+        return views
     }
 
     GetViewsByZOrder() {
         views := ApplicationViewArray()
         this.wrapped.GetViewsByZOrder(views)
-        Return views
+        return views
     }
 
     GetViewsByAppUserModelId(modelId) {
         views := ApplicationViewArray()
         this.wrapped.GetViewsByAppUserModelId(views, modelId)
-        Return views
+        return views
     }
 
     GetViewForHwnd(hwnd) {
         view := ApplicationView()
         this.wrapped.GetViewForHwnd(view, hwnd)
-        Return view
+        return view
     }
 
     GetViewForAppUserModelId(modelId) {
         view := ApplicationView()
         this.wrapped.GetViewForAppUserModelId(view, modelId)
-        Return view
+        return view
     }
 
     GetViewInFocus() {
         view := ApplicationView()
         this.wrapped.GetViewInFocus(view)
-        Return view
+        return view
     }
 
     RefreshCollection() {
-        Return this.wrapped.RefreshCollection()
+        return this.wrapped.RefreshCollection()
     }
 
     RegisterForApplicationViewChanges(listener) {
         handler := listener.ptr
         cookie := this.wrapped.RegisterForApplicationViewChanges(handler)
         this.handlers[handler] := cookie
-        Return cookie > 0
+        return cookie > 0
     }
 
     UnregisterForApplicationViewChanges(listener) {
         handler := listener.ptr
         cookie := this.handlers[handler]
-        Return this.wrapped.UnregisterForApplicationViewChanges(cookie)
+        return this.wrapped.UnregisterForApplicationViewChanges(cookie)
     }
 }
 
@@ -75,9 +75,9 @@ class ApplicationViewArray extends IObjectArray {
 
         super.GetAt(view, index)
         if !view.Ptr {
-            Return false
+            return false
         }
-        Return view
+        return view
     }
 }
 
