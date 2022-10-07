@@ -204,6 +204,9 @@ class MonitorList {
             "UInt", MONITOR_DEFAULTTOPRIMARY,
             "Ptr",
         )
+        if !handle {
+            return this.Primary
+        }
         return this._monitors[this._handles[handle]]
     }
 }

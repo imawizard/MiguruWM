@@ -34,7 +34,7 @@ Tested on Win10 Build 19044. Win11 is probably not supported, particularly the G
 - [nog](https://github.com/TimUntersberger/nog)
 - [PyleWM](https://github.com/GGLucas/PyleWM)
 - [win3wm](https://github.com/McYoloSwagHam/win3wm)
-- [workspacer](https://github.com/workspacer/workspacer)
+- [Workspacer](https://github.com/workspacer/workspacer)
 
 ## Non-automatically tiling WMs and similiar tools for Windows
 - [FancyZones](https://docs.microsoft.com/en-us/windows/powertoys/fancyzones)

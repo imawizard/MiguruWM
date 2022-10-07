@@ -94,13 +94,14 @@ class WorkspaceList {
                 return false
             }
 
+            wasLast := this._tiled.Last == entry.node
             this._windows.Delete(hwnd)
             this._mruTile := this._tiled.Drop(entry.node)
                 ? entry.node.next
                 : ""
 
             if this._mruTile {
-                if this._mruTile == this._tiled.First {
+                if wasLast {
                     this._mruTile := this._mruTile.previous
                 }
                 if focus {
@@ -112,6 +113,10 @@ class WorkspaceList {
         }
 
         Focus(target) {
+            if this._tiled.Count < 1 {
+                return
+            }
+
             tile := ""
             switch target {
             case "next":

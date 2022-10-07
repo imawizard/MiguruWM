@@ -37,7 +37,7 @@ class IVirtualDesktopPinnedApps_19044 extends IUnknown {
         ret := 0
         this._funcs["IsViewPinned"](
             "Ptr", view,
-            "Int*", ret,
+            "Int*", &ret,
             "HRESULT",
         )
         return ret > 0
