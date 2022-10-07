@@ -10,6 +10,9 @@
             "name": "AutoHotkey Debugger",
             "runtime": "${userHome}/scoop/apps/autohotkey2/current/AutoHotkey64.exe",
             "program": "${workspaceFolder}/example.ahk",
+            "env": {
+                "AHK_LOG": "debug",
+            },
             "stopOnEntry": false
         },
     ]

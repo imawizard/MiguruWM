@@ -27,36 +27,69 @@ EVENT_OBJECT_CLOAKED        := 0x8017
 EVENT_OBJECT_UNCLOAKED      := 0x8018
 EVENT_OBJECT_DRAGCOMPLETE   := 0x8023
 
+WM_WININICHANGE  := 0x001A
+WM_SETTINGCHANGE := WM_WININICHANGE
+WM_DISPLAYCHANGE := 0x007E
+WM_DEVICECHANGE  := 0x0219
+WM_DPICHANGED    := 0x02E0
+
+DBT_DEVNODES_CHANGED      := 0x0007
+SPI_SETWORKAREA           := 0x002F
+SPI_SETLOGICALDPIOVERRIDE := 0x009F
+
 WM_AHK_USER := 0x1000
 WM_EVENT    := WM_AHK_USER + 1
-WM_COMMAND  := WM_AHK_USER + 2
-WM_QUERY    := WM_AHK_USER + 3
+WM_REQUEST  := WM_AHK_USER + 2
 
-EV_WINDOW_SHOWN      := 1
-EV_WINDOW_UNCLOAKED  := 2
-EV_WINDOW_RESTORED   := 3
-EV_WINDOW_HIDDEN     := 4
-EV_WINDOW_CLOAKED    := 5
-EV_WINDOW_MINIMIZED  := 6
-EV_WINDOW_CREATED    := 7
-EV_WINDOW_DESTROYED  := 8
-EV_WINDOW_FOCUSED    := 9
-EV_MIN_WINDOW        := EV_WINDOW_SHOWN
-EV_MAX_WINDOW        := EV_WINDOW_FOCUSED
-EV_DESKTOP_CHANGED   := 10
-EV_DESKTOP_RENAMED   := 11
-EV_DESKTOP_CREATED   := 12
-EV_DESKTOP_DESTROYED := 13
-EV_MIN_DESKTOP       := EV_DESKTOP_CHANGED
-EV_MAX_DESKTOP       := EV_DESKTOP_DESTROYED
+EV_WINDOW_SHOWN        := 1
+EV_WINDOW_UNCLOAKED    := 2
+EV_WINDOW_RESTORED     := 3
+EV_WINDOW_HIDDEN       := 4
+EV_WINDOW_CLOAKED      := 5
+EV_WINDOW_MINIMIZED    := 6
+EV_WINDOW_CREATED      := 7
+EV_WINDOW_DESTROYED    := 8
+EV_WINDOW_FOCUSED      := 9
+EV_WINDOW_REPOSITIONED := 10
+EV_MIN_WINDOW          := EV_WINDOW_SHOWN
+EV_MAX_WINDOW          := EV_WINDOW_REPOSITIONED
+EV_DESKTOP_CHANGED     := 20
+EV_DESKTOP_RENAMED     := 21
+EV_DESKTOP_CREATED     := 22
+EV_DESKTOP_DESTROYED   := 23
+EV_MIN_DESKTOP         := EV_DESKTOP_CHANGED
+EV_MAX_DESKTOP         := EV_DESKTOP_DESTROYED
 
 class WMEvents {
+    static Stringified := Map(
+        EV_WINDOW_SHOWN,        "EV_WINDOW_SHOWN",
+        EV_WINDOW_UNCLOAKED,    "EV_WINDOW_UNCLOAKED",
+        EV_WINDOW_RESTORED,     "EV_WINDOW_RESTORED",
+        EV_WINDOW_HIDDEN,       "EV_WINDOW_HIDDEN",
+        EV_WINDOW_CLOAKED,      "EV_WINDOW_CLOAKED",
+        EV_WINDOW_MINIMIZED,    "EV_WINDOW_MINIMIZED",
+        EV_WINDOW_CREATED,      "EV_WINDOW_CREATED",
+        EV_WINDOW_DESTROYED,    "EV_WINDOW_DESTROYED",
+        EV_WINDOW_FOCUSED,      "EV_WINDOW_FOCUSED",
+        EV_WINDOW_REPOSITIONED, "EV_WINDOW_REPOSITIONED",
+        EV_DESKTOP_CHANGED,     "EV_DESKTOP_CHANGED",
+        EV_DESKTOP_RENAMED,     "EV_DESKTOP_RENAMED",
+        EV_DESKTOP_CREATED,     "EV_DESKTOP_CREATED",
+        EV_DESKTOP_DESTROYED,   "EV_DESKTOP_DESTROYED",
+    )
+
     __New() {
         w := (fn, self, args*) => fn.Call(ObjFromPtrAddRef(self), args*)
-        msgproc := w.Bind(this._onMessage, ObjPtr(this))
-        OnMessage(WM_EVENT  , msgproc)
-        OnMessage(WM_COMMAND, msgproc)
-        OnMessage(WM_QUERY  , msgproc)
+        this.msgproc := w.Bind(this._onMessage, ObjPtr(this))
+        this.msgs := [
+            WM_EVENT,
+            WM_REQUEST,
+            WM_DISPLAYCHANGE,
+            WM_SETTINGCHANGE,
+        ]
+        for msg in this.msgs {
+            OnMessage(msg, this.msgproc)
+        }
 
         w := (fn, self, args*) => fn.Call(ObjFromPtrAddRef(self), args*)
         method := this._windowEvListener
@@ -70,27 +103,46 @@ class WMEvents {
         winEvHooks.Register(EVENT_OBJECT_SHOW, EVENT_OBJECT_HIDE)
         winEvHooks.Register(EVENT_OBJECT_FOCUS)
         winEvHooks.Register(EVENT_OBJECT_CLOAKED, EVENT_OBJECT_UNCLOAKED)
+        winEvHooks.Register(EVENT_SYSTEM_MOVESIZEEND)
         this.winEvHooks := winEvHooks
 
         w := (fn, self, args*) => fn.Call(ObjFromPtrAddRef(self), args*)
-        w := w.Bind(this._desktopEvListener, ObjPtr(this))
-        this.VD := VD(w)
+        b := w.Bind(this._desktopEvListener, ObjPtr(this))
+        this.VD := VD(b)
+    }
+
+    __Delete() {
+        for msg in this.msgs {
+            OnMessage(msg, this.msgproc, 0)
+        }
     }
 
     _onMessage(wparam, lparam, msg, hwnd) {
         Critical 100
 
+        ret := 0
         switch msg {
         case WM_EVENT:
             if wparam <= EV_MAX_WINDOW {
+                trace("WM_EVENT event={} hwnd=0x{:08x}", WMEvents.Stringified[wparam], lparam)
                 ret := this._onWindowEvent(wparam, lparam)
             } else if wparam <= EV_MAX_DESKTOP {
-                ret := this._onDesktopEvent(wparam, ObjFromPtr(lparam))
+                args := ObjFromPtr(lparam)
+                trace("WM_EVENT event={} args=", WMEvents.Stringified[wparam], StringifySL(args))
+                ret := this._onDesktopEvent(wparam, args)
             }
-        case WM_COMMAND:
-            ret := this._onCommand(wparam, lparam)
-        case WM_QUERY:
-            ret := this._onQuery(wparam, lparam)
+        case WM_REQUEST:
+            req := ObjFromPtr(wparam)
+            info("WM_REQUEST {}", StringifySL(req))
+            ret := this._onRequest(req)
+        case WM_DISPLAYCHANGE:
+            debug("WM_DISPLAYCHANGE lparam=0x{:08x} wparam=0x{:08x}", lparam, wparam)
+            ret := this._onDisplayChange()
+        case WM_SETTINGCHANGE:
+            if wparam == SPI_SETWORKAREA {
+                debug("SPI_SETWORKAREA lparam={}", lparam)
+                ret := this._onDisplayChange()
+            }
         }
         return ret
     }
@@ -103,25 +155,33 @@ class WMEvents {
             return
         }
 
-        switch event {
-        case EVENT_OBJECT_SHOW:
-            PostMessage(WM_EVENT, EV_WINDOW_SHOWN, hwnd, , "ahk_id" A_ScriptHwnd)
-        case EVENT_OBJECT_UNCLOAKED:
-            PostMessage(WM_EVENT, EV_WINDOW_UNCLOAKED, hwnd, , "ahk_id" A_ScriptHwnd)
-        case EVENT_SYSTEM_MINIMIZEEND:
-            PostMessage(WM_EVENT, EV_WINDOW_RESTORED, hwnd, , "ahk_id" A_ScriptHwnd)
-        case EVENT_OBJECT_HIDE:
-            PostMessage(WM_EVENT, EV_WINDOW_HIDDEN, hwnd, , "ahk_id" A_ScriptHwnd)
-        case EVENT_OBJECT_CLOAKED:
-            PostMessage(WM_EVENT, EV_WINDOW_CLOAKED, hwnd, , "ahk_id" A_ScriptHwnd)
-        case EVENT_SYSTEM_MINIMIZESTART:
-            PostMessage(WM_EVENT, EV_WINDOW_MINIMIZED, hwnd, , "ahk_id" A_ScriptHwnd)
-        case EVENT_OBJECT_CREATE:
-            PostMessage(WM_EVENT, EV_WINDOW_CREATED, hwnd, , "ahk_id" A_ScriptHwnd)
-        case EVENT_OBJECT_DESTROY:
-            PostMessage(WM_EVENT, EV_WINDOW_DESTROYED, hwnd, , "ahk_id" A_ScriptHwnd)
-        case EVENT_SYSTEM_FOREGROUND, EVENT_OBJECT_FOCUS:
-            PostMessage(WM_EVENT, EV_WINDOW_FOCUSED, hwnd, , "ahk_id" A_ScriptHwnd)
+        try {
+            switch event {
+            case EVENT_OBJECT_SHOW:
+                PostMessage(WM_EVENT, EV_WINDOW_SHOWN, hwnd, , "ahk_id" A_ScriptHwnd)
+            case EVENT_OBJECT_UNCLOAKED:
+                PostMessage(WM_EVENT, EV_WINDOW_UNCLOAKED, hwnd, , "ahk_id" A_ScriptHwnd)
+            case EVENT_SYSTEM_MINIMIZEEND:
+                PostMessage(WM_EVENT, EV_WINDOW_RESTORED, hwnd, , "ahk_id" A_ScriptHwnd)
+            case EVENT_OBJECT_HIDE:
+                PostMessage(WM_EVENT, EV_WINDOW_HIDDEN, hwnd, , "ahk_id" A_ScriptHwnd)
+            case EVENT_OBJECT_CLOAKED:
+                PostMessage(WM_EVENT, EV_WINDOW_CLOAKED, hwnd, , "ahk_id" A_ScriptHwnd)
+            case EVENT_SYSTEM_MINIMIZESTART:
+                PostMessage(WM_EVENT, EV_WINDOW_MINIMIZED, hwnd, , "ahk_id" A_ScriptHwnd)
+            case EVENT_OBJECT_CREATE:
+                PostMessage(WM_EVENT, EV_WINDOW_CREATED, hwnd, , "ahk_id" A_ScriptHwnd)
+            case EVENT_OBJECT_DESTROY:
+                PostMessage(WM_EVENT, EV_WINDOW_DESTROYED, hwnd, , "ahk_id" A_ScriptHwnd)
+            case EVENT_SYSTEM_FOREGROUND, EVENT_OBJECT_FOCUS:
+                PostMessage(WM_EVENT, EV_WINDOW_FOCUSED, hwnd, , "ahk_id" A_ScriptHwnd)
+            case EVENT_SYSTEM_MOVESIZEEND:
+                PostMessage(WM_EVENT, EV_WINDOW_REPOSITIONED, hwnd, , "ahk_id" A_ScriptHwnd)
+            default:
+                throw "Unhandled window event: " event
+            }
+        } catch TargetError {
+            ; Ignore if A_ScriptHwnd is already gone
         }
     }
 

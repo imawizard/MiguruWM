@@ -1,79 +1,71 @@
 #Requires AutoHotkey v2.0-beta
 #SingleInstance force
-#UseHook true
-A_MaxHotkeysPerInterval := 1000
 #WinActivateForce
+KeyHistory(0), ListLines(false), ProcessSetPriority("H")
+A_IconTip := "見苦窓経営"
 
-KeyHistory(0)
-ListLines(false)
-ProcessSetPriority("H")
-
-DetectHiddenWindows(true)
+; Initial settings ........................................................{{{1
 
 #include lib\miguru\miguru.ahk
-Miguru := MiguruWM()
 
-log(fmt, args*) {
-    s := Format(fmt, args*)
-    FileAppend(s "`n", "*")
-}
+Miguru := MiguruWM({
+    defaults: {
+        layout: "tall",
+        padding: 0,
+        spacing: 1,
+    },
+})
+
+; Set the current workspace's padding/spacing
+Miguru.SetPadding(22)
+Miguru.SetSpacing(12)
+
+; Show only columns on the leftmost monitor's current workspace
+Miguru.SetLayout("wide", , 1)
+Miguru.SetMasterCount(0, , , 1)
+
+; Change the 4th workspace's layout
+Miguru.SetMasterSize(0.6, , 4)
+Miguru.SetMasterCount(2, , 4)
+
+;..........................................................................}}}
 
 ; Right Alt ..............................................................{{{1
 
 #Hotif GetKeyState("RAlt", "P") and !GetKeyState("Shift", "P")
 
-;; §  1  2  3  4  5  6  7  8  9  0  -  =
-*sc29::
-*sc02::
-*sc03::
-*sc04::
-*sc05::
-*sc06::
-*sc07::
-*sc08::
-*sc09::
-*sc0a::
-*sc0b::
-*sc0c::
-*sc0d::
-;; q  w  e  r  t  y  u  i  o  p  [  ]
-*sc10::
-*sc11::
-*sc12::
-*sc13::
-*sc14::
-*sc15::
-*sc16::
-*sc17::Send("#{Tab}")
-*sc18::
-*sc19::
-*sc1a::
-*sc1b::
-;; a  s  d  f  g  h  j  k  l  ;  '  \
-*sc1e::Miguru.FocusWorkspace(1)
-*sc1f::Miguru.FocusWorkspace(2)
-*sc20::Miguru.FocusWorkspace(3)
-*sc21::Miguru.FocusWorkspace(4)
-*sc22::Miguru.FocusWorkspace(5)
-*sc23::
-*sc24::
-*sc25::
-*sc26::
-*sc27::
-*sc28::
-*sc2b::
-;; `  z  x  c  v  b  n  m  ,  .  /
-*sc56::
-*sc2c::
-*sc2d::
-*sc2e::
-*sc2f::
-*sc30::
-*sc31::
-*sc32::
-*sc33::
-*sc34::
-*sc35::
+*a::Miguru.FocusWorkspace(1)
+*s::Miguru.FocusWorkspace(2)
+*d::Miguru.FocusWorkspace(3)
+*f::Miguru.FocusWorkspace(4)
+*g::Miguru.FocusWorkspace(5)
+
+*j::Miguru.FocusWindow("next")
+*k::Miguru.FocusWindow("previous")
+*m::Miguru.FocusWindow("master")
+
+*h::Miguru.SetMasterSize(, -0.01)
+*l::Miguru.SetMasterSize(, +0.01)
+
+*w::Miguru.FocusMonitor("primary", -1)
+*e::Miguru.FocusMonitor("primary")
+*r::Miguru.FocusMonitor("primary", +1)
+
+*1::TrayTip("Set layout to floating"),   Miguru.SetLayout("floating")
+*2::TrayTip("Set layout to tall"),       Miguru.SetLayout("tall")
+*3::TrayTip("Set layout to wide"),       Miguru.SetLayout("wide")
+*4::TrayTip("Set layout to fullscreen"), Miguru.SetLayout("fullscreen")
+
+*,::Miguru.SetMasterCount(, +1)
+*.::Miguru.SetMasterCount(, -1)
+*F1::Miguru.SetPadding(, -1)
+*F2::Miguru.SetPadding(, +1)
+*F3::Miguru.SetSpacing(, -1)
+*F4::Miguru.SetSpacing(, +1)
+
+*Enter::Miguru.SwapWindow("master")
+*c::OpenTaskView()
+*q::Reload()
 
 ;..........................................................................}}}
 
@@ -81,64 +73,74 @@ log(fmt, args*) {
 
 #Hotif GetKeyState("RAlt", "P") and GetKeyState("Shift", "P")
 
-;; §  1  2  3  4  5  6  7  8  9  0  -  =
-*sc29::
-*sc02::
-*sc03::
-*sc04::
-*sc05::
-*sc06::
-*sc07::
-*sc08::
-*sc09::
-*sc0a::
-*sc0b::
-*sc0c::
-*sc0d::
-;; q  w  e  r  t  y  u  i  o  p  [  ]
-*sc10::
-*sc11::
-*sc12::
-*sc13::
-*sc14::
-*sc15::
-*sc16::
-*sc17::
-*sc18::
-*sc19::
-*sc1a::
-*sc1b::
-;; a  s  d  f  g  h  j  k  l  ;  '  \
-*sc1e::Miguru.SendToWorkspace(1)
-*sc1f::Miguru.SendToWorkspace(2)
-*sc20::Miguru.SendToWorkspace(3)
-*sc21::Miguru.SendToWorkspace(4)
-*sc22::Miguru.SendToWorkspace(5)
-*sc23::
-*sc24::
-*sc25::
-*sc26::
-*sc27::
-*sc28::
-*sc2b::
-;; `  z  x  c  v  b  n  m  ,  .  /
-*sc56::
-*sc2c::
-*sc2d::
-*sc2e::
-*sc2f::
-*sc30::
-*sc31::
-*sc32::
-*sc33::
-*sc34::
-*sc35::
+*a::Miguru.SendToWorkspace(1)
+*s::Miguru.SendToWorkspace(2)
+*d::Miguru.SendToWorkspace(3)
+*f::Miguru.SendToWorkspace(4)
+*g::Miguru.SendToWorkspace(5)
+
+*j::Miguru.SwapWindow("next")
+*k::Miguru.SwapWindow("previous")
+
+*w::Miguru.SendToMonitor("primary", -1)
+*e::Miguru.SendToMonitor("primary")
+*r::Miguru.SendToMonitor("primary", +1)
+
+*Enter::OpenTerminal()
+*Space::CycleLayouts()
+*c::WinClose("A")
+*q::ExitApp()
 
 ;..........................................................................}}}
 
 #Hotif
 
-F1:: {
-    Reload
-    TrayTip("MiguruWM", "Reloaded")
+OpenTerminal() {
+    wd := EnvGet("HOME")
+    if WinGetProcessName("A") == "explorer.exe" {
+        path := GetSHAppFolderPath()
+        if path && Substr(path, 1, 2) !== "::" {
+            wd := path
+        }
+    }
+    Run("wt.exe -d " wd)
+}
+
+OpenTaskView() {
+    Send("#{Tab}")
+}
+
+CycleLayouts() {
+    cycle := [
+        "tall",
+        "wide",
+        "fullscreen",
+        "floating",
+    ]
+
+    m := Map()
+    for i, l in cycle {
+        m[l] := i
+    }
+
+    current := Miguru.Layout()
+    next := cycle[Mod(m[current], cycle.Length) + 1]
+
+    TrayTip("Set layout to " next)
+    Miguru.SetLayout(next)
+}
+
+GetSHAppFolderPath(hwnd := 0) {
+    if !hwnd {
+        hwnd := WinExist("A")
+    }
+    res := ""
+    app := ComObject("Shell.Application")
+    for window in app.Windows {
+        if window && window.hwnd == hwnd {
+            res := window.Document.Folder.Self.Path
+            break
+        }
+    }
+    return res
 }
