@@ -1,12 +1,28 @@
 # MiguruWM (見苦窓経営笑)
 **Work in Progress**
 
-There already are a bunch of really nice tiling window managers for Windows – see [Tiling WMs for Windows](#tiling-wms-for-windows)) – so far I did not settle with any, though.
+There already are a bunch of really nice tiling window managers for Windows – see [Tiling WMs for Windows](#tiling-wms-for-windows) – so far I did not settle with any, though. So I'll be rolling my own...
 
-So I'll be rolling my own...
+The goal is a basic but hopefully stable automatically tiling window manager that should behave somewhere close to Amethyst/xmonad.
 
-## Caveats
-- For workspaces, Windows' virtual desktops are used (by means of their COM interfaces, tested on Win10 Build 19044). Thus the integration is better and e.g. windows can't get lost due to not being correctly restored, on the other hand, Windows' virtual desktops can't be switched on per-monitor basis (at least on Win10).
+## Features/Caveats
+- Screen is divided into a master and a second pane
+    - layouts are tall, wide, fullscreen and no tiling (floating)
+    - forward/backward cycling through windows
+    - *no binary space partitioning, no moving in specific directions*
+- Uses Win10's native virtual desktops
+    - thus integrates with `HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\VirtualDesktopAltTabFilter`, `VirtualDesktopTaskbarFilter` and task view or programs like [VirtualSpace](https://github.com/newlooper/VirtualSpace)
+    - windows are not programmatically hidden when switching desktops, so they can't get lost due to not being correctly restored
+    - *Windows' virtual desktops can't be switched on per-monitor basis*
+- Bring your own hotkeys
+    - *comes as an AHK library, so no settings window etc.*
+
+## Installation
+1. Download and install AutoHotkey v2 from [Github Releases](https://github.com/Lexikos/AutoHotkey_L/tags) or via [`scoop install autohotkey2`](https://scoop.sh)
+2. Run `example.ahk` and toggle layout with `right alt + shift + space`
+3. See [example.ahk](example.ahk) and [lib/miguru/api.ahk](lib/miguru/api.ahk) for more usage.
+
+Tested on Win10 Build 19044. Win11 is probably not supported, particularly the GUIDs for the virtual desktop COM interfaces are missing/untested.
 
 ## Tiling WMs for Windows
 - [Amethyst Windows](https://github.com/glsorre/amethystwindows)
@@ -25,6 +41,7 @@ So I'll be rolling my own...
 - [GridMove](https://github.com/jgpaiva/GridMove)
 - [grout](https://github.com/tarkah/grout)
 - [RectangleWin](https://github.com/ahmetb/RectangleWin)
+- [win-vind](https://github.com/pit-ray/win-vind)
 
 ## Credits
 ### Virtual Desktops
@@ -32,6 +49,7 @@ So I'll be rolling my own...
 - https://github.com/MScholtes/VirtualDesktop
 - https://github.com/Grabacr07/VirtualDesktop
 - https://github.com/Ciantic/VirtualDesktopAccessor
+- https://github.com/tyranid/oleviewdotnet
 ### Ahk and COM
 - https://autohotkey.com/boards/viewtopic.php?p=170967#p170967
 - https://docs.microsoft.com/en-us/windows/win32/directshow/how-iunknown-works
