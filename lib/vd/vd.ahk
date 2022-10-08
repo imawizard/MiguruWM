@@ -228,7 +228,12 @@ class VD {
         if !desktop.Ptr {
             return false
         }
-        WinActivate("ahk_class Shell_TrayWnd")
+        try {
+            ; Fails if called when task view is open
+            WinActivate("ahk_class Shell_TrayWnd")
+        } catch TargetError {
+            ; Do nothing
+        }
         return this.managerInternal.SwitchDesktop(desktop)
     }
 
