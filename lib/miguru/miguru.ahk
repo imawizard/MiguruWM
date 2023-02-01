@@ -42,9 +42,6 @@ class MiguruWM extends WMEvents {
         this._managed := Map()
         this._delayed := Timeouts()
 
-        debug("Options {}", Stringify(this._opts))
-        debug("MonitorList {}", String(this._monitors))
-
         super.__New()
         this._initWithCurrentDesktopAndWindows()
         MiguruAPI.Init(this)
@@ -57,12 +54,17 @@ class MiguruWM extends WMEvents {
         case EV_WINDOW_FOCUSED:
             monitor := this._monitors.ByWindow(hwnd)
             if monitor && monitor !== this.activeMonitor {
+                debug("Focused: Display #{} -> Display #{}",
+                    this.activeMonitor.Index, monitor.Index)
                 this.activeMonitor := monitor
-                debug("Monitor {} is now active", monitor.Index)
             }
             goto fallthrough
         case EV_WINDOW_SHOWN, EV_WINDOW_UNCLOAKED, EV_WINDOW_RESTORED, EV_WINDOW_REPOSITIONED:
             fallthrough:
+
+            ; To not miss any windows that were already created and thus e.g.
+            ; appear for the first time by unhiding instead of creation, add
+            ; new windows on any event.
             window := this._manage(hwnd)
             if !window {
                 return
@@ -76,9 +78,12 @@ class MiguruWM extends WMEvents {
 
             try {
                 if WinGetMinMax("ahk_id" window.handle) >= 0 {
-                    if !window.workspace.Appear(window.handle) {
+                    if !window.workspace.AddIfNew(window.handle) {
                         switch event {
                         case EV_WINDOW_FOCUSED:
+                            debug(() => ["Focused: {} D={} {}",
+                                this.VD.DesktopName(wsIdx), monitor.Index,
+                                WinInfo(window.handle)])
                             window.workspace.ActiveWindow := window.handle
                         case EV_WINDOW_REPOSITIONED:
                             window.workspace.Retile()
@@ -86,13 +91,11 @@ class MiguruWM extends WMEvents {
                     }
                 }
             } catch TargetError {
+                warn("Lost window while trying to manage it {}", WinInfo(hwnd))
                 return this._drop(window.handle)
             }
         case EV_WINDOW_HIDDEN, EV_WINDOW_CLOAKED, EV_WINDOW_MINIMIZED:
-            window := this._managed.Get(hwnd, 0)
-            if window {
-                this._hide(event, window)
-            }
+            this._hide(event, hwnd)
         case EV_WINDOW_DESTROYED:
             this._drop(hwnd)
         case EV_WINDOW_CREATED:
@@ -105,16 +108,18 @@ class MiguruWM extends WMEvents {
     _onDesktopEvent(event, args) {
         switch event {
         case EV_DESKTOP_CHANGED:
+            ; Discard pending window removals.
             this._delayed.Drop("hide")
 
             this.activeWsIdx := args.now
-            debug("Current desktop changed from {} to {}", args.was, args.now)
+            debug(() => ["Focused: {} -> {}",
+                this.VD.DesktopName(args.was), this.VD.DesktopName(args.now)])
         case EV_DESKTOP_RENAMED:
-            debug("Desktop {} was renamed to {}", args.desktop, args.name)
+            debug("Renamed: Desktop #{} `"{}`"", args.desktop, args.name)
         case EV_DESKTOP_CREATED:
-            debug("Desktop {} was created", args.desktop)
+            debug(() => ["Created: {}", this.VD.DesktopName(args.desktop)])
         case EV_DESKTOP_DESTROYED:
-            debug("Desktop {} was destroyed", args.desktopId)
+            debug("Destroyed: Desktop #{}", args.desktopId)
         default:
             throw "Unknown desktop event: " event
         }
@@ -153,7 +158,7 @@ class MiguruWM extends WMEvents {
                 : req.target > 0 ? req.target : activeIdx
             index += req.delta
             if index < 1 || index > this._monitors.Count || index == activeIdx {
-                info("Monitor {} is active or non-existent", index)
+                warn("Monitor {} is active or non-existent", index)
                 return
             }
 
@@ -256,7 +261,6 @@ class MiguruWM extends WMEvents {
         }
 
         this._monitors.Update()
-        debug("MonitorList {}", String(this._monitors))
 
         gone := this._workspaces.Update(this._monitors)
         for monitor, workspaces in gone {
@@ -285,21 +289,22 @@ class MiguruWM extends WMEvents {
         this._onWindowEvent(EV_WINDOW_FOCUSED, WinExist("A"))
     }
 
+    ; Add a window for which an event happened to the global list if it hasn't
+    ; been added yet.
     _manage(hwnd) {
         try {
             if this._managed.Has(hwnd) {
-                info("ignore 0x{:08x} because it's already managed", hwnd)
+                trace(() => ["Ignoring: already managed {} D={} {}",
+                    this.VD.DesktopName(this._managed[hwnd].workspace.Index),
+                    this._managed[hwnd].monitor.Index,
+                    WinInfo(hwnd)])
                 return this._managed[hwnd]
             }
 
             wsIdx := this.VD.DesktopByWindow(hwnd)
             if !wsIdx {
-                procname := "N/A"
-                try {
-                    procname := WinGetProcessName("ahk_id" hwnd)
-                }
-                info("DesktopByWindow didn't work for 0x{:08x} procname={}",
-                    hwnd, procname)
+                trace(() => ["Ignoring: unknown desktop {}", WinInfo(hwnd)])
+                return ""
                 return ""
             }
 
@@ -325,6 +330,10 @@ class MiguruWM extends WMEvents {
             monitor := this._monitors.ByWindow(hwnd)
             ws := this._workspaces[monitor, wsIdx]
 
+            debug(() => ["Managing: {} D={} {}",
+                this.VD.DesktopName(ws.Index), monitor.Index,
+                WinInfo(hwnd)])
+
             window := {
                 handle: hwnd,
                 monitor: monitor,
@@ -332,60 +341,64 @@ class MiguruWM extends WMEvents {
             }
             this._managed[hwnd] := window
 
-            wincls := WinGetClass("ahk_id" hwnd)
-            title := WinGetTitle("ahk_id" hwnd)
-            procname := WinGetProcessName("ahk_id" hwnd)
-            debug("Now managing 0x{:08x} on ({}, {}) proc={} class={} title=`"{}`"",
-                hwnd, monitor.Index, ws.Index, procname, wincls, title)
-
             return window
         } catch TargetError {
+            warn("Lost window while trying to manage it {}", WinInfo(hwnd))
             return ""
         }
     }
 
+    ; When a window gets destroyed or accessing it results in a TargetError,
+    ; remove from the global list.
     _drop(hwnd) {
         if !this._managed.Has(hwnd) {
             return ""
         }
 
         window := this._managed.Delete(hwnd)
-        window.workspace.Disappear(hwnd)
+        window.workspace.Remove(hwnd)
         monitorIdx := this._monitors.Has(window.monitor)
             ? window.monitor.Index
             : -1
-        extra := ""
-        try {
-            extra .= " proc=" WinGetProcessName("ahk_id" hwnd)
-            extra .= " class=" WinGetClass("ahk_id" hwnd)
-            extra .= " title='" WinGetTitle("ahk_id" hwnd) "'"
-        }
-        debug("Dropped 0x{:08x} from ({}, {}){}",
-            hwnd, monitorIdx, window.workspace.Index, extra)
+
+        debug(() => ["Dropping: {} D={} {}",
+            this.VD.DesktopName(window.workspace.Index), monitorIdx,
+            WinInfo(hwnd)])
+
         return window
     }
 
+    ; Remove a window from its workspace and add it to another.
     _reassociate(window, monitor, workspace) {
-        debug("Window 0x{:08x} moved from ({}, {}) to ({}, {})",
-            window.handle,
-            window.monitor.Index, window.workspace.Index,
-            monitor.Index, workspace.Index)
-        window.workspace.Disappear(window.handle, false)
+        debug(() => ["Moved: {} D={} -> {} D={} - {}",
+            this.VD.DesktopName(window.workspace.Index), window.monitor.Index,
+            this.VD.DesktopName(workspace.Index), monitor.Index,
+            WinInfo(window.handle)])
+        window.workspace.Remove(window.handle, false)
         window.monitor := monitor
         window.workspace := workspace
-        workspace.Appear(window.handle)
+        workspace.AddIfNew(window.handle)
     }
 
-    _hide(event, window, wait := true) {
+    ; When a window vanishes, remove it from its previous workspace.
+    ; However, ignore hiding of windows when switching the active virtual
+    ; desktop by delaying the removal and removing pending hides if an
+    ; EV_DESKTOP_CHANGED happens within the delay.
+    _hide(event, hwnd, wait := true) {
+        if !this._managed.Has(hwnd)  {
+            return
+        }
+
         if wait {
             this._delayed.Drop("hide")
 
-            b := this._hide.Bind(this, event, window, false)
+            b := this._hide.Bind(this, event, hwnd, false)
             this._delayed.Add(b, 400, "hide")
             return
         }
 
-        window.workspace.Disappear(window.handle)
+        window := this._managed[hwnd]
+        window.workspace.Remove(hwnd, false)
     }
 
 

@@ -77,7 +77,7 @@ class WorkspaceList {
             }
         }
 
-        Appear(hwnd) {
+        AddIfNew(hwnd) {
             if this._windows.Has(hwnd) {
                 return false
             }
@@ -88,7 +88,7 @@ class WorkspaceList {
             return true
         }
 
-        Disappear(hwnd, focus := true) {
+        Remove(hwnd, focus := true) {
             entry := this._windows.Get(hwnd, "")
             if !entry {
                 return false

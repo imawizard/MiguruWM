@@ -14,8 +14,8 @@ class MiguruAPI {
     ; Focus (and possibly create) a specific workspace.
     ;
     ; Examples:
-    ;    FocusWorkspace(1) ; first
-    ;    FocusWorkspace(, 1) ; current + 1
+    ;    FocusWorkspace(1) ; First
+    ;    FocusWorkspace(, 1) ; Current + 1
     FocusWorkspace(target := 0, delta := 0) {
         current := this.VD.CurrentDesktop()
         if !target {
@@ -30,10 +30,10 @@ class MiguruAPI {
     ; Focus a specific monitor which are ordered by coordinates.
     ;
     ; Examples:
-    ;    FocusMonitor(1) ; leftmost
-    ;    FocusMonitor("primary") ; primary
-    ;    FocusMonitor("primary", -1) ; one left from primary
-    ;    FocusMonitor(, 1) ; one right from current
+    ;    FocusMonitor(1) ; Leftmost
+    ;    FocusMonitor("primary") ; Primary
+    ;    FocusMonitor("primary", -1) ; One left from primary
+    ;    FocusMonitor(, 1) ; One right from current
     FocusMonitor(target := 0, delta := 0) {
         req := { type: "focus-monitor", target: target, delta: delta }
         PostMessage(WM_REQUEST, ObjPtrAddRef(req), , , "ahk_id" A_ScriptHwnd)
@@ -42,9 +42,9 @@ class MiguruAPI {
     ; Cycle through a workspace's windows.
     ;
     ; Examples:
-    ;    FocusWindow("next") ; cycle forwards
-    ;    FocusWindow("previous") ; cycle backwards
-    ;    FocusWindow("master") ; focus first window of master pane
+    ;    FocusWindow("next") ; Cycle forwards
+    ;    FocusWindow("previous") ; Cycle backwards
+    ;    FocusWindow("master") ; Focus first window of master pane
     FocusWindow(target) {
         req := { type: "focus-window", target: target }
         PostMessage(WM_REQUEST, ObjPtrAddRef(req), , , "ahk_id" A_ScriptHwnd)
@@ -53,8 +53,8 @@ class MiguruAPI {
     ; Move the active window to another workspace.
     ;
     ; Examples:
-    ;    SendToWorkspace(3) ; to third workspace
-    ;    SendToWorkspace(, 1) ; to next workspace
+    ;    SendToWorkspace(, 1) ; To next workspace and follow
+    ;    SendToWorkspace(3, , false) ; To third workspace, but don't follow
     SendToWorkspace(target := 0, delta := 0, follow := true) {
         current := this.VD.CurrentDesktop()
         if !target {
@@ -72,9 +72,9 @@ class MiguruAPI {
     ; Move the active window to another monitor's workspace.
     ;
     ; Examples:
-    ;    SendToMonitor(2) ; to second leftmost monitor
-    ;    SendToMonitor("primary") ; to primary monitor
-    ;    SendToMonitor(, 1) ; to next monitor
+    ;    SendToMonitor(2) ; To second leftmost monitor and follow
+    ;    SendToMonitor("primary") ; To primary monitor and follow
+    ;    SendToMonitor(, 1, false) ; To next monitor, but don't follow
     SendToMonitor(target := 0, delta := 0, follow := true) {
         req := { type: "send-monitor" }
         req.target := target
@@ -86,9 +86,9 @@ class MiguruAPI {
     ; Swap the active window with another one.
     ;
     ; Examples:
-    ;    SwapWindow("next") ; with next one in cycle
-    ;    SwapWindow("previous") ; with previous one in cycle
-    ;    SwapWindow("master") ; with first one in master pane
+    ;    SwapWindow("next") ; With next one in cycle
+    ;    SwapWindow("previous") ; With previous one in cycle
+    ;    SwapWindow("master") ; With first one in master pane
     SwapWindow(target) {
         req := { type: "swap-window", target: target }
         PostMessage(WM_REQUEST, ObjPtrAddRef(req), , , "ahk_id" A_ScriptHwnd)
@@ -97,7 +97,7 @@ class MiguruAPI {
     ; Set the layout of a monitor's workspace.
     ;
     ; Examples:
-    ;    SetLayout("tall") ; current monitor's current workspace
+    ;    SetLayout("tall") ; Current monitor's current workspace
     SetLayout(value, workspace := 0, monitor := 0) {
         return this._access("layout", workspace, monitor, value)
     }
@@ -121,6 +121,9 @@ class MiguruAPI {
     }
 
     ; Resize the master pane.
+    ;
+    ; Examples:
+    ;    SetMasterSize(0.62) ; Set it to 62%
     SetMasterSize(value := unset, delta := 0, workspace := 0, monitor := 0) {
         return this._access("master-size", workspace, monitor, value ?? unset, delta)
     }
@@ -132,7 +135,7 @@ class MiguruAPI {
     ; Change the space to the border of the screen.
     ;
     ; Examples:
-    ;    SetPadding(, -2)
+    ;    SetPadding(, -2) ; Decrease by two
     SetPadding(value := unset, delta := 0, workspace := 0, monitor := 0) {
         return this._access("padding", workspace, monitor, value ?? unset, delta)
     }
@@ -144,7 +147,7 @@ class MiguruAPI {
     ; Change the gaps between windows.
     ;
     ; Examples:
-    ;    SetSpacing(20, 3, 2) ; for the third workspace of the second monitor
+    ;    SetSpacing(20, , 3, 2) ; For the third workspace of the second monitor
     SetSpacing(value := unset, delta := 0, workspace := 0, monitor := 0) {
         return this._access("spacing", workspace, monitor, value ?? unset, delta)
     }

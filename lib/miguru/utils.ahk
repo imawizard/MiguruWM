@@ -574,3 +574,27 @@ time(since := 0) {
     )
     Return (ticks - since) * 1000 / freq
 }
+
+measure(cb, iterations := 1) {
+    tc := time()
+    i := 0
+    while i < iterations {
+        cb()
+        i++
+    }
+    return time(tc)
+}
+
+WinInfo(hwnd) {
+    info := "W=" hwnd
+    try {
+        info := info " P=" WinGetProcessName("ahk_id" hwnd)
+    }
+    try {
+        info := info " C=" WinGetClass("ahk_id" hwnd)
+    }
+    try {
+        info := info " T=`"" WinGetTitle("ahk_id" hwnd) "`""
+    }
+    return info
+}

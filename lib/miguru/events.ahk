@@ -124,23 +124,24 @@ class WMEvents {
         switch msg {
         case WM_EVENT:
             if wparam <= EV_MAX_WINDOW {
-                trace("WM_EVENT event={} hwnd=0x{:08x}", WMEvents.Stringified[wparam], lparam)
+                trace(() => ["{}: {}", WMEvents.Stringified[wparam], WinInfo(lparam)])
                 ret := this._onWindowEvent(wparam, lparam)
             } else if wparam <= EV_MAX_DESKTOP {
                 args := ObjFromPtr(lparam)
-                trace("WM_EVENT event={} args=", WMEvents.Stringified[wparam], StringifySL(args))
+                trace(() => ["{}: {}", WMEvents.Stringified[wparam], StringifySL(args)])
                 ret := this._onDesktopEvent(wparam, args)
             }
         case WM_REQUEST:
             req := ObjFromPtr(wparam)
-            info("WM_REQUEST {}", StringifySL(req))
+            debug(() => ["WM_REQUEST: {}", StringifySL(req)])
             ret := this._onRequest(req)
         case WM_DISPLAYCHANGE:
-            debug("WM_DISPLAYCHANGE lparam=0x{:08x} wparam=0x{:08x}", lparam, wparam)
+            debug("WM_DISPLAYCHANGE: lparam=0x{:08x} wparam=0x{:08x}",
+                lparam, wparam)
             ret := this._onDisplayChange()
         case WM_SETTINGCHANGE:
             if wparam == SPI_SETWORKAREA {
-                debug("SPI_SETWORKAREA lparam={}", lparam)
+                debug("SPI_SETWORKAREA: lparam={}", lparam)
                 ret := this._onDisplayChange()
             }
         }
@@ -154,6 +155,11 @@ class WMEvents {
             ; Only listen to window events, ignore events regarding controls.
             return
         }
+
+        ; Ignore everything but one process (for tracing).
+        ;if StrLower(WinGetProcessName("ahk_id" hwnd)) !== "teams.exe" {
+        ;    return
+        ;}
 
         try {
             switch event {
