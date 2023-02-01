@@ -456,6 +456,19 @@ qsort(arr, fn := "asc") {
     return sorted
 }
 
+ObjMerge(a, b) {
+    c := {}
+    for k, v in a.OwnProps() {
+        c.%k% := IsObject(v) ? ObjMerge({}, v) : v
+    }
+    for k, v in b.OwnProps() {
+        c.%k% := IsObject(v) ? ObjMerge(c.HasProp(k) && IsObject(c.%k%) ? c.%k% : {}, v) : v
+    }
+    return c
+}
+
+ObjClone(v) => ObjMerge({}, v)
+
 StringifySL(self) {
     s := Stringify(self)
     s := StrReplace(s, "`n`t", ", ")

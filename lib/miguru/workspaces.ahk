@@ -21,17 +21,21 @@ HWND_NOTOPMOST := -2
 
 class WorkspaceList {
     class Workspace {
-        __New(monitor, index) {
+        __New(monitor, index, opts) {
             this._monitor := monitor
             this._index := index
             this._windows := Map()
             this._tiled := CircularList()
             this._mruTile := ""
-            this._layout := ""
-            this._masterCount := 0
-            this._masterSize := 0
-            this._padding := 0
-            this._spacing := 0
+            this._opts := opts
+
+            this._retileFns := Map(
+                "tall",       this._tallRetile,
+                "wide",       this._wideRetile,
+                "fullscreen", this._fullscreenRetile,
+                "floating",   this._floatingRetile,
+            )
+            this._retile := this._retileFns[this._opts.layout]
         }
 
         Monitor    => this._monitor
@@ -54,15 +58,10 @@ class WorkspaceList {
         }
 
         Layout {
-            get => this._layout
+            get => this._opts.layout
             set {
-                this._layout := value
-                this._retile := Map(
-                    "tall",       this._tallRetile,
-                    "wide",       this._wideRetile,
-                    "fullscreen", this._fullscreenRetile,
-                    "floating",   this._floatingRetile,
-                )[this._layout]
+                this._opts.layout := value
+                this._retile := this._retileFns[this._opts.layout]
                 this.Retile()
             }
         }
@@ -136,7 +135,7 @@ class WorkspaceList {
         }
 
         Swap(target) {
-            if this._tiled.Count < 2 || this._layout == "fullscreen" {
+            if this._tiled.Count < 2 {
                 return
             }
 
@@ -152,40 +151,40 @@ class WorkspaceList {
         }
 
         MasterCount {
-            get => this._masterCount
+            get => this._opts.masterCount
             set {
                 if value >= 0 && value <= 6 {
-                    this._masterCount := value
+                    this._opts.masterCount := value
                     this.Retile()
                 }
             }
         }
 
         MasterSize {
-            get => Round(this._masterSize / 100, 2)
+            get => Round(this._opts.masterSize, 2)
             set {
                 if value >= 0.0 && value <= 1.0 {
-                    this._masterSize := Round(value * 100)
+                    this._opts.masterSize := value
                     this.Retile()
                 }
             }
         }
 
         Padding {
-            get => this._padding // 2
+            get => this._opts.padding // 2
             set {
                 if value >= 0 {
-                    this._padding := Integer(value) * 2
+                    this._opts.padding := Integer(value) * 2
                     this.Retile()
                 }
             }
         }
 
         Spacing {
-            get => this._spacing // 2
+            get => this._opts.spacing // 2
             set {
                 if value >= 0 {
-                    this._spacing := Integer(value) * 2
+                    this._opts.spacing := Integer(value) * 2
                     this.Retile()
                 }
             }
@@ -196,8 +195,8 @@ class WorkspaceList {
                 return
             }
 
-            debug("Retiling ({}, {}) tiles={} layout={}",
-                this._monitor.Index, this._index, this._tiled.Count, this._layout)
+            info("Retiling ({}, {}) tiles={} layout={}",
+                this._monitor.Index, this._index, this._tiled.Count, this._opts.layout)
 
             old := SetDpiAwareness(DPI_PMv2)
             this._retile()
@@ -277,44 +276,45 @@ class WorkspaceList {
         }
 
         _tallRetile() {
-            masterCount := Min(this._masterCount, this._tiled.Count)
+            opts := this._opts
+            masterCount := Min(opts.masterCount, this._tiled.Count)
             slaveCount := this._tiled.Count - masterCount
             workArea := this._monitor.WorkArea
 
             if masterCount >= 1 && slaveCount >= 1 {
-                masterWidth := Round(workArea.Width * this._masterSize / 100)
+                masterWidth := Round(workArea.Width * opts.masterSize)
                 firstSlave := this._tallRetilePane(
                     this._tiled.First,
                     masterCount,
-                    workArea.left + this._padding,
-                    workArea.top + this._padding,
-                    masterWidth - this._padding - this._spacing // 2,
-                    workArea.Height - 2 * this._padding,
+                    workArea.left + opts.padding,
+                    workArea.top + opts.padding,
+                    masterWidth - opts.padding - opts.spacing // 2,
+                    workArea.Height - 2 * opts.padding,
                 )
 
                 slaveWidth := workArea.Width - masterWidth
                 this._tallRetilePane(
                     firstSlave,
                     slaveCount,
-                    workArea.left + masterWidth + this._spacing // 2,
-                    workArea.top + this._padding,
-                    slaveWidth - this._padding - this._spacing // 2,
-                    workArea.Height - 2 * this._padding,
+                    workArea.left + masterWidth + opts.spacing // 2,
+                    workArea.top + opts.padding,
+                    slaveWidth - opts.padding - opts.spacing // 2,
+                    workArea.Height - 2 * opts.padding,
                 )
             } else {
                 this._tallRetilePane(
                     this._tiled.First,
                     masterCount || this._tiled.Count,
-                    workArea.left + this._padding,
-                    workArea.top + this._padding,
-                    workArea.Width - 2 * this._padding,
-                    workArea.Height - 2 * this._padding,
+                    workArea.left + opts.padding,
+                    workArea.top + opts.padding,
+                    workArea.Width - 2 * opts.padding,
+                    workArea.Height - 2 * opts.padding,
                 )
             }
         }
 
         _tallRetilePane(tile, count, x, startY, totalWidth, totalHeight) {
-            spacing := this._spacing > 0 && count > 1 ? this._spacing // 2 : 0
+            spacing := this._opts.spacing > 0 && count > 1 ? this._opts.spacing // 2 : 0
             height := Round((totalHeight - spacing * Max(count - 2, 0)) / count)
             y := startY
 
@@ -336,44 +336,45 @@ class WorkspaceList {
         }
 
         _wideRetile() {
-            masterCount := Min(this._masterCount, this._tiled.Count)
+            opts := this._opts
+            masterCount := Min(opts.masterCount, this._tiled.Count)
             slaveCount := this._tiled.Count - masterCount
             workArea := this._monitor.WorkArea
 
             if masterCount >= 1 && slaveCount >= 1 {
-                masterHeight := Round(workArea.Height * this._masterSize / 100)
+                masterHeight := Round(workArea.Height * opts.masterSize)
                 firstSlave := this._wideRetilePane(
                     this._tiled.First,
                     masterCount,
-                    workArea.left + this._padding,
-                    workArea.top + this._padding,
-                    workArea.Width - 2 * this._padding,
-                    masterHeight - this._padding - this._spacing // 2,
+                    workArea.left + opts.padding,
+                    workArea.top + opts.padding,
+                    workArea.Width - 2 * opts.padding,
+                    masterHeight - opts.padding - opts.spacing // 2,
                 )
 
                 slaveHeight := workArea.Height - masterHeight
                 this._wideRetilePane(
                     firstSlave,
                     slaveCount,
-                    workArea.left + this._padding,
-                    workArea.top + masterHeight + this._spacing // 2,
-                    workArea.Width - 2 * this._padding,
-                    slaveHeight - this._padding - this._spacing // 2,
+                    workArea.left + opts.padding,
+                    workArea.top + masterHeight + opts.spacing // 2,
+                    workArea.Width - 2 * opts.padding,
+                    slaveHeight - opts.padding - opts.spacing // 2,
                 )
             } else {
                 this._wideRetilePane(
                     this._tiled.First,
                     masterCount || this._tiled.Count,
-                    workArea.left + this._padding,
-                    workArea.top + this._padding,
-                    workArea.Width - 2 * this._padding,
-                    workArea.Height - 2 * this._padding,
+                    workArea.left + opts.padding,
+                    workArea.top + opts.padding,
+                    workArea.Width - 2 * opts.padding,
+                    workArea.Height - 2 * opts.padding,
                 )
             }
         }
 
         _wideRetilePane(tile, count, startX, y, totalWidth, totalHeight) {
-            spacing := this._spacing > 0 && count > 1 ? this._spacing // 2 : 0
+            spacing := this._opts.spacing > 0 && count > 1 ? this._opts.spacing // 2 : 0
             width := Round((totalWidth - spacing * Max(count - 2, 0)) / count)
             x := startX
 
@@ -396,14 +397,15 @@ class WorkspaceList {
 
         _fullscreenRetile() {
             if this._mruTile {
+                opts := this._opts
                 workArea := this._monitor.WorkArea
                 this._tallRetilePane(
                     this._mruTile,
                     1,
-                    workArea.left + this._padding,
-                    workArea.top + this._padding,
-                    workArea.Width - 2 * this._padding,
-                    workArea.Height - 2 * this._padding,
+                    workArea.left + opts.padding,
+                    workArea.top + opts.padding,
+                    workArea.Width - 2 * opts.padding,
+                    workArea.Height - 2 * opts.padding,
                 )
 
                 ; Move window to the foreground, even in front of possible siblings
@@ -456,12 +458,7 @@ class WorkspaceList {
             workspaces := this._workspaces[monitor.handle]
             ws := workspaces.Get(index, 0)
             if !ws {
-                ws := WorkspaceList.Workspace(monitor, index)
-                ws.Layout := this._defaults.layout
-                ws.MasterCount := this._defaults.masterCount
-                ws.MasterSize := this._defaults.masterSize
-                ws.Padding := this._defaults.padding
-                ws.Spacing := this._defaults.spacing
+                ws := WorkspaceList.Workspace(monitor, index, ObjClone(this._defaults))
                 workspaces[index] := ws
             }
             return ws

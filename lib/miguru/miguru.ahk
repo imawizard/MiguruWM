@@ -21,24 +21,16 @@ DetectHiddenWindows(true)
 
 class MiguruWM extends WMEvents {
     __New(opts := {}) {
-        defaults := opts.HasProp("defaults") ? opts.defaults : {}
-        this._opts := {
-            defaults: {
-                layout: defaults.HasProp("layout")
-                    ? defaults.layout : "tall",
-                masterSize: defaults.HasProp("masterSize")
-                    ? defaults.masterSize : 0.5,
-                masterCount: defaults.HasProp("masterCount")
-                    ? defaults.masterCount : 1,
-                padding: defaults.HasProp("padding")
-                    ? defaults.padding : 0,
-                spacing: defaults.HasProp("spacing")
-                    ? defaults.spacing : 0,
-            },
-        }
+        this._opts := ObjMerge({
+            layout: "tall",
+            masterSize: 0.5,
+            masterCount: 1,
+            padding: 0,
+            spacing: 0,
+        }, opts)
 
         this._monitors := MonitorList()
-        this._workspaces := WorkspaceList(this._monitors, this._opts.defaults)
+        this._workspaces := WorkspaceList(this._monitors, ObjClone(this._opts))
         this._managed := Map()
         this._delayed := Timeouts()
 
@@ -47,7 +39,7 @@ class MiguruWM extends WMEvents {
         MiguruAPI.Init(this)
     }
 
-    Options => this._opts.Clone()
+    Options => ObjClone(this._opts)
 
     _onWindowEvent(event, hwnd) {
         switch event {

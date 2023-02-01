@@ -9,11 +9,12 @@ A_IconTip := "見苦窓経営"
 #include lib\miguru\miguru.ahk
 
 Miguru := MiguruWM({
-    defaults: {
-        layout: "tall",
-        padding: 0,
-        spacing: 1,
-    },
+    ; defaults
+    ;layout: "tall",
+    ;masterSize: 0.5,
+    ;masterCount: 1,
+    ;padding: 0,
+    ;spacing: 0,
 })
 
 ; Set the current workspace's padding/spacing
