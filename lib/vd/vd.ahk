@@ -247,10 +247,19 @@ class VD {
         return this._sendWindowToDesktop(hwnd, index, ensure) !== false
     }
 
-    ; Returns the 1-based index of the desktop containing a specific window.
+    ; Returns either the 1-based index of the desktop containing a specific
+    ; window, 0 on error or -1 if the window is not assigned yet.
     DesktopByWindow(hwnd) {
-        guid := this.manager.GetWindowDesktopId(hwnd)
-        return this._desktopIndexById(guid)
+        try {
+            guid := this.manager.GetWindowDesktopId(hwnd)
+            desktop := this._desktopIndexById(guid)
+            return desktop ? desktop : -1
+        } catch OSError as err {
+            if err.Number !== E_ELEMENTNOTFOUND {
+                throw err
+            }
+            return 0
+        }
     }
 
     ; ......................................................................}}}

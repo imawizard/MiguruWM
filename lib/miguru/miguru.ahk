@@ -72,7 +72,7 @@ class MiguruWM extends WMEvents {
 
             monitor := this._monitors.ByWindow(window.handle)
             wsIdx := this.VD.DesktopByWindow(window.handle)
-            if monitor !== window.monitor || wsIdx !== window.workspace.Index {
+            if monitor !== window.monitor || wsIdx > 0 && wsIdx !== window.workspace.Index {
                 this._reassociate(window, monitor, this._workspaces[monitor, wsIdx])
             }
 
@@ -305,6 +305,8 @@ class MiguruWM extends WMEvents {
             if !wsIdx {
                 trace(() => ["Ignoring: unknown desktop {}", WinInfo(hwnd)])
                 return ""
+            } else if wsIdx < 0 {
+                debug(() => ["Desktop not yet assigned {}", WinInfo(hwnd)])
                 return ""
             }
 

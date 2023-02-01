@@ -18,14 +18,12 @@ class IVirtualDesktopManager_19044 extends IUnknown {
 
     GetWindowDesktopId(hwnd) {
         desktopId := Buffer(16)
-        if this._funcs["GetWindowDesktopId"](
+        this._funcs["GetWindowDesktopId"](
             "Ptr", hwnd,
             "Ptr", desktopId,
-            "UInt",
-        ) {
-            return false
-        }
-        return StrGet(desktopId)
+            "HRESULT",
+        )
+        return StrGet(desktopId, -desktopId.Size / 2, "utf-16")
     }
 
     MoveWindowToDesktop(desktopId, hwnd) {

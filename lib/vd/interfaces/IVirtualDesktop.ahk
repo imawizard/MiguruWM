@@ -21,7 +21,7 @@ class IVirtualDesktop_19044 extends IUnknown {
             "Ptr", desktopId,
             "HRESULT",
         )
-        return StrGet(desktopId)
+        return StrGet(desktopId, -desktopId.Size / 2, "utf-16")
     }
 }
 
