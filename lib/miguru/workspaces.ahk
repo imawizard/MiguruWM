@@ -254,9 +254,18 @@ class WorkspaceList {
             }
 
             if !hwnd {
-                info("Nothing to focus")
+                if this._active && this._active == WinExist("A") {
+                    ;; If e.g. the currently active window is unmanaged,
+                    ;; this._active still holds the last active window for the
+                    ;; workspace, so just focus that.
+                    info("Focus window #{} which was last active", hwnd)
+                    WinActivate("ahk_id" this._active)
+                } else {
+                    info("Nothing to focus")
+                }
                 return
             }
+
             info("Focus window #{}", hwnd)
             WinActivate("ahk_id" hwnd)
 

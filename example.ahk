@@ -1,6 +1,7 @@
-#Requires AutoHotkey v2.0-beta
+#Requires AutoHotkey v2.0
 #SingleInstance force
 #WinActivateForce
+A_MaxHotkeysPerInterval := 1000
 KeyHistory(0), ListLines(false), ProcessSetPriority("H")
 A_IconTip := "見苦窓経営"
 
@@ -8,8 +9,13 @@ A_IconTip := "見苦窓経営"
 
 #include lib\miguru\miguru.ahk
 
+;; Floating windows can be focused when iterating via FocusWindow, however, they
+;; are not re-positioned or resized.
 GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Benachrichtigung ahk_exe Teams.exe")
 GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Notification ahk_exe Teams.exe")
+
+;; Neither tile nor float these windows, ignore them.
+GroupAdd("MIGURU_IGNORE", "Window Spy ahk_class AutoHotkeyGUI")
 
 Miguru := MiguruWM({
     ;; defaults
@@ -20,24 +26,33 @@ Miguru := MiguruWM({
     ;spacing: 0,
     ;tilingInsertion: "before-mru",
 
+    ;; Float windows that are smaller in at least one of these aspects.
     tilingMinWidth: 200,
     tilingMinHeight: 200,
+
+    ;; Insert new tiled windows as master. Possible are first, last, before-mru
+    ;; and after-mru (most recently used tile).
     tilingInsertion: "first",
+
+    ;; Place floating windows above tiled ones.
     floatingAlwaysOnTop: true,
+
+    ;; Maximize windows in monocle layout.
     nativeMaximize: true,
 })
 
-; Set the current workspace's padding/spacing
+;; Set the current workspace's padding/spacing.
 Miguru.SetPadding(22)
 Miguru.SetSpacing(12)
 
-; Show only columns on the leftmost monitor's current workspace
-Miguru.SetLayout("wide", , 1)
-Miguru.SetMasterCount(0, , , 1)
+;; Show only columns by using the wide-layout with zero masters.
+;; (likewise the wide-layout with zero masters results in just rows)
+Miguru.SetLayout("wide")
+Miguru.SetMasterCount(0)
 
-; Change the 4th workspace's layout
-Miguru.SetMasterSize(0.6, , 4)
-Miguru.SetMasterCount(2, , 4)
+;; Possibly create and rename a virtual desktop.
+Miguru.VD.EnsureDesktops(7)
+Miguru.VD.RenameDesktop("Browser", 7)
 
 ;..........................................................................}}}
 
@@ -45,11 +60,11 @@ Miguru.SetMasterCount(2, , 4)
 
 #Hotif GetKeyState("RAlt", "P") and !GetKeyState("Shift", "P")
 
-*a::Miguru.FocusWorkspace(1)
-*s::Miguru.FocusWorkspace(2)
-*d::Miguru.FocusWorkspace(3)
-*f::Miguru.FocusWorkspace(4)
-*g::Miguru.FocusWorkspace(5)
+*1::Miguru.FocusWorkspace(1)
+*2::Miguru.FocusWorkspace(2)
+*3::Miguru.FocusWorkspace(3)
+*4::Miguru.FocusWorkspace(4)
+*5::Miguru.FocusWorkspace(5)
 
 *j::Miguru.FocusWindow("next")
 *k::Miguru.FocusWindow("previous")
@@ -62,21 +77,17 @@ Miguru.SetMasterCount(2, , 4)
 *e::Miguru.FocusMonitor("primary")
 *r::Miguru.FocusMonitor("primary", +1)
 
-*1::TrayTip("Set layout to floating"),   Miguru.SetLayout("floating")
-*2::TrayTip("Set layout to tall"),       Miguru.SetLayout("tall")
-*3::TrayTip("Set layout to wide"),       Miguru.SetLayout("wide")
-*4::TrayTip("Set layout to monocle"),    Miguru.SetLayout("monocle")
-
 *,::Miguru.SetMasterCount(, +1)
 *.::Miguru.SetMasterCount(, -1)
-*F1::Miguru.SetPadding(, -1)
-*F2::Miguru.SetPadding(, +1)
-*F3::Miguru.SetSpacing(, -1)
-*F4::Miguru.SetSpacing(, +1)
 
 *Enter::Miguru.SwapWindow("master")
 *c::OpenTaskView()
 *q::Reload()
+
+*F1::Miguru.SetPadding(, -1)
+*F2::Miguru.SetPadding(, +1)
+*F3::Miguru.SetSpacing(, -1)
+*F4::Miguru.SetSpacing(, +1)
 
 ;..........................................................................}}}
 
@@ -84,11 +95,11 @@ Miguru.SetMasterCount(2, , 4)
 
 #Hotif GetKeyState("RAlt", "P") and GetKeyState("Shift", "P")
 
-*a::Miguru.SendToWorkspace(1)
-*s::Miguru.SendToWorkspace(2)
-*d::Miguru.SendToWorkspace(3)
-*f::Miguru.SendToWorkspace(4)
-*g::Miguru.SendToWorkspace(5)
+*1::Miguru.SendToWorkspace(1)
+*2::Miguru.SendToWorkspace(2)
+*3::Miguru.SendToWorkspace(3)
+*4::Miguru.SendToWorkspace(4)
+*5::Miguru.SendToWorkspace(5)
 
 *j::Miguru.SwapWindow("next")
 *k::Miguru.SwapWindow("previous")
@@ -97,8 +108,8 @@ Miguru.SetMasterCount(2, , 4)
 *e::Miguru.SendToMonitor("primary")
 *r::Miguru.SendToMonitor("primary", +1)
 
-*Enter::OpenTerminal()
 *Space::CycleLayouts()
+*Enter::OpenTerminal()
 *c::WinClose("A")
 *q::ExitApp()
 

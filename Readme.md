@@ -1,6 +1,4 @@
 # MiguruWM (見苦窓経営笑)
-**Work in Progress**
-
 There already are a bunch of really nice tiling window managers for Windows – see [Tiling WMs for Windows](#tiling-wms-for-windows) – so far I did not settle with any, though. So I'll be rolling my own...
 
 The goal is a basic but hopefully stable automatically tiling window manager that should behave somewhere close to Amethyst/xmonad.
@@ -18,7 +16,7 @@ The goal is a basic but hopefully stable automatically tiling window manager tha
     - *comes as an AHK library, so no settings window etc.*
 
 ## Installation
-1. Download and install AutoHotkey v2 from [Github Releases](https://github.com/Lexikos/AutoHotkey_L/tags) or via [`scoop install autohotkey2`](https://scoop.sh)
+1. Download and install AutoHotkey v2 from [Github Releases](https://github.com/Lexikos/AutoHotkey_L/tags) or via [`scoop install autohotkey`](https://scoop.sh)
 2. Run `example.ahk` and toggle layout with `right alt + shift + space`
 3. See [example.ahk](example.ahk) and [lib/miguru/api.ahk](lib/miguru/api.ahk) for more usage.
 
@@ -29,7 +27,9 @@ Tested on Win10 Build 19044. Win11 is probably not supported, particularly the G
 - [b3](https://github.com/ritschmaster/b3)
 - [bug.n](https://github.com/fuhsjr00/bug.n)
 - [dwm-win32](https://github.com/prabirshrestha/dwm-win32)
+- [FancyWM](https://github.com/FancyWM/fancywm)
 - [GlazeWM](https://github.com/lars-berger/GlazeWM)
+- [JigsawWM](https://github.com/klesh/JigsawWM)
 - [komorebi](https://github.com/LGUG2Z/komorebi)
 - [nog](https://github.com/TimUntersberger/nog)
 - [PyleWM](https://github.com/GGLucas/PyleWM)
