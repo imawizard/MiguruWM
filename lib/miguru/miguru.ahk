@@ -22,6 +22,8 @@ WS_EX_STATICEDGE    := 0x00020000
 WS_EX_APPWINDOW     := 0x00040000
 WS_EX_LAYERED       := 0x00080000
 
+ERROR_ACCESS_DENIED := 5
+
 DetectHiddenWindows(true)
 
 class MiguruWM extends WMEvents {
@@ -325,6 +327,9 @@ class MiguruWM extends WMEvents {
                 return ""
             }
 
+            ; Throws if window needs elevated access.
+            WinGetProcessName("ahk_id" hwnd)
+
             monitor := this._monitors.ByWindow(hwnd)
             ws := this._workspaces[monitor, wsIdx]
 
@@ -342,6 +347,12 @@ class MiguruWM extends WMEvents {
             return window
         } catch TargetError {
             warn("Lost window while trying to manage it {}", WinInfo(hwnd))
+            return ""
+        } catch OSError as err {
+            if err.Number !== ERROR_ACCESS_DENIED {
+                throw err
+            }
+            warn("Can't access window #{}", hwnd)
             return ""
         }
     }
