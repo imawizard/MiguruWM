@@ -228,13 +228,17 @@ class VD {
         if !desktop.Ptr {
             return false
         }
+
         try {
             ; Fails if called when task view is open
             WinActivate("ahk_class Shell_TrayWnd")
         } catch TargetError {
             ; Do nothing
         }
-        return this.managerInternal.SwitchDesktop(desktop)
+        this.managerInternal.SwitchDesktop(desktop)
+
+        ; Switch to last active window.
+        Send("!{Esc}")
     }
 
     ; Sends a window to a specific desktop. Creates new desktops on demand if

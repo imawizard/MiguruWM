@@ -106,13 +106,9 @@ class MiguruWM extends WMEvents {
         switch event {
         case EV_DESKTOP_CHANGED:
             this._delayed.Drop("hide")
-            this._delayed.Drop("activate")
 
             this.activeWsIdx := args.now
             debug("Current desktop changed from {} to {}", args.was, args.now)
-
-            b := this._activate.Bind(this, this.activeMonitor, this.activeWsIdx)
-            this._delayed.Add(b, 250, "activate")
         case EV_DESKTOP_RENAMED:
             debug("Desktop {} was renamed to {}", args.desktop, args.name)
         case EV_DESKTOP_CREATED:
@@ -392,19 +388,5 @@ class MiguruWM extends WMEvents {
         window.workspace.Disappear(window.handle)
     }
 
-    _activate(monitor, wsIdx) {
-        if wsIdx !== this.activeWsIdx {
-            debug("Don't activate because workspace changed")
-            return
-        } else if monitor !== this.activeMonitor {
-            debug("Don't activate because monitor changed")
-            return
-        }
 
-        ws := this._workspaces[monitor, wsIdx]
-        hwnd := ws.ActiveWindow
-        if hwnd && hwnd !== WinExist("A") {
-            WinActivate("ahk_id" hwnd)
-        }
-    }
 }
