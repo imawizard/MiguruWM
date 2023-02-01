@@ -22,6 +22,11 @@ HWND_NOTOPMOST := -2
 TILED   := 0
 FLOATED := 1
 
+INSERT_FIRST      := 0
+INSERT_LAST       := 1
+INSERT_BEFORE_MRU := 2
+INSERT_AFTER_MRU  := 3
+
 class WorkspaceList {
     class Workspace {
         __New(monitor, index, opts) {
@@ -33,6 +38,13 @@ class WorkspaceList {
             this._active := ""
             this._mruTile := ""
             this._opts := opts
+
+            this._tileInsertion := Map(
+                "first",      INSERT_FIRST,
+                "last",       INSERT_LAST,
+                "before-mru", INSERT_BEFORE_MRU,
+                "after-mru",  INSERT_AFTER_MRU,
+            )[this._opts.tilingInsertion]
 
             this._retileFns := Map(
                 "tall",       this._tallRetile,
@@ -121,7 +133,18 @@ class WorkspaceList {
             }
 
             if shouldTile {
-                tile := this._tiled.Prepend(hwnd, this._mruTile)
+                switch this._tileInsertion {
+                case INSERT_FIRST:
+                    tile := this._tiled.Prepend(hwnd)
+                case INSERT_LAST:
+                    tile := this._tiled.Append(hwnd)
+                case INSERT_BEFORE_MRU:
+                    tile := this._tiled.Prepend(hwnd, this._mruTile)
+                case INSERT_AFTER_MRU:
+                    tile := this._tiled.Append(hwnd, this._mruTile)
+                default:
+                    throw "Incorrect tiling insertion setting"
+                }
                 this._mruTile := tile
                 this._windows[hwnd] := { type: TILED, node: tile }
                 this.Retile()
@@ -510,15 +533,19 @@ class WorkspaceList {
         _fullscreenRetile() {
             if this._mruTile {
                 opts := this._opts
-                workArea := this._monitor.WorkArea
-                this._tallRetilePane(
-                    this._mruTile,
-                    1,
-                    workArea.left + opts.padding,
-                    workArea.top + opts.padding,
-                    workArea.Width - 2 * opts.padding,
-                    workArea.Height - 2 * opts.padding,
-                )
+                if !opts.nativeMaximize {
+                    workArea := this._monitor.WorkArea
+                    this._tallRetilePane(
+                        this._mruTile,
+                        1,
+                        workArea.left + opts.padding,
+                        workArea.top + opts.padding,
+                        workArea.Width - 2 * opts.padding,
+                        workArea.Height - 2 * opts.padding,
+                    )
+                } else {
+                    WinMaximize("ahk_id" this._mruTile.data)
+                }
 
                 ; Move window to the foreground, even in front of possible siblings
                 WinSetAlwaysOnTop(true, "ahk_id" this._mruTile.data)

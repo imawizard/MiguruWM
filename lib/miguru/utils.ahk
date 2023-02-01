@@ -162,12 +162,17 @@ class CircularList {
         }
     }
 
-    Append(data, sibling := this._first) {
-        if sibling {
-            return this.Prepend(data, sibling.next)
+    Append(data, sibling := this.Last) {
+        node := { data: data }
+        if this._first {
+            this._prependTile(node, sibling.next)
         } else {
-            return this.Prepend(data)
+            node.previous := node
+            node.next := node
+            this._first := node
         }
+        this._count++
+        return node
     }
 
     Prepend(data, sibling := this._first) {

@@ -18,10 +18,13 @@ Miguru := MiguruWM({
     ;masterCount: 1,
     ;padding: 0,
     ;spacing: 0,
+    ;tilingInsertion: "before-mru",
 
     tilingMinWidth: 200,
     tilingMinHeight: 200,
+    tilingInsertion: "first",
     floatingAlwaysOnTop: true,
+    nativeMaximize: true,
 })
 
 ; Set the current workspace's padding/spacing

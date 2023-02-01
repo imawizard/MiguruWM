@@ -35,7 +35,9 @@ class MiguruWM extends WMEvents {
 
             tilingMinWidth: 0,
             tilingMinHeight: 0,
+            tilingInsertion: "before-mru",
             floatingAlwaysOnTop: false,
+            nativeMaximize: false,
         }, opts)
 
         this._monitors := MonitorList()
