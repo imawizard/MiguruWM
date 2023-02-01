@@ -8,6 +8,9 @@ A_IconTip := "見苦窓経営"
 
 #include lib\miguru\miguru.ahk
 
+GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Benachrichtigung ahk_exe Teams.exe")
+GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Notification ahk_exe Teams.exe")
+
 Miguru := MiguruWM({
     ; defaults
     ;layout: "tall",
@@ -15,6 +18,10 @@ Miguru := MiguruWM({
     ;masterCount: 1,
     ;padding: 0,
     ;spacing: 0,
+
+    tilingMinWidth: 200,
+    tilingMinHeight: 200,
+    floatingAlwaysOnTop: true,
 })
 
 ; Set the current workspace's padding/spacing

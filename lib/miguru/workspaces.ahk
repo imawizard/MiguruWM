@@ -19,6 +19,9 @@ HWND_TOP       := 0
 HWND_BOTTOM    := 1
 HWND_NOTOPMOST := -2
 
+TILED   := 0
+FLOATED := 1
+
 class WorkspaceList {
     class Workspace {
         __New(monitor, index, opts) {
@@ -26,6 +29,8 @@ class WorkspaceList {
             this._index := index
             this._windows := Map()
             this._tiled := CircularList()
+            this._floating := []
+            this._active := ""
             this._mruTile := ""
             this._opts := opts
 
@@ -38,10 +43,11 @@ class WorkspaceList {
             this._retile := this._retileFns[this._opts.layout]
         }
 
-        Monitor    => this._monitor
-        Index      => this._index
-        TileCount  => this._tiled.Count
-        MruTile    => this._mruTile
+        Monitor     => this._monitor
+        Index       => this._index
+        WindowCount => this._windows.Count
+        TileCount   => this._tiled.Count
+        MruTile     => this._mruTile
 
         ToString() {
             return Stringify(this)
@@ -67,10 +73,15 @@ class WorkspaceList {
         }
 
         ActiveWindow {
-            get => this._mruTile ? this._mruTile.data : ""
+            get => this._active
             set {
                 entry := this._windows.Get(value, "")
-                if entry {
+                if !entry {
+                    return
+                }
+
+                this._active := value
+                if entry.type == TILED {
                     this._mruTile := entry.node
                 }
             }
@@ -81,9 +92,46 @@ class WorkspaceList {
                 return false
             }
 
-            this._mruTile := this._tiled.Prepend(hwnd, this._mruTile)
-            this._windows[hwnd] := { node: this._mruTile }
-            this.Retile()
+            shouldTile := true
+            exstyle := WinGetExStyle("ahk_id" hwnd)
+            if exstyle & WS_EX_WINDOWEDGE == 0 {
+                trace(() => ["Floating: no WS_EX_WINDOWEDGE {}", WinInfo(hwnd)])
+                shouldTile := false
+            } else if exstyle & WS_EX_DLGMODALFRAME !== 0 {
+                trace(() => ["Floating: WS_EX_DLGMODALFRAME {}", WinInfo(hwnd)])
+                shouldTile := false
+            } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_AUTOFLOAT") {
+                trace(() => ["Floating: ahk_group  {}", WinInfo(hwnd)])
+                shouldTile := false
+            } else {
+                WinGetPos(, , &width, &height, "ahk_id" hwnd)
+                if this._opts.tilingMinWidth > 0 && width < this._opts.tilingMinWidth {
+                    trace(() => ["Floating: width {}<{} {}",
+                        width, this._opts.tilingMinWidth,
+                        WinInfo(hwnd)])
+                    shouldTile := false
+                } else if this._opts.tilingMinHeight > 0 && height < this._opts.tilingMinHeight {
+                    trace(() => ["Floating: height {}<{} {}",
+                        height, this._opts.tilingMinHeight,
+                        WinInfo(hwnd)])
+                    shouldTile := false
+                } else {
+                    trace(() => ["Tiling: {}", WinInfo(hwnd)])
+                }
+            }
+
+            if shouldTile {
+                tile := this._tiled.Prepend(hwnd, this._mruTile)
+                this._mruTile := tile
+                this._windows[hwnd] := { type: TILED, node: tile }
+                this.Retile()
+            } else {
+                this._floating.Push(hwnd)
+                this._windows[hwnd] := { type: FLOATED, index: this._floating.Length }
+                WinSetAlwaysOnTop(this._opts.floatingAlwaysOnTop, "ahk_id" hwnd)
+            }
+
+            this._active := hwnd
             return true
         }
 
@@ -93,42 +141,106 @@ class WorkspaceList {
                 return false
             }
 
-            wasLast := this._tiled.Last == entry.node
+            trace(() => ["Disappeared: {} {}", entry.type, WinInfo(hwnd)])
             this._windows.Delete(hwnd)
-            this._mruTile := this._tiled.Drop(entry.node)
-                ? entry.node.next
-                : ""
 
-            if this._mruTile {
-                if wasLast {
-                    this._mruTile := this._mruTile.previous
+            if entry.type == TILED {
+                wasLast := this._tiled.Last == entry.node
+                this._mruTile := this._tiled.Drop(entry.node)
+                    ? entry.node.next
+                    : ""
+
+                if this._mruTile {
+                    if wasLast {
+                        this._mruTile := this._mruTile.previous
+                    }
+                    if focus {
+                        WinActivate("ahk_id" this._mruTile.data)
+                    }
                 }
+                this.Retile()
+                return true
+            } else if entry.type == FLOATED {
+                for i, hwnd in this._floating {
+                    if i > entry.index {
+                        this._windows[hwnd].index--
+                    }
+                }
+                this._floating.RemoveAt(entry.index)
+
                 if focus {
-                    WinActivate("ahk_id" this._mruTile.data)
+                    next := Min(entry.index, this._floating.Length)
+                    if next {
+                        WinActivate("ahk_id" this._floating[next])
+                    } else if this._mruTile {
+                        WinActivate("ahk_id" this._mruTile.data)
+                    }
+                }
+                return true
+            }
+        }
+
+        _nextWindow() {
+            a := this._windows[this._active]
+            if a.type == TILED {
+                if a.node == this._tiled.Last && this._floating.Length > 0 {
+                    return this._floating[1]
+                } else if this._tiled.Count > 1 {
+                    return a.node.next.data
+                }
+            } else if a.type == FLOATED {
+                if a.index < this._floating.Length {
+                    return this._floating[a.index + 1]
+                } else if this._tiled.Count > 0 {
+                    return this._tiled.First.data
                 }
             }
-            this.Retile()
-            return true
+        }
+
+        _previousWindow() {
+            a := this._windows[this._active]
+            if a.type == TILED {
+                if a.node == this._tiled.First && this._floating.Length > 0 {
+                    return this._floating[this._floating.Length]
+                } else if this._tiled.Count > 1 {
+                    return a.node.previous.data
+                }
+            } else if a.type == FLOATED {
+                if a.index > 1 {
+                    return this._floating[a.index - 1]
+                } else if this._tiled.Count > 0 {
+                    return this._tiled.Last.data
+                }
+            }
         }
 
         Focus(target) {
-            if this._tiled.Count < 1 {
+            if this._windows.Count < 1 {
                 return
             }
 
-            tile := ""
             switch target {
             case "next":
-                tile := this._mruTile.next
+                hwnd := this._nextWindow()
             case "previous":
-                tile := this._mruTile.previous
+                hwnd := this._previousWindow()
             case "master":
-                tile := this._tiled.First
+                hwnd := this._tiled.First.data
+            default:
+                throw "Incorrect focus target"
             }
-            if tile {
-                WinActivate("ahk_id" tile.data)
-                this._mruTile := tile
-                if this._layout == "fullscreen" {
+
+            if !hwnd {
+                info("Nothing to focus")
+                return
+            }
+            info("Focus window #{}", hwnd)
+            WinActivate("ahk_id" hwnd)
+
+            t := this._windows[hwnd]
+            if t.type == TILED {
+                this._mruTile := t.node
+                if this._opts.layout == "fullscreen" {
                     this.Retile()
                 }
             }

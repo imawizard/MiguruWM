@@ -5,8 +5,11 @@
 #include workspaces.ahk
 
 WS_THICKFRAME       := 0x00040000
+WS_SYSMENU          := 0x00080000
 WS_DLGFRAME         := 0x00400000
+WS_BORDER           := 0x00800000
 WS_CAPTION          := 0x00C00000
+WS_POPUP            := 0x80000000
 WS_VISIBLE          := 0x10000000
 WS_CHILD            := 0x40000000
 WS_EX_DLGMODALFRAME := 0x00000001
@@ -14,6 +17,8 @@ WS_EX_TOPMOST       := 0x00000008
 WS_EX_CLICKTHROUGH  := 0x00000020
 WS_EX_TOOLWINDOW    := 0x00000080
 WS_EX_WINDOWEDGE    := 0x00000100
+WS_EX_CLIENTEDGE    := 0x00000200
+WS_EX_STATICEDGE    := 0x00020000
 WS_EX_APPWINDOW     := 0x00040000
 WS_EX_LAYERED       := 0x00080000
 
@@ -27,6 +32,10 @@ class MiguruWM extends WMEvents {
             masterCount: 1,
             padding: 0,
             spacing: 0,
+
+            tilingMinWidth: 0,
+            tilingMinHeight: 0,
+            floatingAlwaysOnTop: false,
         }, opts)
 
         this._monitors := MonitorList()
@@ -303,21 +312,14 @@ class MiguruWM extends WMEvents {
             }
 
             style := WinGetStyle("ahk_id" hwnd)
-            exstyle := WinGetExStyle("ahk_id" hwnd)
-            if style & WS_VISIBLE == 0 {
-                info("ignore 0x{:08x} because it's not visible", hwnd)
+            if style & WS_CAPTION == 0 {
+                trace(() => ["Ignoring: no titlebar {} {}", this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
                 return ""
-            } else if IsWindowCloaked(hwnd) {
-                info("ignore 0x{:08x} because it's cloaked", hwnd)
+            } else if style & WS_VISIBLE == 0 || IsWindowCloaked(hwnd) {
+                trace(() => ["Ignoring: hidden {} {}", this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
                 return ""
-            } else if style & WS_CAPTION == 0 {
-                info("ignore 0x{:08x} because it has no WS_CAPTION", hwnd)
-                return ""
-            } else if exstyle & WS_EX_WINDOWEDGE == 0 {
-                info("ignore 0x{:08x} because it has no WS_EX_WINDOWEDGE", hwnd)
-                return ""
-            } else if exstyle & WS_EX_DLGMODALFRAME !== 0 {
-                info("ignore 0x{:08x} because it has WS_EX_DLGMODALFRAME", hwnd)
+            } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_IGNORE") {
+                trace(() => ["Ignoring: ahk_group {} {}", this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
                 return ""
             }
 
