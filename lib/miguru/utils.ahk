@@ -264,8 +264,11 @@ class Timeouts {
     }
 }
 
+STD_OUTPUT_HANDLE := -11
+ENABLE_ECHO_INPUT := 0x0004
+
 ; The logging levels can be set for a class, the auto-execute section or
-; everything unspecified, they are: warn (default), debug, info and trace.
+; everything unspecified, they are: warn, debug (default), info and trace.
 ; Use the env variable AHK_LOG like below.
 ;
 ; Examples:
@@ -280,7 +283,6 @@ class Timeouts {
 ;
 ;    ; Disable logging completely
 ;    AHK_LOG=disable
-;    AHK_LOG=
 class Logger {
     static Disabled := false
     static Labels := [
@@ -290,19 +292,59 @@ class Logger {
         "TRACE",
     ]
     static Levels := Map()
+    static PrintModule := true
 
     static Init() {
+        attached := DllCall("AttachConsole",
+            "UInt", -1,
+            "Int")
+
+        if attached {
+            handle := DllCall("GetStdHandle",
+                "UInt", STD_OUTPUT_HANDLE,
+                "UInt")
+            mode := 0
+            DllCall("GetConsoleMode",
+                "UInt", handle,
+                "UInt*", &mode,
+                "Int")
+
+            ; If writing to stdout is not possible...
+            if mode & ENABLE_ECHO_INPUT == 0 {
+                con := DllCall("GetConsoleWindow", "Ptr")
+
+                ; and there is no cmd window associated...
+                if DllCall("IsWindow", "Ptr", con, "Int") &&
+                    !DllCall("IsWindowVisible", "Ptr", con, "Int") {
+
+                    ; then undo AttachConsole.
+                    DllCall("FreeConsole", "Int")
+                    attached := false
+                }
+            }
+        }
+
         opts := StrLower(EnvGet("AHK_LOG"))
-        if opts == "" || opts == "disable" {
+        if (!attached && opts == "") || opts == "disable" {
             Logger.Disabled := true
             return
         }
 
-        for part in StrSplit(opts, ",") {
+        if !attached {
+            ; If AHK_LOG was set but there's no attached console.
+            DllCall("AllocConsole", "Int")
+        }
+
+        for part in StrSplit("debug," opts, ",") {
+            if !part {
+                continue
+            }
             parts := StrSplit(part, "=")
             module := ""
             level := parts[1]
-            if parts.Length >= 2 {
+            if !level {
+                continue
+            } else if parts.Length >= 2 {
                 module := parts[1]
                 level := parts[2]
             }
@@ -335,15 +377,20 @@ class Logger {
         max := Logger.Levels[Logger.Levels.Has(key) ? key : ""]
 
         if level <= max {
-            s := Format(fmt, args*)
+            s := ""
+            if fmt is Func {
+                s := Format(fmt()*)
+            } else {
+                s := Format(fmt, args*)
+            }
             t := FormatTime(, "HH:mm:ss")
-            l := Logger.Labels[level]
-            m := module
+            m := Logger.PrintModule && module
                 ? module !== "auto-exec"
                     ? " " module
                     : ""
                 : ""
-            FileAppend("[" t " " l m "] " s "`n", "*")
+            l := Logger.Labels[level]
+            FileAppend(t "." A_MSec m " [" l "] " s "`n", "*")
         }
     }
 }
