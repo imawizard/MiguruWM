@@ -113,10 +113,10 @@ class CircularList {
         this._count := 0
     }
 
-    First      => this._first
-    Last       => this._first ? this._first.previous : ""
-    Count      => this._count
-    Empty      => this._count == 0
+    First => this._first
+    Last  => this._first ? this._first.previous : ""
+    Count => this._count
+    Empty => this._count == 0
 
     Swap(a, b) {
         this._swapTiles(a, b)
@@ -272,22 +272,22 @@ class Timeouts {
 STD_OUTPUT_HANDLE := -11
 ENABLE_ECHO_INPUT := 0x0004
 
-; The logging levels can be set for a class, the auto-execute section or
-; everything unspecified, they are: warn, debug (default), info and trace.
-; Use the env variable AHK_LOG like below.
-;
-; Examples:
-;    ; Set logging for class MiguruWM to debug
-;    ; Set logging to warn for everything else
-;    AHK_LOG=miguruwm=debug
-;
-;    ; Set logging for class Workspace to warn
-;    ; Set logging for auto-execute section to debug
-;    ; Turn off logging for everything else
-;    AHK_LOG=off,auto-exec=debug,workspace=warn
-;
-;    ; Disable logging completely
-;    AHK_LOG=disable
+;; The logging levels can be set for a class, the auto-execute section or
+;; everything unspecified, they are: warn, debug (default), info and trace.
+;; Use the env variable AHK_LOG like below.
+;;
+;; Examples:
+;;    ; Set logging for class MiguruWM to debug
+;;    ; Set logging to warn for everything else
+;;    AHK_LOG=miguruwm=debug
+;;
+;;    ; Set logging for class Workspace to warn
+;;    ; Set logging for auto-execute section to debug
+;;    ; Turn off logging for everything else
+;;    AHK_LOG=off,auto-exec=debug,workspace=warn
+;;
+;;    ; Disable logging completely
+;;    AHK_LOG=disable
 class Logger {
     static Disabled := false
     static Labels := [
@@ -314,15 +314,15 @@ class Logger {
                 "UInt*", &mode,
                 "Int")
 
-            ; If writing to stdout is not possible...
+            ;; If writing to stdout is not possible,
             if mode & ENABLE_ECHO_INPUT == 0 {
                 con := DllCall("GetConsoleWindow", "Ptr")
 
-                ; and there is no cmd window associated...
+                ;; and there is no cmd window associated,
                 if DllCall("IsWindow", "Ptr", con, "Int") &&
                     !DllCall("IsWindowVisible", "Ptr", con, "Int") {
 
-                    ; then undo AttachConsole.
+                    ;; then undo AttachConsole.
                     DllCall("FreeConsole", "Int")
                     attached := false
                 }
@@ -336,7 +336,7 @@ class Logger {
         }
 
         if !attached {
-            ; If AHK_LOG was set but there's no attached console.
+            ;; If AHK_LOG was set but there's no attached console.
             DllCall("AllocConsole", "Int")
         }
 

@@ -12,7 +12,7 @@ GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Benachrichtigung ahk_exe Teams.exe
 GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Notification ahk_exe Teams.exe")
 
 Miguru := MiguruWM({
-    ; defaults
+    ;; defaults
     ;layout: "tall",
     ;masterSize: 0.5,
     ;masterCount: 1,
@@ -65,7 +65,7 @@ Miguru.SetMasterCount(2, , 4)
 *1::TrayTip("Set layout to floating"),   Miguru.SetLayout("floating")
 *2::TrayTip("Set layout to tall"),       Miguru.SetLayout("tall")
 *3::TrayTip("Set layout to wide"),       Miguru.SetLayout("wide")
-*4::TrayTip("Set layout to fullscreen"), Miguru.SetLayout("fullscreen")
+*4::TrayTip("Set layout to monocle"),    Miguru.SetLayout("monocle")
 
 *,::Miguru.SetMasterCount(, +1)
 *.::Miguru.SetMasterCount(, -1)
@@ -125,7 +125,7 @@ CycleLayouts() {
     cycle := [
         "tall",
         "wide",
-        "fullscreen",
+        "monocle",
         "floating",
     ]
 

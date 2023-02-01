@@ -67,9 +67,9 @@ class MiguruWM extends WMEvents {
         case EV_WINDOW_SHOWN, EV_WINDOW_UNCLOAKED, EV_WINDOW_RESTORED, EV_WINDOW_REPOSITIONED:
             fallthrough:
 
-            ; To not miss any windows that were already created and thus e.g.
-            ; appear for the first time by unhiding instead of creation, add
-            ; new windows on any event.
+            ;; To not miss any windows that were already created and thus e.g.
+            ;; appear for the first time by unhiding instead of creation, add
+            ;; new windows on any event.
             window := this._manage(hwnd)
             if !window {
                 return
@@ -104,7 +104,7 @@ class MiguruWM extends WMEvents {
         case EV_WINDOW_DESTROYED:
             this._drop(hwnd)
         case EV_WINDOW_CREATED:
-            ; Do nothing
+            ;; Do nothing
         default:
             throw "Unknown window event: " event
         }
@@ -113,7 +113,7 @@ class MiguruWM extends WMEvents {
     _onDesktopEvent(event, args) {
         switch event {
         case EV_DESKTOP_CHANGED:
-            ; Discard pending window removals.
+            ;; Discard pending window removals.
             this._delayed.Drop("hide")
 
             this.activeWsIdx := args.now
@@ -174,8 +174,8 @@ class MiguruWM extends WMEvents {
                 if ws.MruTile {
                     WinActivate("ahk_id" ws.MruTile.data)
                 } else {
-                    ; If there is no tile associated, focus the monitor by
-                    ; activating its taskbar.
+                    ;; If there is no tile associated, focus the monitor by
+                    ;; activating its taskbar.
                     taskbar := monitor.Taskbar()
                     if taskbar {
                         WinActivate("ahk_id" taskbar)
@@ -191,7 +191,7 @@ class MiguruWM extends WMEvents {
                 ws := this._workspaces[monitor, this.activeWsIdx]
                 this._reassociate(window, monitor, ws)
 
-                ; Retile again to mitigate cross-DPI issues
+                ;; Retile again to mitigate cross-DPI issues.
                 b := window.workspace.Retile.Bind(window.workspace)
                 this._delayed.Add(b, 10, "retile")
 
@@ -201,8 +201,8 @@ class MiguruWM extends WMEvents {
                 this.activeMonitor := monitor
             }
 
-            ; Also place the cursor in the middle of the specified screen for
-            ; e.g. PowerToys Run
+            ;; Also place the cursor in the middle of the specified screen for
+            ;; e.g. PowerToys Run.
             old := A_CoordModeMouse
             CoordMode("Mouse", "Screen")
             MouseMove(monitor.Area.CenterX, monitor.Area.CenterY)
@@ -294,8 +294,8 @@ class MiguruWM extends WMEvents {
         this._onWindowEvent(EV_WINDOW_FOCUSED, WinExist("A"))
     }
 
-    ; Add a window for which an event happened to the global list if it hasn't
-    ; been added yet.
+    ;; Add a window for which an event happened to the global list if it hasn't
+    ;; been added yet.
     _manage(hwnd) {
         try {
             if this._managed.Has(hwnd) {
@@ -327,7 +327,7 @@ class MiguruWM extends WMEvents {
                 return ""
             }
 
-            ; Throws if window needs elevated access.
+            ;; Throws if window needs elevated access.
             WinGetProcessName("ahk_id" hwnd)
 
             monitor := this._monitors.ByWindow(hwnd)
@@ -357,8 +357,8 @@ class MiguruWM extends WMEvents {
         }
     }
 
-    ; When a window gets destroyed or accessing it results in a TargetError,
-    ; remove from the global list.
+    ;; When a window gets destroyed or accessing it results in a TargetError,
+    ;; remove from the global list.
     _drop(hwnd) {
         if !this._managed.Has(hwnd) {
             return ""
@@ -377,7 +377,7 @@ class MiguruWM extends WMEvents {
         return window
     }
 
-    ; Remove a window from its workspace and add it to another.
+    ;; Remove a window from its workspace and add it to another.
     _reassociate(window, monitor, workspace) {
         debug(() => ["Moved: {} D={} -> {} D={} - {}",
             this.VD.DesktopName(window.workspace.Index), window.monitor.Index,
@@ -389,10 +389,10 @@ class MiguruWM extends WMEvents {
         workspace.AddIfNew(window.handle)
     }
 
-    ; When a window vanishes, remove it from its previous workspace.
-    ; However, ignore hiding of windows when switching the active virtual
-    ; desktop by delaying the removal and removing pending hides if an
-    ; EV_DESKTOP_CHANGED happens within the delay.
+    ;; When a window vanishes, remove it from its previous workspace.
+    ;; However, ignore hiding of windows when switching the active virtual
+    ;; desktop by delaying the removal and removing pending hides if an
+    ;; EV_DESKTOP_CHANGED happens within the delay.
     _hide(event, hwnd, wait := true) {
         if !this._managed.Has(hwnd)  {
             return

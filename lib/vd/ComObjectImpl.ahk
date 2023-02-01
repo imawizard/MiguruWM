@@ -44,13 +44,13 @@ class ComObjectImpl {
         NumPut("Ptr", 0, vtable, (methods.Length + 1) * A_PtrSize)
 
         for i, name in methods {
-            ; Swallows COM Objects' thisptr and restore `this` (ObjFromPtr takes
-            ; ownership, so we increment the reference counter here)
+            ;; Swallows COM Objects' thisptr and restore `this` (ObjFromPtr
+            ;; takes ownership, so we increment the reference counter here).
             w := (fn, self, thisptr, args*) => fn.Call(ObjFromPtrAddRef(self), args*)
 
-            ; Bind `method` instead of closing over it, because we're in a loop
+            ;; Bind `method` instead of closing over it, because we're in a loop.
             method := this.%name%
-            ; Bind `this` without incrementing its reference counter
+            ;; Bind `this` without incrementing its reference counter.
             self := ObjPtr(this)
             b := w.Bind(method, self)
 

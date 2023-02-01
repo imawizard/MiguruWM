@@ -49,7 +49,7 @@ class WorkspaceList {
             this._retileFns := Map(
                 "tall",       this._tallRetile,
                 "wide",       this._wideRetile,
-                "fullscreen", this._fullscreenRetile,
+                "monocle",    this._monocleRetile,
                 "floating",   this._floatingRetile,
             )
             this._retile := this._retileFns[this._opts.layout]
@@ -263,7 +263,7 @@ class WorkspaceList {
             t := this._windows[hwnd]
             if t.type == TILED {
                 this._mruTile := t.node
-                if this._opts.layout == "fullscreen" {
+                if this._opts.layout == "monocle" {
                     this.Retile()
                 }
             }
@@ -359,8 +359,8 @@ class WorkspaceList {
                 "UInt",
             )
 
-            ; FIXME: Seemed to work at first, but apparently only for specific
-            ; combinations of monitor dpi, primary dpi and window dpi
+            ;; FIXME: Seemed to work at first, but apparently only for specific
+            ;; combinations of monitor dpi, primary dpi and window dpi.
             awareness := ""
             if dpi == A_ScreenDPI {
                 if this._monitor.DPI == dpi {
@@ -455,8 +455,8 @@ class WorkspaceList {
 
             Loop count {
                 bounds := ExtendedFrameBounds(tile.data)
-                debug("ExtendenFrameBounds(0x{:08x}) are {}",
-                    tile.data, StringifySL(bounds))
+                trace(() => ["ExtendedFrameBounds(0x{:08x}) are {}",
+                    tile.data, StringifySL(bounds)])
                 this._moveWindow(
                     tile.data,
                     x - bounds.left,
@@ -515,8 +515,8 @@ class WorkspaceList {
 
             Loop count {
                 bounds := ExtendedFrameBounds(tile.data)
-                debug("ExtendenFrameBounds(0x{:08x}) are {}",
-                    tile.data, StringifySL(bounds))
+                trace(() => ["ExtendedFrameBounds(0x{:08x}) are {}",
+                    tile.data, StringifySL(bounds)])
                 this._moveWindow(
                     tile.data,
                     x - bounds.left,
@@ -530,7 +530,7 @@ class WorkspaceList {
             return tile
         }
 
-        _fullscreenRetile() {
+        _monocleRetile() {
             if this._mruTile {
                 opts := this._opts
                 if !opts.nativeMaximize {
@@ -547,14 +547,15 @@ class WorkspaceList {
                     WinMaximize("ahk_id" this._mruTile.data)
                 }
 
-                ; Move window to the foreground, even in front of possible siblings
+                ;; Move window to the foreground, even in front of possible
+                ;; siblings.
                 WinSetAlwaysOnTop(true, "ahk_id" this._mruTile.data)
                 WinSetAlwaysOnTop(false, "ahk_id" this._mruTile.data)
             }
         }
 
         _floatingRetile() {
-            ; Do nothing
+            ;; Do nothing
         }
     }
 

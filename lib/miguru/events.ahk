@@ -118,7 +118,7 @@ class WMEvents {
     }
 
     _onMessage(wparam, lparam, msg, hwnd) {
-        Critical 100
+        Critical 1000
 
         ret := 0
         switch msg {
@@ -149,14 +149,12 @@ class WMEvents {
     }
 
     _windowEvListener(hook, event, hwnd, objectId, childId, threadId, timestamp) {
-        Critical 100
-
         if !hwnd || objectId !== OBJID_WINDOW {
-            ; Only listen to window events, ignore events regarding controls.
+            ;; Only listen to window events, ignore events regarding controls.
             return
         }
 
-        ; Ignore everything but one process (for tracing).
+        ;; Ignore everything but one process (for tracing).
         ;if StrLower(WinGetProcessName("ahk_id" hwnd)) !== "teams.exe" {
         ;    return
         ;}
@@ -187,13 +185,11 @@ class WMEvents {
                 throw "Unhandled window event: " event
             }
         } catch TargetError {
-            ; Ignore if A_ScriptHwnd is already gone
+            ;; Ignore if A_ScriptHwnd is already gone
         }
     }
 
     _desktopEvListener(event, args) {
-        Critical 100
-
         switch event {
         case "desktop_changed":
             PostMessage(WM_EVENT, EV_DESKTOP_CHANGED, ObjPtrAddRef(args), , "ahk_id" A_ScriptHwnd)

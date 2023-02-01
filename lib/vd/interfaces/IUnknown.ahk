@@ -19,7 +19,7 @@ class IUnknown {
                 return
             }
 
-            ; Take ownership of the interface pointer
+            ;; Take ownership of the interface pointer.
             this._value.Ptr := value
 
             classes := []
@@ -41,7 +41,7 @@ class IUnknown {
                 }
             }
 
-            ; Filter dupes in methods
+            ;; Filter dupes in methods.
             filtered := []
             uniq := Map()
             loop methods.Length {
@@ -58,7 +58,7 @@ class IUnknown {
             }
 
             if guid && guid !== IUnknown.GUID {
-                ; Might throw an error
+                ;; Might throw an error.
                 this._value := ComObjQuery(value, guid)
             }
 

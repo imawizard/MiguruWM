@@ -133,19 +133,19 @@ class VD {
 
     ; API ..................................................................{{{
 
-    ; Returns the number of virtual desktops, or 0 on error.
+    ;; Returns the number of virtual desktops, or 0 on error.
     Count() {
         desktops := this.managerInternal.GetDesktops()
         return desktops ? desktops.GetCount() : 0
     }
 
-    ; Returns the 1-based index of the current desktop.
+    ;; Returns the 1-based index of the current desktop.
     CurrentDesktop() {
         current := this.managerInternal.GetCurrentDesktop()
         return this._desktopIndexById(current.GetId())
     }
 
-    ; Returns the 1-based index of the created desktop, or 0 on error.
+    ;; Returns the 1-based index of the created desktop, or 0 on error.
     CreateDesktop() {
         desktops := this.managerInternal.GetDesktops()
         count := desktops.GetCount()
@@ -155,12 +155,12 @@ class VD {
         return count + 1
     }
 
-    ; Creates desktops if needed, returns false on error.
+    ;; Creates desktops if needed, returns false on error.
     EnsureDesktops(count) {
         return this._desktop(count, true) !== false
     }
 
-    ; Returns the name of a specific desktop, or the current one's if index is 0.
+    ;; Returns the name of a specific desktop, or the current one's if index is 0.
     DesktopName(index := 0) {
         if index < 0 {
             return false
@@ -172,16 +172,16 @@ class VD {
         name := desktop.GetName()
         if !name {
             if index == 0 {
-                name := "Desktop" this._desktopIndexById(desktop.GetId())
+                name := "Desktop " this._desktopIndexById(desktop.GetId())
             } else {
-                name := "Desktop" index
+                name := "Desktop " index
             }
         }
         return name
     }
 
-    ; Renames a specific desktop by its 1-based index, or the current one if
-    ; index is 0.
+    ;; Renames a specific desktop by its 1-based index, or the current one if
+    ;; index is 0.
     RenameDesktop(name, index := 0) {
         if index < 0 {
             return false
@@ -194,9 +194,9 @@ class VD {
         return true
     }
 
-    ; Destroys a specific desktop and places its windows if any on the next
-    ; desktop to the right. Uses the one to the left if the rightmost was
-    ; desktop was removed. Destroys the current desktop if index is 0.
+    ;; Destroys a specific desktop and places its windows if any on the next
+    ;; desktop to the right. Uses the one to the left if the rightmost was
+    ;; desktop was removed. Destroys the current desktop if index is 0.
     RemoveDesktop(index := 0) {
         if index < 0 {
             return false
@@ -221,8 +221,8 @@ class VD {
         return this.managerInternal.RemoveDesktop(desktop, fallback)
     }
 
-    ; Focuses a specific desktop. Creates new desktops on demand if ensure is
-    ; true.
+    ;; Focuses a specific desktop. Creates new desktops on demand if ensure is
+    ;; true.
     FocusDesktop(index, ensure := true) {
         desktop := this._desktop(index, ensure)
         if !desktop.Ptr {
@@ -230,25 +230,25 @@ class VD {
         }
 
         try {
-            ; Fails if called when task view is open
+            ;; Fails if called when task view is open.
             WinActivate("ahk_class Shell_TrayWnd")
         } catch TargetError {
-            ; Do nothing
+            ;; Do nothing
         }
         this.managerInternal.SwitchDesktop(desktop)
 
-        ; Switch to last active window.
+        ;; Switch to last active window.
         Send("!{Esc}")
     }
 
-    ; Sends a window to a specific desktop. Creates new desktops on demand if
-    ; ensure is true.
+    ;; Sends a window to a specific desktop. Creates new desktops on demand if
+    ;; ensure is true.
     SendWindowToDesktop(hwnd, index, ensure := true) {
         return this._sendWindowToDesktop(hwnd, index, ensure) !== false
     }
 
-    ; Returns either the 1-based index of the desktop containing a specific
-    ; window, 0 on error or -1 if the window is not assigned yet.
+    ;; Returns either the 1-based index of the desktop containing a specific
+    ;; window, 0 on error or -1 if the window is not assigned yet.
     DesktopByWindow(hwnd) {
         try {
             guid := this.manager.GetWindowDesktopId(hwnd)

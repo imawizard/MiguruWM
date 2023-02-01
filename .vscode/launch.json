@@ -1,7 +1,4 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -11,9 +8,20 @@
             "runtime": "${userHome}/scoop/apps/autohotkey2/current/AutoHotkey64.exe",
             "program": "${workspaceFolder}/example.ahk",
             "env": {
-                "AHK_LOG": "debug",
+                "AHK_LOG": "info"
             },
             "stopOnEntry": false
         },
+        {
+            "type": "autohotkey",
+            "request": "launch",
+            "name": "AutoHotkey Debugger (trace)",
+            "runtime": "${userHome}/scoop/apps/autohotkey2/current/AutoHotkey64.exe",
+            "program": "${workspaceFolder}/example.ahk",
+            "env": {
+                "AHK_LOG": "trace"
+            },
+            "stopOnEntry": false,
+        }
     ]
 }

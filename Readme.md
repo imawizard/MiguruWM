@@ -7,7 +7,7 @@ The goal is a basic but hopefully stable automatically tiling window manager tha
 
 ## Features/Caveats
 - Screen is divided into a master and a second pane
-    - layouts are tall, wide, fullscreen and no tiling (floating)
+    - layouts are tall, wide, monocle (fullscreen) and no tiling (floating)
     - forward/backward cycling through windows
     - *no binary space partitioning, no moving in specific directions*
 - Uses Win10's native virtual desktops
@@ -50,6 +50,7 @@ Tested on Win10 Build 19044. Win11 is probably not supported, particularly the G
 - https://github.com/Grabacr07/VirtualDesktop
 - https://github.com/Ciantic/VirtualDesktopAccessor
 - https://github.com/tyranid/oleviewdotnet
+- https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nn-shobjidl_core-ivirtualdesktopmanager
 ### Ahk and COM
 - https://autohotkey.com/boards/viewtopic.php?p=170967#p170967
 - https://docs.microsoft.com/en-us/windows/win32/directshow/how-iunknown-works
@@ -58,5 +59,13 @@ Tested on Win10 Build 19044. Win11 is probably not supported, particularly the G
 - https://docs.microsoft.com/en-us/windows/win32/hidpi/high-dpi-desktop-application-development-on-windows
 - https://autohotkey.com/boards/viewtopic.php?t=13810
 - https://autohotkey.com/boards/viewtopic.php?t=102586
+### Window events
+- https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwineventhook
+- https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registershellhookwindow
+- https://chromium.googlesource.com/chromium/src/+/72c5651c7d39e8d1eef3f7cf21077005caedd4ef/ui/aura/native_window_occlusion_tracker_win.cc
+### Window styles
+- https://docs.microsoft.com/en-us/windows/win32/winmsg/window-styles
+- https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
+- https://docs.microsoft.com/en-us/windows/win32/api/dwmapi/ne-dwmapi-dwmwindowattribute
 
 <!-- vim: set tw=0 wrap ts=4 sw=4 et: -->

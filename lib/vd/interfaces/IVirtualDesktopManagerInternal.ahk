@@ -30,7 +30,7 @@ class IVirtualDesktopManagerInternal_19044 extends IUnknown {
         )
         switch res {
         case E_NOT_VALID_STATE:
-            ; can't move window because e.g. it's a popup/child
+            ;; Can't move window because e.g. it's a popup/child.
         }
         return res == 0
     }
@@ -68,7 +68,7 @@ class IVirtualDesktopManagerInternal_19044 extends IUnknown {
         )
         switch res {
         case E_OUTOFBOUNDS:
-            ; there is no desktop on the left/right
+            ;; There is no desktop on the left/right.
         }
     }
 
@@ -157,8 +157,8 @@ class IVirtualDesktopManagerInternal_22000 extends IVirtualDesktopManagerInterna
 
     Ptr {
         set {
-            ; Build 22000 and 22489 seem to be using the same guid, so check
-            ; here explicitely, based on the build number
+            ;; Build 22000 and 22489 seem to be using the same guid, so check
+            ;; here explicitely, based on the build number.
             build := StrSplit(A_OSVersion, ".")[3]
             if build < 22489 {
                 super.Ptr := value
@@ -223,8 +223,8 @@ class IVirtualDesktopManagerInternal_22489 extends IVirtualDesktopManagerInterna
 
     Ptr {
         set {
-            ; Build 22000 and 22489 seem to be using the same guid, so check
-            ; here explicitely, based on the build number
+            ;; Build 22000 and 22489 seem to be using the same guid, so check
+            ;; here explicitely, based on the build number.
             build := StrSplit(A_OSVersion, ".")[3]
             if build >= 22489 {
                 super.Ptr := value

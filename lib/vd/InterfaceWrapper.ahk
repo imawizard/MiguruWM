@@ -18,21 +18,21 @@ class InterfaceWrapper {
             for i, t in a {
                 v := t()
                 try {
-                    ; v takes ownership of the pointer
+                    ;; v takes ownership of the pointer.
                     v.Ptr := value
 
-                    ; But only if its Ptr setter didn't return early
+                    ;; But only if its Ptr setter didn't return early.
                     if v.Ptr {
                         this.wrapped := v
                         return
                     }
                 } catch as err {
-                    ; If it failed, we have to make sure we don't lose the
-                    ; pointer after v is freed
+                    ;; If it failed, we have to make sure we don't lose the
+                    ;; pointer after v is freed.
                     if v.Ptr {
                         ObjAddRef(value)
                     }
-                    ; Swallow every error but E_NOINTERFACE
+                    ;; Swallow every error but E_NOINTERFACE.
                     if !InStr(err.Message, Format("{:x}", E_NOINTERFACE)) {
                         throw
                     }
