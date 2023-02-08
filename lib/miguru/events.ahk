@@ -154,8 +154,16 @@ class WMEvents {
             return
         }
 
-        ;; Ignore everything but one process (for tracing).
-        ;if StrLower(WinGetProcessName("ahk_id" hwnd)) !== "teams.exe" {
+        ;; Restrict handling of events for tracing and testing.
+        ;static allow := Map(
+        ;    "explorer.exe", true,
+        ;    "teams.exe", true,
+        ;)
+        ;try {
+        ;    if !allow.Get(StrLower(WinGetProcessName("ahk_id" hwnd)), false) {
+        ;        return
+        ;    }
+        ;} catch {
         ;    return
         ;}
 

@@ -49,7 +49,7 @@ class WorkspaceList {
             this._retileFns := Map(
                 "tall",       this._tallRetile,
                 "wide",       this._wideRetile,
-                "monocle",    this._monocleRetile,
+                "fullscreen", this._fullscreenRetile,
                 "floating",   this._floatingRetile,
             )
             this._retile := this._retileFns[this._opts.layout]
@@ -301,7 +301,7 @@ class WorkspaceList {
             t := this._windows[hwnd]
             if t.type == TILED {
                 this._mruTile := t.node
-                if this._opts.layout == "monocle" {
+                if this._opts.layout == "fullscreen" {
                     this.Retile()
                 }
             }
@@ -587,7 +587,7 @@ class WorkspaceList {
             return tile
         }
 
-        _monocleRetile() {
+        _fullscreenRetile() {
             if this._mruTile {
                 opts := this._opts
                 if !opts.nativeMaximize {

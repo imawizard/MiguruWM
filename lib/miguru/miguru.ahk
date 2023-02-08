@@ -71,6 +71,8 @@ class MiguruWM extends WMEvents {
         switch event {
         case EV_WINDOW_FOCUSED:
             monitor := this._monitors.ByWindow(hwnd)
+
+            ;; Set currently active monitor if changed.
             if monitor && monitor !== this.activeMonitor {
                 debug("Focused: Display #{} -> Display #{}",
                     this.activeMonitor.Index, monitor.Index)
@@ -134,10 +136,13 @@ class MiguruWM extends WMEvents {
                 this.VD.DesktopName(args.was), this.VD.DesktopName(args.now)])
         case EV_DESKTOP_RENAMED:
             debug("Renamed: Desktop #{} `"{}`"", args.desktop, args.name)
+            ;; Do nothing
         case EV_DESKTOP_CREATED:
             debug(() => ["Created: {}", this.VD.DesktopName(args.desktop)])
+            ;; Do nothing
         case EV_DESKTOP_DESTROYED:
             debug("Destroyed: Desktop #{}", args.desktopId)
+            ;; Do nothing
         default:
             throw "Unknown desktop event: " event
         }
