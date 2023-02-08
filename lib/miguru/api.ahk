@@ -94,6 +94,20 @@ class MiguruAPI {
         PostMessage(WM_REQUEST, ObjPtrAddRef(req), , , "ahk_id" A_ScriptHwnd)
     }
 
+    ;; Float or tile a specific window or the currently active one.
+    ;;
+    ;; Examples:
+    ;;    FloatWindow() ; Float if it was tiled
+    ;;    FloatWindow(, false) ; Tile if it was floating
+    ;;    FloatWindow(, "toggle") ; Float or tile respectively
+    FloatWindow(hwnd := "A", value := true) {
+        if hwnd == "A" {
+            hwnd := WinExist("A")
+        }
+        req := { type: "float-window", hwnd: hwnd, value: value }
+        PostMessage(WM_REQUEST, ObjPtrAddRef(req), , , "ahk_id" A_ScriptHwnd)
+    }
+
     ;; Set the layout of a monitor's workspace.
     ;;
     ;; Examples:

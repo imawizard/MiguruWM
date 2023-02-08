@@ -80,6 +80,7 @@ Miguru.VD.RenameDesktop("Browser", 7)
 *,::Miguru.SetMasterCount(, +1)
 *.::Miguru.SetMasterCount(, -1)
 
+*t::Miguru.FloatWindow(, "toggle")
 *Enter::Miguru.SwapWindow("master")
 *c::OpenTaskView()
 *q::Reload()
@@ -116,6 +117,36 @@ Miguru.VD.RenameDesktop("Browser", 7)
 ;..........................................................................}}}
 
 #Hotif
+
++vk01::{
+    MouseGetPos(, , &hwnd)
+    if !hwnd {
+        return
+    }
+    Miguru.FloatWindow(hwnd)
+    PostMessage(WM_SYSCOMMAND, SC_MOVE, , , "ahk_id" hwnd)
+    PostMessage(WM_KEYDOWN, VK_LEFT, , , "ahk_id" hwnd)
+    PostMessage(WM_KEYUP, VK_LEFT, , , "ahk_id" hwnd)
+    PostMessage(WM_KEYDOWN, VK_RIGHT, , , "ahk_id" hwnd)
+    PostMessage(WM_KEYUP, VK_RIGHT, , , "ahk_id" hwnd)
+    KeyWait("vk01")
+    Send("{vk01 Up}")
+}
+
++vk02::{
+    MouseGetPos(, , &hwnd)
+    if !hwnd {
+        return
+    }
+    Miguru.FloatWindow(hwnd)
+    PostMessage(WM_SYSCOMMAND, SC_SIZE, , , "ahk_id" hwnd)
+    PostMessage(WM_KEYDOWN, VK_DOWN, , , "ahk_id" hwnd)
+    PostMessage(WM_KEYUP, VK_DOWN, , , "ahk_id" hwnd)
+    PostMessage(WM_KEYDOWN, VK_RIGHT, , , "ahk_id" hwnd)
+    PostMessage(WM_KEYUP, VK_RIGHT, , , "ahk_id" hwnd)
+    KeyWait("vk02")
+    Send("{vk01 Up}")
+}
 
 OpenTerminal() {
     wd := EnvGet("HOME")

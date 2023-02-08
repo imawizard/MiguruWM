@@ -22,7 +22,20 @@ WS_EX_STATICEDGE    := 0x00020000
 WS_EX_APPWINDOW     := 0x00040000
 WS_EX_LAYERED       := 0x00080000
 
-ERROR_ACCESS_DENIED := 5
+WM_SYSCOMMAND := 0x112
+SC_MOVE       := 0xf010
+SC_SIZE       := 0xf000
+
+WM_KEYDOWN := 0x100
+WM_KEYUP   := 0x101
+
+VK_LEFT  := 0x25
+VK_UP    := 0x26
+VK_RIGHT := 0x27
+VK_DOWN  := 0x28
+
+ERROR_ACCESS_DENIED     := 5
+ERROR_INVALID_PARAMETER := 87
 
 DetectHiddenWindows(true)
 
@@ -213,6 +226,9 @@ class MiguruWM extends WMEvents {
         case "swap-window":
             ws := getWorkspace()
             ws.Swap(req.target)
+        case "float-window":
+            ws := this._workspaces[this.activeMonitor, this.activeWsIdx]
+            ws.Float(req.hwnd, req.value)
         case "layout":
             ws := getWorkspace()
             if !req.HasProp("value") {

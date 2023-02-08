@@ -133,29 +133,38 @@ class WorkspaceList {
             }
 
             if shouldTile {
-                switch this._tileInsertion {
-                case INSERT_FIRST:
-                    tile := this._tiled.Prepend(hwnd)
-                case INSERT_LAST:
-                    tile := this._tiled.Append(hwnd)
-                case INSERT_BEFORE_MRU:
-                    tile := this._tiled.Prepend(hwnd, this._mruTile)
-                case INSERT_AFTER_MRU:
-                    tile := this._tiled.Append(hwnd, this._mruTile)
-                default:
-                    throw "Incorrect tiling insertion setting"
-                }
-                this._mruTile := tile
-                this._windows[hwnd] := { type: TILED, node: tile }
-                this.Retile()
+                this._addTiled(hwnd)
             } else {
-                this._floating.Push(hwnd)
-                this._windows[hwnd] := { type: FLOATED, index: this._floating.Length }
-                WinSetAlwaysOnTop(this._opts.floatingAlwaysOnTop, "ahk_id" hwnd)
+                this._addFloating(hwnd)
             }
 
             this._active := hwnd
             return true
+        }
+
+        _addTiled(hwnd) {
+            switch this._tileInsertion {
+            case INSERT_FIRST:
+                tile := this._tiled.Prepend(hwnd)
+            case INSERT_LAST:
+                tile := this._tiled.Append(hwnd)
+            case INSERT_BEFORE_MRU:
+                tile := this._tiled.Prepend(hwnd, this._mruTile)
+            case INSERT_AFTER_MRU:
+                tile := this._tiled.Append(hwnd, this._mruTile)
+            default:
+                throw "Incorrect tiling insertion setting: " this._tileInsertion
+            }
+            this._mruTile := tile
+            this._windows[hwnd] := { type: TILED, node: tile }
+            WinSetAlwaysOnTop(false, "ahk_id" hwnd)
+            this.Retile()
+        }
+
+        _addFloating(hwnd) {
+            this._floating.Push(hwnd)
+            this._windows[hwnd] := { type: FLOATED, index: this._floating.Length }
+            WinSetAlwaysOnTop(this._opts.floatingAlwaysOnTop, "ahk_id" hwnd)
         }
 
         Remove(hwnd, focus := true) {
@@ -165,32 +174,15 @@ class WorkspaceList {
             }
 
             trace(() => ["Disappeared: {} {}", entry.type, WinInfo(hwnd)])
-            this._windows.Delete(hwnd)
 
             if entry.type == TILED {
-                wasLast := this._tiled.Last == entry.node
-                this._mruTile := this._tiled.Drop(entry.node)
-                    ? entry.node.next
-                    : ""
-
-                if this._mruTile {
-                    if wasLast {
-                        this._mruTile := this._mruTile.previous
-                    }
-                    if focus {
-                        WinActivate("ahk_id" this._mruTile.data)
-                    }
+                this._removeTiled(entry)
+                if focus && this._mruTile {
+                    WinActivate("ahk_id" this._mruTile.data)
                 }
-                this.Retile()
                 return true
             } else if entry.type == FLOATED {
-                for i, hwnd in this._floating {
-                    if i > entry.index {
-                        this._windows[hwnd].index--
-                    }
-                }
-                this._floating.RemoveAt(entry.index)
-
+                this._removeFloating(entry)
                 if focus {
                     next := Min(entry.index, this._floating.Length)
                     if next {
@@ -200,6 +192,43 @@ class WorkspaceList {
                     }
                 }
                 return true
+            }
+        }
+
+        _removeTiled(window) {
+            hwnd := window.node.data
+            this._windows.Delete(hwnd)
+            wasLast := this._tiled.Last == window.node
+            this._mruTile := this._tiled.Drop(window.node)
+                ? window.node.next
+                : ""
+            if this._mruTile && wasLast {
+                this._mruTile := this._mruTile.previous
+            }
+            this.Retile()
+        }
+
+        _removeFloating(window) {
+            hwnd := this._floating[window.index]
+            this._windows.Delete(hwnd)
+            for i, hwnd in this._floating {
+                if i > window.index {
+                    this._windows[hwnd].index--
+                }
+            }
+            this._floating.RemoveAt(window.index)
+
+            if this._opts.floatingAlwaysOnTop {
+                try {
+                    WinSetAlwaysOnTop(false, "ahk_id" hwnd)
+                } catch TargetError {
+                    ;; Do nothing
+                } catch OSError as err {
+                    if err.Number !== ERROR_INVALID_PARAMETER {
+                        throw
+                    }
+                    ;; Do nothing
+                }
             }
         }
 
@@ -292,6 +321,25 @@ class WorkspaceList {
                 this._tiled.Swap(this._mruTile, this._tiled.First)
             }
             this.Retile()
+        }
+
+        Float(hwnd, value) {
+            window := this._windows.Get(hwnd, "")
+            if !window {
+                return
+            }
+
+            if window.type == TILED {
+                if value || value == "toggle" {
+                    this._removeTiled(window)
+                    this._addFloating(hwnd)
+                }
+            } else if window.type == FLOATED {
+                if !value || value == "toggle" {
+                    this._removeFloating(window)
+                    this._addTiled(hwnd)
+                }
+            }
         }
 
         MasterCount {
