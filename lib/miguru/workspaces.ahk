@@ -232,10 +232,7 @@ class WorkspaceList {
                     WinSetAlwaysOnTop(false, "ahk_id" hwnd)
                 } catch TargetError {
                     ;; Do nothing
-                } catch OSError as err {
-                    if err.Number !== ERROR_INVALID_PARAMETER {
-                        throw
-                    }
+                } catch OSError {
                     ;; Do nothing
                 }
             }
@@ -450,6 +447,7 @@ class WorkspaceList {
                     scale, dpi, this._monitor.DPI, A_ScreenDPI)
             }
 
+            try {
             if WinGetMinMax("ahk_id" hwnd) > 0 {
                 WinRestore("ahk_id" hwnd)
             }
@@ -473,6 +471,13 @@ class WorkspaceList {
                 SetDpiAwareness(awareness)
                 debug("SetWindowPos(0x{:08x}) to x={:.2f} y={:.2f} width={:.2f} height={:.2f}",
                     hwnd, x, y, width, height)
+            }
+            } catch TargetError {
+                warn("Lost window while trying to position it {}", WinInfo(hwnd))
+                this.Remove(hwnd)
+            } catch OSError as err {
+                warn("Removing window ({}): {}", WinInfo(hwnd), err.Message)
+                this.Remove(hwnd)
             }
         }
 

@@ -204,7 +204,10 @@ class MonitorList {
             "UInt", MONITOR_DEFAULTTOPRIMARY,
             "Ptr",
         )
-        if !handle {
+        if !this._handles.Has(handle) {
+            warn("Monitor handle #{} for window #{} isn't mapped."
+                " Returning primary monitor instead.",
+                hwnd, handle)
             return this.Primary
         }
         return this._monitors[this._handles[handle]]

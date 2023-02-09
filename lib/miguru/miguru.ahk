@@ -85,6 +85,8 @@ class MiguruWM extends WMEvents {
         case EV_WINDOW_SHOWN, EV_WINDOW_UNCLOAKED, EV_WINDOW_RESTORED, EV_WINDOW_REPOSITIONED:
             fallthrough:
 
+            try {
+
             ;; To not miss any windows that were already created and thus e.g.
             ;; appear for the first time by unhiding instead of creation, add
             ;; new windows on any event.
@@ -103,7 +105,6 @@ class MiguruWM extends WMEvents {
                 this._reassociate(window, monitor, ws)
             }
 
-            try {
                 if WinGetMinMax("ahk_id" window.handle) >= 0 {
                     if !window.workspace.AddIfNew(window.handle) {
                         switch event {
@@ -126,7 +127,10 @@ class MiguruWM extends WMEvents {
 
             } catch TargetError {
                 warn("Lost window while trying to manage it {}", WinInfo(hwnd))
-                this._drop(window.handle)
+                this._drop(hwnd)
+            } catch OSError as err {
+                warn("Dropping window ({}): {}", WinInfo(hwnd), err.Message)
+                this._drop(hwnd)
             }
 
         case EV_WINDOW_HIDDEN, EV_WINDOW_CLOAKED, EV_WINDOW_MINIMIZED:
@@ -357,7 +361,6 @@ class MiguruWM extends WMEvents {
     ;; Add a window for which an event happened to the global list if it hasn't
     ;; been added yet.
     _manage(hwnd) {
-        try {
             if this._managed.Has(hwnd) {
                 trace(() => ["Ignoring: already managed {} D={} {}",
                     this.VD.DesktopName(this._managed[hwnd].workspace.Index),
@@ -408,16 +411,6 @@ class MiguruWM extends WMEvents {
             this._managed[hwnd] := window
 
             return window
-        } catch TargetError {
-            warn("Lost window while trying to manage it {}", WinInfo(hwnd))
-            return ""
-        } catch OSError as err {
-            if err.Number !== ERROR_ACCESS_DENIED {
-                throw err
-            }
-            warn("Can't access window #{}", hwnd)
-            return ""
-        }
     }
 
     ;; When a window gets destroyed or accessing it results in a TargetError,
