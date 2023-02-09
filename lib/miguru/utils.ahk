@@ -296,6 +296,13 @@ class Logger {
         "INFO",
         "TRACE",
     ]
+    static Colors := [
+        "1;31",
+        "1;34",
+        "1;38",
+        "1;30",
+    ]
+    static NO_COLOR := EnvGet("NO_COLOR") !== ""
     static Levels := Map()
     static PrintModule := true
 
@@ -331,6 +338,8 @@ class Logger {
                     ;; then undo AttachConsole.
                     DllCall("FreeConsole", "Int")
                     attached := false
+                } else {
+                    Logger.NO_COLOR := true
                 }
             }
         }
@@ -400,7 +409,13 @@ class Logger {
                     ? " " module
                     : ""
                 : ""
+
             l := Logger.Labels[level]
+            c := Logger.Colors[level]
+            if c && !Logger.NO_COLOR {
+                l := Chr(27) "[" c "m" l Chr(27) "[0m"
+            }
+
             FileAppend(t "." A_MSec m " [" l "] " s "`n", "*")
         }
     }

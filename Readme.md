@@ -1,4 +1,4 @@
-# 「見苦窓経営笑」 - MiguruWM
+# 「見苦窓経営」笑 - MiguruWM
 
 **mwm.ahk** is an automatically tiling window manager for Windows 10 à la Amethyst/xmonad.
 

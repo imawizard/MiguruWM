@@ -87,23 +87,23 @@ class MiguruWM extends WMEvents {
 
             try {
 
-            ;; To not miss any windows that were already created and thus e.g.
-            ;; appear for the first time by unhiding instead of creation, add
-            ;; new windows on any event.
-            window := this._manage(hwnd)
-            if !window {
-                return
-            }
+                ;; To not miss any windows that were already created and thus
+                ;; e.g. appear for the first time by unhiding instead of
+                ;; creation, add new windows on any event.
+                window := this._manage(hwnd)
+                if !window {
+                    return
+                }
 
-            monitor := this._monitors.ByWindow(window.handle)
-            wsIdx := this.VD.DesktopByWindow(window.handle)
+                monitor := this._monitors.ByWindow(window.handle)
+                wsIdx := this.VD.DesktopByWindow(window.handle)
 
-            ;; Adjust when a window changed desktop or monitor.
-            if monitor !== window.monitor ||
-                wsIdx > 0 && wsIdx !== window.workspace.Index {
-                ws := this._workspaces[monitor, wsIdx]
-                this._reassociate(window, monitor, ws)
-            }
+                ;; Adjust when a window changed desktop or monitor.
+                if monitor !== window.monitor ||
+                    wsIdx > 0 && wsIdx !== window.workspace.Index {
+                    ws := this._workspaces[monitor, wsIdx]
+                    this._reassociate(window, monitor, ws)
+                }
 
                 if WinGetMinMax("ahk_id" window.handle) >= 0 {
                     if !window.workspace.AddIfNew(window.handle) {

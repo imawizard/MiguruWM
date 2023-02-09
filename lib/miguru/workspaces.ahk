@@ -27,6 +27,15 @@ INSERT_LAST       := 1
 INSERT_BEFORE_MRU := 2
 INSERT_AFTER_MRU  := 3
 
+SWP_FLAGS := 0
+    | SWP_ASYNCWINDOWPOS
+    | SWP_FRAMECHANGED
+    | SWP_NOACTIVATE
+    | SWP_NOCOPYBITS
+    | SWP_NOOWNERZORDER
+    | SWP_NOSENDCHANGING
+    | SWP_NOZORDER
+
 class WorkspaceList {
     class Workspace {
         __New(monitor, index, opts) {
@@ -402,15 +411,6 @@ class WorkspaceList {
         }
 
         _moveWindow(hwnd, x, y, width, height) {
-            static flags := 0
-                | SWP_ASYNCWINDOWPOS
-                | SWP_FRAMECHANGED
-                | SWP_NOACTIVATE
-                | SWP_NOCOPYBITS
-                | SWP_NOOWNERZORDER
-                | SWP_NOSENDCHANGING
-                | SWP_NOZORDER
-
             context := DllCall(
                 "GetWindowDpiAwarenessContext",
                 "Ptr", hwnd,
@@ -448,30 +448,30 @@ class WorkspaceList {
             }
 
             try {
-            if WinGetMinMax("ahk_id" hwnd) > 0 {
-                WinRestore("ahk_id" hwnd)
-            }
+                if WinGetMinMax("ahk_id" hwnd) > 0 {
+                    WinRestore("ahk_id" hwnd)
+                }
 
-            if !DllCall(
-                "SetWindowPos",
-                "Ptr", hwnd,
-                "Ptr", 0,
-                "Int", x,
-                "Int", y,
-                "Int", width,
-                "Int", height,
-                "UInt", flags,
-                "Int",
-            ) {
-                warn("SetWindowPos failed for hwnd 0x{:08x} with x={:.2f} y={:.2f} width={:.2f} height={:.2f}",
-                    hwnd, x, y, width, height)
-            }
+                if !DllCall(
+                    "SetWindowPos",
+                    "Ptr", hwnd,
+                    "Ptr", HWND_TOP,
+                    "Int", x,
+                    "Int", y,
+                    "Int", width,
+                    "Int", height,
+                    "UInt", SWP_FLAGS,
+                    "Int",
+                ) {
+                    warn("SetWindowPos failed for hwnd 0x{:08x} with x={:.2f} y={:.2f} width={:.2f} height={:.2f}",
+                        hwnd, x, y, width, height)
+                }
 
-            if awareness !== "" {
-                SetDpiAwareness(awareness)
-                debug("SetWindowPos(0x{:08x}) to x={:.2f} y={:.2f} width={:.2f} height={:.2f}",
-                    hwnd, x, y, width, height)
-            }
+                if awareness !== "" {
+                    SetDpiAwareness(awareness)
+                    debug("SetWindowPos(0x{:08x}) to x={:.2f} y={:.2f} width={:.2f} height={:.2f}",
+                        hwnd, x, y, width, height)
+                }
             } catch TargetError {
                 warn("Lost window while trying to position it {}", WinInfo(hwnd))
                 this.Remove(hwnd)
