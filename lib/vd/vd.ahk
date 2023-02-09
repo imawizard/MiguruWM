@@ -131,7 +131,7 @@ class VD {
         return desktop
     }
 
-    ; API ..................................................................{{{
+    ; API .................................................................{{{1
 
     ;; Returns the number of virtual desktops, or 0 on error.
     Count() {

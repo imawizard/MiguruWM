@@ -19,8 +19,8 @@ HWND_TOP       := 0
 HWND_BOTTOM    := 1
 HWND_NOTOPMOST := -2
 
-TILED   := 0
-FLOATED := 1
+TILED    := 0
+FLOATING := 1
 
 INSERT_FIRST      := 0
 INSERT_LAST       := 1
@@ -32,9 +32,11 @@ class WorkspaceList {
         __New(monitor, index, opts) {
             this._monitor := monitor
             this._index := index
+
             this._windows := Map()
             this._tiled := CircularList()
             this._floating := []
+
             this._active := ""
             this._mruTile := ""
             this._opts := opts
@@ -87,14 +89,14 @@ class WorkspaceList {
         ActiveWindow {
             get => this._active
             set {
-                entry := this._windows.Get(value, "")
-                if !entry {
+                window := this._windows.Get(value, "")
+                if !window {
                     return
                 }
 
                 this._active := value
-                if entry.type == TILED {
-                    this._mruTile := entry.node
+                if window.type == TILED {
+                    this._mruTile := window.node
                 }
             }
         }
@@ -108,24 +110,32 @@ class WorkspaceList {
             exstyle := WinGetExStyle("ahk_id" hwnd)
             if exstyle & WS_EX_WINDOWEDGE == 0 {
                 trace(() => ["Floating: no WS_EX_WINDOWEDGE {}", WinInfo(hwnd)])
+
                 shouldTile := false
             } else if exstyle & WS_EX_DLGMODALFRAME !== 0 {
                 trace(() => ["Floating: WS_EX_DLGMODALFRAME {}", WinInfo(hwnd)])
+
                 shouldTile := false
             } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_AUTOFLOAT") {
                 trace(() => ["Floating: ahk_group  {}", WinInfo(hwnd)])
+
                 shouldTile := false
             } else {
                 WinGetPos(, , &width, &height, "ahk_id" hwnd)
-                if this._opts.tilingMinWidth > 0 && width < this._opts.tilingMinWidth {
+
+                if this._opts.tilingMinWidth > 0 &&
+                    width < this._opts.tilingMinWidth {
                     trace(() => ["Floating: width {}<{} {}",
                         width, this._opts.tilingMinWidth,
                         WinInfo(hwnd)])
+
                     shouldTile := false
-                } else if this._opts.tilingMinHeight > 0 && height < this._opts.tilingMinHeight {
+                } else if this._opts.tilingMinHeight > 0 &&
+                    height < this._opts.tilingMinHeight {
                     trace(() => ["Floating: height {}<{} {}",
                         height, this._opts.tilingMinHeight,
                         WinInfo(hwnd)])
+
                     shouldTile := false
                 } else {
                     trace(() => ["Tiling: {}", WinInfo(hwnd)])
@@ -137,7 +147,6 @@ class WorkspaceList {
             } else {
                 this._addFloating(hwnd)
             }
-
             this._active := hwnd
             return true
         }
@@ -163,28 +172,28 @@ class WorkspaceList {
 
         _addFloating(hwnd) {
             this._floating.Push(hwnd)
-            this._windows[hwnd] := { type: FLOATED, index: this._floating.Length }
+            this._windows[hwnd] := { type: FLOATING, index: this._floating.Length }
             WinSetAlwaysOnTop(this._opts.floatingAlwaysOnTop, "ahk_id" hwnd)
         }
 
         Remove(hwnd, focus := true) {
-            entry := this._windows.Get(hwnd, "")
-            if !entry {
+            window := this._windows.Get(hwnd, "")
+            if !window {
                 return false
             }
 
-            trace(() => ["Disappeared: {} {}", entry.type, WinInfo(hwnd)])
+            trace(() => ["Disappeared: {} {}", window.type, WinInfo(hwnd)])
 
-            if entry.type == TILED {
-                this._removeTiled(entry)
+            if window.type == TILED {
+                this._removeTiled(window)
                 if focus && this._mruTile {
                     WinActivate("ahk_id" this._mruTile.data)
                 }
                 return true
-            } else if entry.type == FLOATED {
-                this._removeFloating(entry)
+            } else if window.type == FLOATING {
+                this._removeFloating(window)
                 if focus {
-                    next := Min(entry.index, this._floating.Length)
+                    next := Min(window.index, this._floating.Length)
                     if next {
                         WinActivate("ahk_id" this._floating[next])
                     } else if this._mruTile {
@@ -240,7 +249,7 @@ class WorkspaceList {
                 } else if this._tiled.Count > 1 {
                     return a.node.next.data
                 }
-            } else if a.type == FLOATED {
+            } else if a.type == FLOATING {
                 if a.index < this._floating.Length {
                     return this._floating[a.index + 1]
                 } else if this._tiled.Count > 0 {
@@ -257,7 +266,7 @@ class WorkspaceList {
                 } else if this._tiled.Count > 1 {
                     return a.node.previous.data
                 }
-            } else if a.type == FLOATED {
+            } else if a.type == FLOATING {
                 if a.index > 1 {
                     return this._floating[a.index - 1]
                 } else if this._tiled.Count > 0 {
@@ -279,7 +288,7 @@ class WorkspaceList {
             case "master":
                 hwnd := this._tiled.First.data
             default:
-                throw "Incorrect focus target"
+                throw "Incorrect focus target: " target
             }
 
             if !hwnd {
@@ -334,7 +343,7 @@ class WorkspaceList {
                     this._removeTiled(window)
                     this._addFloating(hwnd)
                 }
-            } else if window.type == FLOATED {
+            } else if window.type == FLOATING {
                 if !value || value == "toggle" {
                     this._removeFloating(window)
                     this._addTiled(hwnd)
@@ -639,7 +648,7 @@ class WorkspaceList {
         had := this._workspaces.Clone()
         for m in monitors {
             if had.Has(m.Handle) {
-                for idx, ws in this._workspaces[m.handle] {
+                for idx, ws in this._workspaces[m.Handle] {
                     ws._monitor := m
                 }
                 had.Delete(m.Handle)
@@ -652,7 +661,7 @@ class WorkspaceList {
 
     __Item[monitor, index] {
         get {
-            workspaces := this._workspaces[monitor.handle]
+            workspaces := this._workspaces[monitor.Handle]
             ws := workspaces.Get(index, 0)
             if !ws {
                 ws := WorkspaceList.Workspace(monitor, index, ObjClone(this._defaults))

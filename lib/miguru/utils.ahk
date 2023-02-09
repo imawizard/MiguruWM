@@ -300,19 +300,25 @@ class Logger {
     static PrintModule := true
 
     static Init() {
-        attached := DllCall("AttachConsole",
+        attached := DllCall(
+            "AttachConsole",
             "UInt", -1,
-            "Int")
+            "Int",
+        )
 
         if attached {
-            handle := DllCall("GetStdHandle",
+            handle := DllCall(
+                "GetStdHandle",
                 "UInt", STD_OUTPUT_HANDLE,
-                "UInt")
+                "UInt",
+            )
             mode := 0
-            DllCall("GetConsoleMode",
+            DllCall(
+                "GetConsoleMode",
                 "UInt", handle,
                 "UInt*", &mode,
-                "Int")
+                "Int",
+            )
 
             ;; If writing to stdout is not possible,
             if mode & ENABLE_ECHO_INPUT == 0 {

@@ -73,12 +73,15 @@ class MiguruWM extends WMEvents {
             monitor := this._monitors.ByWindow(hwnd)
 
             ;; Set currently active monitor if changed.
-            if monitor && monitor !== this.activeMonitor {
-                debug("Focused: Display #{} -> Display #{}",
+            if monitor !== this.activeMonitor {
+                debug("Active Display: #{} -> #{}",
                     this.activeMonitor.Index, monitor.Index)
+
                 this.activeMonitor := monitor
             }
+
             goto fallthrough
+
         case EV_WINDOW_SHOWN, EV_WINDOW_UNCLOAKED, EV_WINDOW_RESTORED, EV_WINDOW_REPOSITIONED:
             fallthrough:
 
@@ -92,8 +95,12 @@ class MiguruWM extends WMEvents {
 
             monitor := this._monitors.ByWindow(window.handle)
             wsIdx := this.VD.DesktopByWindow(window.handle)
-            if monitor !== window.monitor || wsIdx > 0 && wsIdx !== window.workspace.Index {
-                this._reassociate(window, monitor, this._workspaces[monitor, wsIdx])
+
+            ;; Adjust when a window changed desktop or monitor.
+            if monitor !== window.monitor ||
+                wsIdx > 0 && wsIdx !== window.workspace.Index {
+                ws := this._workspaces[monitor, wsIdx]
+                this._reassociate(window, monitor, ws)
             }
 
             try {
@@ -104,22 +111,33 @@ class MiguruWM extends WMEvents {
                             debug(() => ["Focused: {} D={} {}",
                                 this.VD.DesktopName(wsIdx), monitor.Index,
                                 WinInfo(window.handle)])
+
                             window.workspace.ActiveWindow := window.handle
+
                         case EV_WINDOW_REPOSITIONED:
+                            debug(() => ["Repositioned: {} D={} {}",
+                                this.VD.DesktopName(wsIdx), monitor.Index,
+                                WinInfo(window.handle)])
+
                             window.workspace.Retile()
                         }
                     }
                 }
+
             } catch TargetError {
                 warn("Lost window while trying to manage it {}", WinInfo(hwnd))
-                return this._drop(window.handle)
+                this._drop(window.handle)
             }
+
         case EV_WINDOW_HIDDEN, EV_WINDOW_CLOAKED, EV_WINDOW_MINIMIZED:
             this._hide(event, hwnd)
+
         case EV_WINDOW_DESTROYED:
             this._drop(hwnd)
+
         case EV_WINDOW_CREATED:
             ;; Do nothing
+
         default:
             throw "Unknown window event: " event
         }
@@ -131,18 +149,27 @@ class MiguruWM extends WMEvents {
             ;; Discard pending window removals.
             this._delayed.Drop("hide")
 
-            this.activeWsIdx := args.now
-            debug(() => ["Focused: {} -> {}",
+            debug(() => ["Active Desktop: {} -> {}",
                 this.VD.DesktopName(args.was), this.VD.DesktopName(args.now)])
+
+            this.activeWsIdx := args.now
+
         case EV_DESKTOP_RENAMED:
-            debug("Renamed: Desktop #{} `"{}`"", args.desktop, args.name)
+            debug("Renamed Desktop #{}: `"{}`"", args.desktop, args.name)
+
             ;; Do nothing
+
         case EV_DESKTOP_CREATED:
-            debug(() => ["Created: {}", this.VD.DesktopName(args.desktop)])
+            debug(() => ["Created Desktop: {}",
+                this.VD.DesktopName(args.desktop)])
+
             ;; Do nothing
+
         case EV_DESKTOP_DESTROYED:
-            debug("Destroyed: Desktop #{}", args.desktopId)
+            debug("Destroyed Desktop: #{}", args.desktopId)
+
             ;; Do nothing
+
         default:
             throw "Unknown desktop event: " event
         }
@@ -198,9 +225,11 @@ class MiguruWM extends WMEvents {
                     if taskbar {
                         WinActivate("ahk_id" taskbar)
                     } else {
-                        warn("Can't focus monitor {} without a tile or a taskbar", index)
+                        warn("Can't focus monitor {} without a tile or a taskbar",
+                            index)
                     }
                 }
+
             case "send-monitor":
                 window := this._managed.Get(WinExist("A"), 0)
                 if !window {
@@ -225,21 +254,26 @@ class MiguruWM extends WMEvents {
             CoordMode("Mouse", "Screen")
             MouseMove(monitor.Area.CenterX, monitor.Area.CenterY)
             CoordMode("Mouse", old)
+
         case "focus-window":
             ws := this._workspaces[this.activeMonitor, this.activeWsIdx]
             ws.Focus(req.target)
+
         case "swap-window":
             ws := getWorkspace()
             ws.Swap(req.target)
+
         case "float-window":
             ws := this._workspaces[this.activeMonitor, this.activeWsIdx]
             ws.Float(req.hwnd, req.value)
+
         case "layout":
             ws := getWorkspace()
             if !req.HasProp("value") {
                 return ObjPtrAddRef({ layout: ws.Layout })
             }
             ws.Layout := req.value
+
         case "master-count":
             ws := getWorkspace()
             if req.HasProp("value") {
@@ -248,6 +282,7 @@ class MiguruWM extends WMEvents {
                 return ws.MasterCount
             }
             ws.MasterCount += req.delta
+
         case "master-size":
             ws := getWorkspace()
             if req.HasProp("value") {
@@ -256,6 +291,7 @@ class MiguruWM extends WMEvents {
                 return ws.MasterSize
             }
             ws.MasterSize += req.delta
+
         case "padding":
             ws := getWorkspace()
             if req.HasProp("value") {
@@ -264,6 +300,7 @@ class MiguruWM extends WMEvents {
                 return ws.Padding
             }
             ws.Padding += req.delta
+
         case "spacing":
             ws := getWorkspace()
             if req.HasProp("value") {
@@ -272,16 +309,17 @@ class MiguruWM extends WMEvents {
                 return ws.Spacing
             }
             ws.Spacing += req.delta
+
         default:
             throw "Unknown request: " req.type
        }
     }
 
-    _onDisplayChange(update := false) {
-        if !update {
+    _onDisplayChange(wait := true) {
+        if wait {
             this._delayed.Drop("monitor")
 
-            b := this._onDisplayChange.Bind(this, true)
+            b := this._onDisplayChange.Bind(this, false)
             this._delayed.Add(b, 1000, "monitor")
             return
         }
@@ -303,6 +341,7 @@ class MiguruWM extends WMEvents {
     _initWithCurrentDesktopAndWindows() {
         this.activeMonitor := this._monitors.ByWindow(WinExist("A"))
         this.activeWsIdx := this.VD.CurrentDesktop()
+
 
         old := A_DetectHiddenWindows
         DetectHiddenWindows(false)
@@ -338,13 +377,16 @@ class MiguruWM extends WMEvents {
 
             style := WinGetStyle("ahk_id" hwnd)
             if style & WS_CAPTION == 0 {
-                trace(() => ["Ignoring: no titlebar {} {}", this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
+                trace(() => ["Ignoring: no titlebar {} {}",
+                    this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
                 return ""
             } else if style & WS_VISIBLE == 0 || IsWindowCloaked(hwnd) {
-                trace(() => ["Ignoring: hidden {} {}", this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
+                trace(() => ["Ignoring: hidden {} {}",
+                    this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
                 return ""
             } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_IGNORE") {
-                trace(() => ["Ignoring: ahk_group {} {}", this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
+                trace(() => ["Ignoring: ahk_group {} {}",
+                    this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
                 return ""
             }
 
@@ -404,6 +446,7 @@ class MiguruWM extends WMEvents {
             this.VD.DesktopName(window.workspace.Index), window.monitor.Index,
             this.VD.DesktopName(workspace.Index), monitor.Index,
             WinInfo(window.handle)])
+
         window.workspace.Remove(window.handle, false)
         window.monitor := monitor
         window.workspace := workspace
@@ -430,6 +473,4 @@ class MiguruWM extends WMEvents {
         window := this._managed[hwnd]
         window.workspace.Remove(hwnd, false)
     }
-
-
 }
