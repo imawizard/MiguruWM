@@ -193,24 +193,36 @@ class WorkspaceList {
 
             trace(() => ["Disappeared: {} {}", window.type, WinInfo(hwnd)])
 
+            next := ""
             if window.type == TILED {
                 this._removeTiled(window)
-                if focus && this._mruTile {
-                    WinActivate("ahk_id" this._mruTile.data)
+
+                if this._mruTile {
+                    next := this._mruTile.data
+                } else if this._floating.Length > 0 {
+                    next := this._floating[1]
                 }
-                return true
             } else if window.type == FLOATING {
                 this._removeFloating(window)
-                if focus {
-                    next := Min(window.index, this._floating.Length)
-                    if next {
-                        WinActivate("ahk_id" this._floating[next])
-                    } else if this._mruTile {
-                        WinActivate("ahk_id" this._mruTile.data)
-                    }
+
+                idx := Min(window.index, this._floating.Length)
+                if idx > 0 {
+                    next := this._floating[idx]
+                } else if this._mruTile {
+                    next := this._mruTile.data
                 }
-                return true
+            } else {
+                return false
             }
+
+            if hwnd == this._active {
+                this._active := next
+            }
+            if focus && next {
+                this._focusWindow(next)
+            }
+
+            return true
         }
 
         _removeTiled(window) {
@@ -245,6 +257,31 @@ class WorkspaceList {
                     ;; Do nothing
                 }
             }
+        }
+
+        _focusWindow(hwnd) {
+            try {
+                WinActivate("ahk_id" hwnd)
+
+                if this._opts.mouseFollowsFocus {
+                    old := SetDpiAwareness(DPI_PMv2)
+                    WinGetPos(&left, &top, &width, &height, "ahk_id" hwnd)
+                    SetDpiAwareness(old)
+
+                    old := A_CoordModeMouse
+                    CoordMode("Mouse", "Screen")
+                    MouseMove(left + width // 2, top + height // 2, 0)
+                    CoordMode("Mouse", old)
+                }
+                return true
+            } catch TargetError {
+                warn("Lost window while trying to focus it {}", WinInfo(hwnd))
+                this.Remove(hwnd)
+            } catch OSError as err {
+                warn("Removing window ({}): {}", WinInfo(hwnd), err.Message)
+                this.Remove(hwnd)
+            }
+            return false
         }
 
         _nextWindow() {
@@ -293,25 +330,34 @@ class WorkspaceList {
                 hwnd := this._previousWindow()
             case "master":
                 hwnd := this._tiled.First.data
+            case "active":
+                hwnd := this._active
             default:
                 throw "Incorrect focus target: " target
             }
 
             if !hwnd {
-                if this._active && this._active == WinExist("A") {
-                    ;; If e.g. the currently active window is unmanaged,
-                    ;; this._active still holds the last active window for the
-                    ;; workspace, so just focus that.
-                    info("Focus window #{} which was last active", hwnd)
-                    WinActivate("ahk_id" this._active)
+                if this._active {
+                    if this._active == WinExist("A") {
+                        ;; If e.g. the currently active window is unmanaged,
+                        ;; this._active still holds the last active window for the
+                        ;; workspace, so just focus that.
+                        info("Focus window #{} which was last active", hwnd)
+                    } else {
+                        warn("Focus window #{} which was last active but is inactive now",
+                            hwnd)
+                    }
+                    this._focusWindow(this._active)
                 } else {
-                    info("Nothing to focus")
+                    warn("Nothing to focus")
                 }
                 return
             }
 
             info("Focus window #{}", hwnd)
-            WinActivate("ahk_id" hwnd)
+            if !this._focusWindow(hwnd) {
+                return
+            }
 
             t := this._windows[hwnd]
             if t.type == TILED {

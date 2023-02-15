@@ -22,6 +22,8 @@ WS_EX_STATICEDGE    := 0x00020000
 WS_EX_APPWINDOW     := 0x00040000
 WS_EX_LAYERED       := 0x00080000
 
+WM_QUIT := 0x012
+
 WM_SYSCOMMAND := 0x112
 SC_MOVE       := 0xf010
 SC_SIZE       := 0xf000
@@ -36,6 +38,10 @@ VK_DOWN  := 0x28
 
 ERROR_ACCESS_DENIED     := 5
 ERROR_INVALID_PARAMETER := 87
+
+CTRL_C_EVENT     := 0
+CTRL_BREAK_EVENT := 1
+CTRL_CLOSE_EVENT := 2
 
 DetectHiddenWindows(true)
 
@@ -54,10 +60,13 @@ class MiguruWM extends WMEvents {
             floatingAlwaysOnTop: false,
             nativeMaximize: false,
 
+            focusFollowsMouse: false,
+            mouseFollowsFocus: false,
+
             delays: {
                 windowHidden: 400,
                 onDisplayChange: 1000,
-                sendMonitorRetile: 10,
+                sendMonitorRetile: 100,
             },
         }, opts)
 
@@ -66,9 +75,21 @@ class MiguruWM extends WMEvents {
         this._managed := Map()
         this._delayed := Timeouts()
 
+        windowTracking := GetSpiInt(SPI_GETACTIVEWINDOWTRACKING)
+        if windowTracking !== this._opts.focusFollowsMouse {
+            this._oldFFM := windowTracking
+            SetSpiInt(SPI_SETACTIVEWINDOWTRACKING, this._opts.focusFollowsMouse)
+        }
+
         super.__New()
         this._initWithCurrentDesktopAndWindows()
         MiguruAPI.Init(this)
+    }
+
+    __Delete() {
+        if this.HasProp("_oldFFM") {
+            SetSpiInt(SPI_SETACTIVEWINDOWTRACKING, this._oldFFM)
+        }
     }
 
     Options => ObjClone(this._opts)
@@ -210,6 +231,31 @@ class MiguruWM extends WMEvents {
             return this._workspaces[monitor, wsIdx]
         }
 
+        focusMonitor(monitor) {
+            ws := this._workspaces[monitor, this.activeWsIdx]
+            if ws.WindowCount > 0 {
+                ws.Focus("active")
+            } else {
+                ;; If there is no tile associated, focus the monitor by
+                ;; activating its taskbar.
+                taskbar := monitor.Taskbar()
+                if !taskbar {
+                    warn("Can't focus monitor {} without a tile or a taskbar",
+                        index)
+                    return
+                }
+
+                WinActivate("ahk_id" taskbar)
+
+                ;; Also place the cursor in the middle of the specified
+                ;; screen for e.g. PowerToys Run.
+                old := A_CoordModeMouse
+                CoordMode("Mouse", "Screen")
+                MouseMove(monitor.Area.CenterX, monitor.Area.CenterY, 0)
+                CoordMode("Mouse", old)
+            }
+        }
+
         switch req.type {
         case "focus-monitor", "send-monitor":
             activeIdx := this.activeMonitor.Index
@@ -217,56 +263,46 @@ class MiguruWM extends WMEvents {
                 ? this._monitors.Primary.Index
                 : req.target > 0 ? req.target : activeIdx
             index += req.delta
-            if index < 1 || index > this._monitors.Count || index == activeIdx {
-                warn("Monitor {} is active or non-existent", index)
+
+            if index == activeIdx {
+                debug("Monitor #{} is already active", index)
+                return
+            } else if index < 1 || index > this._monitors.Count {
+                warn("Monitor index {} is invalid", index)
                 return
             }
 
             monitor := this._monitors.ByIndex(index)
             switch req.type {
             case "focus-monitor":
-                ws := this._workspaces[monitor, this.activeWsIdx]
-                if ws.MruTile {
-                    WinActivate("ahk_id" ws.MruTile.data)
-                } else {
-                    ;; If there is no tile associated, focus the monitor by
-                    ;; activating its taskbar.
-                    taskbar := monitor.Taskbar()
-                    if taskbar {
-                        WinActivate("ahk_id" taskbar)
-                    } else {
-                        warn("Can't focus monitor {} without a tile or a taskbar",
-                            index)
-                    }
-                }
+                focusMonitor(monitor)
 
             case "send-monitor":
                 window := this._managed.Get(WinExist("A"), 0)
                 if !window {
                     return
                 }
+
+                oldWs := window.workspace
                 ws := this._workspaces[monitor, this.activeWsIdx]
                 this._reassociate(window, monitor, ws)
 
                 ;; Retile again to mitigate cross-DPI issues.
                 this._delayed.Add(
-                    window.workspace.Retile.Bind(window.workspace),
+                    ws.Retile.Bind(ws),
                     this._opts.delays.sendMonitorRetile,
                     "send-monitor-retile",
                 )
 
-                if !req.follow {
-                    return
+                ;; The focus moved together with the active window to another
+                ;; monitor, so just update the active monitor if follow is true.
+                ;; Otherwise focus the recently left monitor again.
+                if req.follow {
+                    this.activeMonitor := monitor
+                } else {
+                    focusMonitor(this.activeMonitor)
                 }
-                this.activeMonitor := monitor
             }
-
-            ;; Also place the cursor in the middle of the specified screen for
-            ;; e.g. PowerToys Run.
-            old := A_CoordModeMouse
-            CoordMode("Mouse", "Screen")
-            MouseMove(monitor.Area.CenterX, monitor.Area.CenterY)
-            CoordMode("Mouse", old)
 
         case "focus-window":
             ws := this._workspaces[this.activeMonitor, this.activeWsIdx]
@@ -478,3 +514,20 @@ class MiguruWM extends WMEvents {
         window.workspace.Remove(hwnd, false)
     }
 }
+
+;; Post quit so the destructors get called which e.g. restore focus-follows-mouse.
+SignalHandler(event) {
+    switch event {
+    case CTRL_C_EVENT:
+        PostMessage(WM_QUIT, , , , "ahk_id" A_ScriptHwnd)
+        return true
+    }
+    return false
+}
+
+DllCall(
+    "SetConsoleCtrlHandler",
+    "UInt", CallbackCreate(SignalHandler, "F"),
+    "Int", true,
+    "Int",
+)
