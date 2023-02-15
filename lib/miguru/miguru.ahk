@@ -53,6 +53,12 @@ class MiguruWM extends WMEvents {
             tilingInsertion: "before-mru",
             floatingAlwaysOnTop: false,
             nativeMaximize: false,
+
+            delays: {
+                windowHidden: 400,
+                onDisplayChange: 1000,
+                sendMonitorRetile: 10,
+            },
         }, opts)
 
         this._monitors := MonitorList()
@@ -151,7 +157,7 @@ class MiguruWM extends WMEvents {
         switch event {
         case EV_DESKTOP_CHANGED:
             ;; Discard pending window removals.
-            this._delayed.Drop("hide")
+            this._delayed.Drop("window-hidden")
 
             debug(() => ["Active Desktop: {} -> {}",
                 this.VD.DesktopName(args.was), this.VD.DesktopName(args.now)])
@@ -243,8 +249,11 @@ class MiguruWM extends WMEvents {
                 this._reassociate(window, monitor, ws)
 
                 ;; Retile again to mitigate cross-DPI issues.
-                b := window.workspace.Retile.Bind(window.workspace)
-                this._delayed.Add(b, 10, "retile")
+                this._delayed.Add(
+                    window.workspace.Retile.Bind(window.workspace),
+                    this._opts.delays.sendMonitorRetile,
+                    "send-monitor-retile",
+                )
 
                 if !req.follow {
                     return
@@ -321,10 +330,11 @@ class MiguruWM extends WMEvents {
 
     _onDisplayChange(wait := true) {
         if wait {
-            this._delayed.Drop("monitor")
-
-            b := this._onDisplayChange.Bind(this, false)
-            this._delayed.Add(b, 1000, "monitor")
+            this._delayed.Replace(
+                this._onDisplayChange.Bind(this, false),
+                this._opts.delays.onDisplayChange,
+                "on-display-change",
+            )
             return
         }
 
@@ -456,10 +466,11 @@ class MiguruWM extends WMEvents {
         }
 
         if wait {
-            this._delayed.Drop("hide")
-
-            b := this._hide.Bind(this, event, hwnd, false)
-            this._delayed.Add(b, 400, "hide")
+            this._delayed.Replace(
+                this._hide.Bind(this, event, hwnd, false),
+                this._opts.delays.windowHidden,
+                "window-hidden",
+            )
             return
         }
 

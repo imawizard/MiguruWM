@@ -33,10 +33,13 @@ class VD {
         this.pinnedApps := VirtualDesktopPinnedApps(immersiveShell)
 
         if callback {
-            w := (fn, self, cb, args*) => fn.Call(ObjFromPtrAddRef(self), cb, args*)
-            w := w.Bind(this._eventListener, ObjPtr(this), callback)
-            listener := VirtualDesktopNotificationListener(w)
-            this.notificationService.Register(listener)
+            this.notificationService.Register(
+                VirtualDesktopNotificationListener(
+                    ((fn, self, cb, args*) =>
+                        fn.Call(ObjFromPtrAddRef(self), cb, args*))
+                    .Bind(this._eventListener, ObjPtr(this), callback)
+                )
+            )
         }
 
         this.MaxDesktops := maxDesktops

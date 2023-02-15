@@ -241,6 +241,12 @@ class Timeouts {
         entry.func.Call()
     }
 
+    Replace(func, delay, tag := "") {
+        dropped := this.Drop(tag)
+        this.Add(func, delay, tag)
+        return dropped
+    }
+
     Drop(tag := "") {
         dropped := []
         for k, v in this.timers {

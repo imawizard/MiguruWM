@@ -44,17 +44,22 @@ class ComObjectImpl {
         NumPut("Ptr", 0, vtable, (methods.Length + 1) * A_PtrSize)
 
         for i, name in methods {
-            ;; Swallows COM Objects' thisptr and restore `this` (ObjFromPtr
-            ;; takes ownership, so we increment the reference counter here).
-            w := (fn, self, thisptr, args*) => fn.Call(ObjFromPtrAddRef(self), args*)
-
             ;; Bind `method` instead of closing over it, because we're in a loop.
             method := this.%name%
             ;; Bind `this` without incrementing its reference counter.
             self := ObjPtr(this)
-            b := w.Bind(method, self)
 
-            callback := CallbackCreate(b, , method.MinParams)
+            callback := CallbackCreate(
+                ;; Transparently skip the COM object's `thisptr` and restore
+                ;; the AHK object's `this` (by using ObjFromPtrAddRef which
+                ;; also increments the object's reference counter, so it's not
+                ;; freed afterwards as ObjFromPtr* actually takes ownership).
+                ((fn, self, thisptr, args*) =>
+                    fn.Call(ObjFromPtrAddRef(self), args*))
+                .Bind(method, self),
+                "F", ; XXX: Is `fast` safe here?
+                method.MinParams,
+            )
             NumPut("Ptr", callback, vtable, i * A_PtrSize)
         }
         return vtable

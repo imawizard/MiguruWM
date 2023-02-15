@@ -79,8 +79,11 @@ class WMEvents {
     )
 
     __New() {
-        w := (fn, self, args*) => fn.Call(ObjFromPtrAddRef(self), args*)
-        this.msgproc := w.Bind(this._onMessage, ObjPtr(this))
+        this.msgproc :=
+            ((fn, self, args*) =>
+                fn.Call(ObjFromPtrAddRef(self), args*))
+            .Bind(this._onMessage, ObjPtr(this))
+
         this.msgs := [
             WM_EVENT,
             WM_REQUEST,
@@ -91,12 +94,16 @@ class WMEvents {
             OnMessage(msg, this.msgproc)
         }
 
-        w := (fn, self, args*) => fn.Call(ObjFromPtrAddRef(self), args*)
         method := this._windowEvListener
-        self := ObjPtr(this)
-        b := w.Bind(method, self)
-        callback := CallbackCreate(b, "F", method.MinParams - 1)
-        winEvHooks := WinEventHooks(callback)
+        winEvHooks := WinEventHooks(
+            CallbackCreate(
+                ((fn, self, args*) =>
+                    fn.Call(ObjFromPtrAddRef(self), args*))
+                .Bind(method, ObjPtr(this)),
+                "F", ; XXX: Is `fast` safe here?
+                method.MinParams - 1,
+            )
+        )
         winEvHooks.Register(EVENT_SYSTEM_FOREGROUND)
         winEvHooks.Register(EVENT_SYSTEM_MINIMIZESTART, EVENT_SYSTEM_MINIMIZEEND)
         winEvHooks.Register(EVENT_OBJECT_CREATE, EVENT_OBJECT_DESTROY)
@@ -106,9 +113,11 @@ class WMEvents {
         winEvHooks.Register(EVENT_SYSTEM_MOVESIZEEND)
         this.winEvHooks := winEvHooks
 
-        w := (fn, self, args*) => fn.Call(ObjFromPtrAddRef(self), args*)
-        b := w.Bind(this._desktopEvListener, ObjPtr(this))
-        this.VD := VD(b)
+        this.VD := VD(
+            ((fn, self, args*) =>
+                fn.Call(ObjFromPtrAddRef(self), args*))
+            .Bind(this._desktopEvListener, ObjPtr(this))
+        )
     }
 
     __Delete() {
