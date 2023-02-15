@@ -113,69 +113,66 @@ class MiguruWM extends WMEvents {
         case EV_WINDOW_SHOWN, EV_WINDOW_UNCLOAKED, EV_WINDOW_RESTORED, EV_WINDOW_REPOSITIONED:
             fallthrough:
 
+            ;; To not miss any windows that were already created and thus
+            ;; e.g. appear for the first time by unhiding instead of
+            ;; creation, add new windows on any event.
+            window := this._manage(hwnd)
+            if !window {
+                return
+            }
+
+            monitor := this._monitors.ByWindow(hwnd)
+            wsIdx := this.VD.DesktopByWindow(hwnd)
+            switch wsIdx {
+            case 0, VD_UNASSIGNED_WINDOW, VD_UNKNOWN_DESKTOP:
+                warn(() => ["Invalid desktop for managed window {}",
+                    WinInfo(hwnd)])
+            case VD_PINNED_APP, VD_PINNED_WINDOW:
+                if !this._pinned.Has(hwnd) {
+                    debug(() => ["Window got pinned {}", WinInfo(hwnd)])
+                    this._pinWindow(hwnd, window)
+                }
+            default:
+                if this._pinned.Has(hwnd) {
+                    debug(() => ["Window got unpinned {}", WinInfo(hwnd)])
+                    this._unpinWindow(hwnd, window, wsIdx)
+                }
+            }
+
+            ;; Adjust when a window changed desktop or monitor.
+            if monitor !== window.monitor ||
+                wsIdx > 0 && wsIdx !== window.workspace.Index {
+                idx := wsIdx > 0 ? wsIdx : this.activeWsIdx
+                ws := this._workspaces[monitor, idx]
+                this._reassociate(hwnd, window, monitor, ws)
+            }
+
             try {
-
-                ;; To not miss any windows that were already created and thus
-                ;; e.g. appear for the first time by unhiding instead of
-                ;; creation, add new windows on any event.
-                window := this._manage(hwnd)
-                if !window {
-                    return
-                }
-
-                monitor := this._monitors.ByWindow(hwnd)
-                wsIdx := this.VD.DesktopByWindow(hwnd)
-                switch wsIdx {
-                case 0, VD_UNASSIGNED_WINDOW, VD_UNKNOWN_DESKTOP:
-                    warn(() => ["Invalid desktop for managed window {}",
-                        WinInfo(hwnd)])
-                case VD_PINNED_APP, VD_PINNED_WINDOW:
-                    if !this._pinned.Has(hwnd) {
-                        debug(() => ["Window got pinned {}", WinInfo(hwnd)])
-                        this._pinWindow(hwnd, window)
-                    }
-                default:
-                    if this._pinned.Has(hwnd) {
-                        debug(() => ["Window got unpinned {}", WinInfo(hwnd)])
-                        this._unpinWindow(hwnd, window, wsIdx)
-                    }
-                }
-
-                ;; Adjust when a window changed desktop or monitor.
-                if monitor !== window.monitor ||
-                    wsIdx > 0 && wsIdx !== window.workspace.Index {
-                    idx := wsIdx > 0 ? wsIdx : this.activeWsIdx
-                    ws := this._workspaces[monitor, idx]
-                    this._reassociate(hwnd, window, monitor, ws)
-                }
-
                 if WinGetMinMax("ahk_id" hwnd) < 0 {
                     return
                 }
+            } catch as err {
+                warn("Dropping window: {} {}",
+                    err.Message, WinInfo(hwnd))
+                this._drop(hwnd)
+                return
+            }
 
-                ws := window.workspace
-                if !ws.AddIfNew(hwnd) {
-                    switch event {
-                    case EV_WINDOW_FOCUSED:
-                        debug(() => ["Focused: D={} WS={} {}",
-                            monitor.Index, wsIdx, WinInfo(hwnd)])
+            ws := window.workspace
+            if !ws.AddIfNew(hwnd) {
+                switch event {
+                case EV_WINDOW_FOCUSED:
+                    debug(() => ["Focused: D={} WS={} {}",
+                        monitor.Index, wsIdx, WinInfo(hwnd)])
 
-                        ws.ActiveWindow := hwnd
+                    ws.ActiveWindow := hwnd
 
-                    case EV_WINDOW_REPOSITIONED:
-                        debug(() => ["Repositioned: D={} WS={} {}",
-                            monitor.Index, wsIdx, WinInfo(hwnd)])
+                case EV_WINDOW_REPOSITIONED:
+                    debug(() => ["Repositioned: D={} WS={} {}",
+                        monitor.Index, wsIdx, WinInfo(hwnd)])
 
-                        ws.Retile()
-                    }
+                    ws.Retile()
                 }
-
-            } catch TargetError {
-                warn("Lost window while trying to manage it {}", WinInfo(hwnd))
-                this._drop(hwnd)
-            } catch OSError as err {
-                warn("Dropping window ({}): {}", WinInfo(hwnd), err.Message)
-                this._drop(hwnd)
             }
 
         case EV_WINDOW_HIDDEN, EV_WINDOW_CLOAKED, EV_WINDOW_MINIMIZED:
@@ -468,23 +465,32 @@ class MiguruWM extends WMEvents {
             }
         }
 
-        style := WinGetStyle("ahk_id" hwnd)
-        if style & WS_CAPTION == 0 {
-            trace(() => ["Ignoring: no titlebar WS={} {}",
-                ws.Index, WinInfo(hwnd)])
+        try {
+            ;; Throws if window needs elevated access.
+            WinGetProcessName("ahk_id" hwnd)
+
+            style := WinGetStyle("ahk_id" hwnd)
+            if style & WS_CAPTION == 0 {
+                trace(() => ["Ignoring: no titlebar WS={} {}",
+                    ws.Index, WinInfo(hwnd)])
+                return ""
+            } else if style & WS_VISIBLE == 0 || IsWindowCloaked(hwnd) {
+                trace(() => ["Ignoring: hidden WS={} {}",
+                    ws.Index, WinInfo(hwnd)])
+                return ""
+            } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_IGNORE") {
+                trace(() => ["Ignoring: ahk_group WS={} {}",
+                    ws.Index, WinInfo(hwnd)])
+                return ""
+            }
+        } catch TargetError {
+            warn(() => ["Lost window while trying to manage it: {}",
+                WinInfo(hwnd)])
             return ""
-        } else if style & WS_VISIBLE == 0 || IsWindowCloaked(hwnd) {
-            trace(() => ["Ignoring: hidden WS={} {}",
-                ws.Index, WinInfo(hwnd)])
-            return ""
-        } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_IGNORE") {
-            trace(() => ["Ignoring: ahk_group WS={} {}",
-                ws.Index, WinInfo(hwnd)])
+        } catch OSError as err {
+            warn(() => ["Failed to manage: {} {}", err.Message, WinInfo(hwnd)])
             return ""
         }
-
-        ;; Throws if window needs elevated access.
-        WinGetProcessName("ahk_id" hwnd)
 
         monitor := this._monitors.ByWindow(hwnd)
         ws := this._workspaces[monitor, !pinned ? wsIdx : this.activeWsIdx]

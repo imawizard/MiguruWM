@@ -130,7 +130,14 @@ class WorkspaceList {
 
                 shouldTile := false
             } else {
-                WinGetPos(, , &width, &height, "ahk_id" hwnd)
+                old := SetDpiAwareness(DPI_PMv2)
+                try {
+                    WinGetPos(, , &width, &height, "ahk_id" hwnd)
+                } catch {
+                    throw
+                } finally {
+                    SetDpiAwareness(old)
+                }
 
                 if this._opts.tilingMinWidth > 0 &&
                     width < this._opts.tilingMinWidth {
@@ -260,28 +267,23 @@ class WorkspaceList {
         }
 
         _focusWindow(hwnd) {
-            try {
-                WinActivate("ahk_id" hwnd)
+            WinActivate("ahk_id" hwnd)
 
-                if this._opts.mouseFollowsFocus {
-                    old := SetDpiAwareness(DPI_PMv2)
+            if this._opts.mouseFollowsFocus {
+                old := SetDpiAwareness(DPI_PMv2)
+                try {
                     WinGetPos(&left, &top, &width, &height, "ahk_id" hwnd)
+                } catch {
+                    throw
+                } finally {
                     SetDpiAwareness(old)
-
-                    old := A_CoordModeMouse
-                    CoordMode("Mouse", "Screen")
-                    MouseMove(left + width // 2, top + height // 2, 0)
-                    CoordMode("Mouse", old)
                 }
-                return true
-            } catch TargetError {
-                warn("Lost window while trying to focus it {}", WinInfo(hwnd))
-                this.Remove(hwnd)
-            } catch OSError as err {
-                warn("Removing window ({}): {}", WinInfo(hwnd), err.Message)
-                this.Remove(hwnd)
+
+                old := A_CoordModeMouse
+                CoordMode("Mouse", "Screen")
+                MouseMove(left + width // 2, top + height // 2, 0)
+                CoordMode("Mouse", old)
             }
-            return false
         }
 
         _nextWindow() {
@@ -453,8 +455,22 @@ class WorkspaceList {
                 this._tiled.Count, this._opts.layout)
 
             old := SetDpiAwareness(DPI_PMv2)
-            this._retile()
-            SetDpiAwareness(old)
+            try {
+                this._retile()
+            } catch WorkspaceList.Workspace.WindowError as err {
+                warn("Removing window: {} {}",
+                    err.cause.Message, WinInfo(err.hwnd))
+                this.Remove(err.hwnd, false)
+            } finally {
+                SetDpiAwareness(old)
+            }
+        }
+
+        class WindowError {
+            __New(hwnd, err) {
+                this.hwnd := hwnd
+                this.cause := err
+            }
         }
 
         _moveWindow(hwnd, x, y, width, height) {
@@ -512,19 +528,16 @@ class WorkspaceList {
                 ) {
                     warn("SetWindowPos failed for hwnd 0x{:08x} with x={:.2f} y={:.2f} width={:.2f} height={:.2f}",
                         hwnd, x, y, width, height)
-                }
-
-                if awareness !== "" {
-                    SetDpiAwareness(awareness)
+                } else if awareness !== "" {
                     debug("SetWindowPos(0x{:08x}) to x={:.2f} y={:.2f} width={:.2f} height={:.2f}",
                         hwnd, x, y, width, height)
                 }
-            } catch TargetError {
-                warn("Lost window while trying to position it {}", WinInfo(hwnd))
-                this.Remove(hwnd)
-            } catch OSError as err {
-                warn("Removing window ({}): {}", WinInfo(hwnd), err.Message)
-                this.Remove(hwnd)
+            } catch {
+                throw
+            } finally {
+                if awareness !== "" {
+                    SetDpiAwareness(awareness)
+                }
             }
         }
 
@@ -571,19 +584,25 @@ class WorkspaceList {
             height := Round((totalHeight - spacing * Max(count - 2, 0)) / count)
             y := startY
 
-            Loop count {
-                bounds := ExtendedFrameBounds(tile.data)
-                trace(() => ["ExtendedFrameBounds(0x{:08x}) are {}",
-                    tile.data, StringifySL(bounds)])
-                this._moveWindow(
-                    tile.data,
-                    x - bounds.left,
-                    y - bounds.top,
-                    totalWidth + bounds.left + bounds.right,
-                    height + bounds.top + bounds.bottom - spacing,
-                )
-                y += height + spacing
-                tile := tile.next
+            try {
+                Loop count {
+                    bounds := ExtendedFrameBounds(tile.data)
+                    debug(() => ["ExtendedFrameBounds({}) are {}",
+                        tile.data, StringifySL(bounds)])
+                    this._moveWindow(
+                        tile.data,
+                        x - bounds.left,
+                        y - bounds.top,
+                        totalWidth + bounds.left + bounds.right,
+                        height + bounds.top + bounds.bottom - spacing,
+                    )
+                    y += height + spacing
+                    tile := tile.next
+                }
+            } catch TargetError as err {
+                throw WorkspaceList.Workspace.WindowError(tile.data, err)
+            } catch OSError as err {
+                throw WorkspaceList.Workspace.WindowError(tile.data, err)
             }
             return tile
         }
@@ -631,19 +650,25 @@ class WorkspaceList {
             width := Round((totalWidth - spacing * Max(count - 2, 0)) / count)
             x := startX
 
-            Loop count {
-                bounds := ExtendedFrameBounds(tile.data)
-                trace(() => ["ExtendedFrameBounds(0x{:08x}) are {}",
-                    tile.data, StringifySL(bounds)])
-                this._moveWindow(
-                    tile.data,
-                    x - bounds.left,
-                    y - bounds.top,
-                    width + bounds.left + bounds.right - spacing,
-                    totalHeight + bounds.top + bounds.bottom,
-                )
-                x += width + spacing
-                tile := tile.next
+            try {
+                Loop count {
+                    bounds := ExtendedFrameBounds(tile.data)
+                    trace(() => ["ExtendedFrameBounds(0x{:08x}) are {}",
+                        tile.data, StringifySL(bounds)])
+                    this._moveWindow(
+                        tile.data,
+                        x - bounds.left,
+                        y - bounds.top,
+                        width + bounds.left + bounds.right - spacing,
+                        totalHeight + bounds.top + bounds.bottom,
+                    )
+                    x += width + spacing
+                    tile := tile.next
+                }
+            } catch TargetError as err {
+                throw WorkspaceList.Workspace.WindowError(tile.data, err)
+            } catch OSError as err {
+                throw WorkspaceList.Workspace.WindowError(tile.data, err)
             }
             return tile
         }

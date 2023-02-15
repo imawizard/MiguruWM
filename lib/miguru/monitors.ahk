@@ -41,7 +41,15 @@ class MonitorList {
             )
             SetTitleMatchMode(old)
             for hwnd in taskbars {
-                WinGetPos(&x, &y, , , "ahk_id" hwnd)
+                old := SetDpiAwareness(DPI_PMv2)
+                try {
+                    WinGetPos(&x, &y, , , "ahk_id" hwnd)
+                } catch {
+                    throw
+                } finally {
+                    SetDpiAwareness(old)
+                }
+
                 if x == this._area.left && y == this._area.top {
                     return hwnd
                 }
@@ -157,23 +165,28 @@ class MonitorList {
         NumPut("UInt", info.Size, info)
 
         old := SetDpiAwareness(DPI_PMv2)
-        DllCall(
-            "GetMonitorInfo",
-            "Ptr", handle,
-            "Ptr", info,
-            "Int",
-        )
+        try {
+            DllCall(
+                "GetMonitorInfo",
+                "Ptr", handle,
+                "Ptr", info,
+                "Int",
+            )
 
-        monitorDPI := 0
-        DllCall(
-            "shcore.dll\GetDpiForMonitor",
-            "Ptr", handle,
-            "UInt", MDT_EFFECTIVE_DPI,
-            "UInt*", &monitorDPI,
-            "UInt*", 0,
-            "HRESULT",
-        )
-        SetDpiAwareness(old)
+            monitorDPI := 0
+            DllCall(
+                "shcore.dll\GetDpiForMonitor",
+                "Ptr", handle,
+                "UInt", MDT_EFFECTIVE_DPI,
+                "UInt*", &monitorDPI,
+                "UInt*", 0,
+                "HRESULT",
+            )
+        } catch {
+            throw
+        } finally {
+            SetDpiAwareness(old)
+        }
 
         monitors.Push(MonitorList.Monitor(
             handle,
