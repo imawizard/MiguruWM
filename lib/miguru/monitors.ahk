@@ -36,21 +36,22 @@ class MonitorList {
             old := A_TitleMatchMode
             SetTitleMatchMode("RegEx")
             taskbars := WinGetList(
-                " ahk_exe explorer.exe"
-                " ahk_class ^Shell_(Secondary)?TrayWnd$"
+                "ahk_exe explorer.exe ahk_class ^Shell_(Secondary)?TrayWnd$"
             )
             SetTitleMatchMode(old)
+
             for hwnd in taskbars {
                 old := SetDpiAwareness(DPI_PMv2)
                 try {
-                    WinGetPos(&x, &y, , , "ahk_id" hwnd)
+                    WinGetPos(&x, &y, &width, &height, "ahk_id" hwnd)
                 } catch {
                     throw
                 } finally {
                     SetDpiAwareness(old)
                 }
 
-                if x == this._area.left && y == this._area.top {
+                if x >= this._area.Left && x + width <= this._area.Right &&
+                    y >= this._area.Top && y + height <= this._area.Bottom {
                     return hwnd
                 }
             }

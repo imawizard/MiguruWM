@@ -237,7 +237,7 @@ class MiguruWM extends WMEvents {
             monitor := this.activeMonitor
             if req.HasProp("monitor") && req.monitor {
                 if req.monitor == "primary" {
-                    monitor := this.activeMonitor
+                    monitor := this._monitors.Primary
                 } else if req.monitor > 0 && req.monitor <= 4 {
                     monitor := this._monitors.ByIndex(req.monitor)
                 } else {
