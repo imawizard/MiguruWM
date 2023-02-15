@@ -7,6 +7,12 @@ class IApplicationView_19044 extends IInspectable {
         "GetThumbnailWindow",
         "GetMonitor",
         "GetVisibility",
+        "SetCloak",
+        "GetPosition",
+        "SetPosition",
+        "InsertAfterWindow",
+        "GetExtendedFramePosition",
+        "GetAppUserModelId",
     ]
 
     SetFocus() {
@@ -53,6 +59,15 @@ class IApplicationView_19044 extends IInspectable {
             "HRESULT",
         )
         return visible > 0
+    }
+
+    GetAppUserModelId() {
+        appId := ""
+        this._funcs["GetAppUserModelId"](
+            "Str*", &appId,
+            "UInt",
+        )
+        return appId
     }
 }
 

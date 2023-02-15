@@ -19,7 +19,7 @@ class IObjectArray extends IUnknown {
     GetAt(out, index) {
         this._funcs["GetAt"](
             "UInt", index - 1,
-            "Ptr", IObjectArray.IID_Unknown,
+            "Str", IObjectArray.IID_Unknown,
             "Ptr*", out,
             "HRESULT",
         )

@@ -73,6 +73,7 @@ class MiguruWM extends WMEvents {
         this._monitors := MonitorList()
         this._workspaces := WorkspaceList(this._monitors, ObjClone(this._opts))
         this._managed := Map()
+        this._pinned := Map()
         this._delayed := Timeouts()
 
         windowTracking := GetSpiInt(SPI_GETACTIVEWINDOWTRACKING)
@@ -122,33 +123,50 @@ class MiguruWM extends WMEvents {
                     return
                 }
 
-                monitor := this._monitors.ByWindow(window.handle)
-                wsIdx := this.VD.DesktopByWindow(window.handle)
+                monitor := this._monitors.ByWindow(hwnd)
+                wsIdx := this.VD.DesktopByWindow(hwnd)
+                switch wsIdx {
+                case 0, VD_UNASSIGNED_WINDOW, VD_UNKNOWN_DESKTOP:
+                    warn(() => ["Invalid desktop for managed window {}",
+                        WinInfo(hwnd)])
+                case VD_PINNED_APP, VD_PINNED_WINDOW:
+                    if !this._pinned.Has(hwnd) {
+                        debug(() => ["Window got pinned {}", WinInfo(hwnd)])
+                        this._pinWindow(hwnd, window)
+                    }
+                default:
+                    if this._pinned.Has(hwnd) {
+                        debug(() => ["Window got unpinned {}", WinInfo(hwnd)])
+                        this._unpinWindow(hwnd, window, wsIdx)
+                    }
+                }
 
                 ;; Adjust when a window changed desktop or monitor.
                 if monitor !== window.monitor ||
                     wsIdx > 0 && wsIdx !== window.workspace.Index {
-                    ws := this._workspaces[monitor, wsIdx]
-                    this._reassociate(window, monitor, ws)
+                    idx := wsIdx > 0 ? wsIdx : this.activeWsIdx
+                    ws := this._workspaces[monitor, idx]
+                    this._reassociate(hwnd, window, monitor, ws)
                 }
 
-                if WinGetMinMax("ahk_id" window.handle) >= 0 {
-                    if !window.workspace.AddIfNew(window.handle) {
-                        switch event {
-                        case EV_WINDOW_FOCUSED:
-                            debug(() => ["Focused: {} D={} {}",
-                                this.VD.DesktopName(wsIdx), monitor.Index,
-                                WinInfo(window.handle)])
+                if WinGetMinMax("ahk_id" hwnd) < 0 {
+                    return
+                }
 
-                            window.workspace.ActiveWindow := window.handle
+                ws := window.workspace
+                if !ws.AddIfNew(hwnd) {
+                    switch event {
+                    case EV_WINDOW_FOCUSED:
+                        debug(() => ["Focused: D={} WS={} {}",
+                            monitor.Index, wsIdx, WinInfo(hwnd)])
 
-                        case EV_WINDOW_REPOSITIONED:
-                            debug(() => ["Repositioned: {} D={} {}",
-                                this.VD.DesktopName(wsIdx), monitor.Index,
-                                WinInfo(window.handle)])
+                        ws.ActiveWindow := hwnd
 
-                            window.workspace.Retile()
-                        }
+                    case EV_WINDOW_REPOSITIONED:
+                        debug(() => ["Repositioned: D={} WS={} {}",
+                            monitor.Index, wsIdx, WinInfo(hwnd)])
+
+                        ws.Retile()
                     }
                 }
 
@@ -184,6 +202,17 @@ class MiguruWM extends WMEvents {
                 this.VD.DesktopName(args.was), this.VD.DesktopName(args.now)])
 
             this.activeWsIdx := args.now
+
+            ;; Add pinned windows to the newly active workspace or retile.
+            if this._pinned.Count > 0 {
+                for k in this._pinned {
+                    window := this._managed[k]
+                    ws := this._workspaces[window.monitor, this.activeWsIdx]
+                    if !ws.AddIfNew(k) {
+                        ws.Retile()
+                    }
+                }
+            }
 
         case EV_DESKTOP_RENAMED:
             debug("Renamed Desktop #{}: `"{}`"", args.desktop, args.name)
@@ -278,14 +307,15 @@ class MiguruWM extends WMEvents {
                 focusMonitor(monitor)
 
             case "send-monitor":
-                window := this._managed.Get(WinExist("A"), 0)
+                hwnd := WinExist("A")
+                window := this._managed.Get(hwnd, 0)
                 if !window {
                     return
                 }
 
                 oldWs := window.workspace
                 ws := this._workspaces[monitor, this.activeWsIdx]
-                this._reassociate(window, monitor, ws)
+                this._reassociate(hwnd, window, monitor, ws)
 
                 ;; Retile again to mitigate cross-DPI issues.
                 this._delayed.Add(
@@ -408,34 +438,48 @@ class MiguruWM extends WMEvents {
     ;; been added yet.
     _manage(hwnd) {
         if this._managed.Has(hwnd) {
-            trace(() => ["Ignoring: already managed {} D={} {}",
-                this.VD.DesktopName(this._managed[hwnd].workspace.Index),
+            trace(() => ["Ignoring: already managed D={} WS={} {}",
                 this._managed[hwnd].monitor.Index,
+                this._managed[hwnd].workspace.Index,
                 WinInfo(hwnd)])
             return this._managed[hwnd]
         }
 
         wsIdx := this.VD.DesktopByWindow(hwnd)
+        pinned := false
         if !wsIdx {
             trace(() => ["Ignoring: unknown desktop {}", WinInfo(hwnd)])
             return ""
         } else if wsIdx < 0 {
-            debug(() => ["Desktop not yet assigned {}", WinInfo(hwnd)])
-            return ""
+            switch wsIdx {
+            case VD_UNASSIGNED_WINDOW:
+                debug(() => ["Desktop not yet assigned {}", WinInfo(hwnd)])
+                return ""
+            case VD_UNKNOWN_DESKTOP:
+                warn(() => ["Desktop {} is unknown: {}",
+                    this.VD.DesktopGUIDByWindow(hwnd), WinInfo(hwnd)])
+                return ""
+            case VD_PINNED_WINDOW:
+                info(() => ["window is pinned {}", WinInfo(hwnd)])
+                pinned := true
+            case VD_PINNED_APP:
+                info(() => ["app is pinned {}", WinInfo(hwnd)])
+                pinned := true
+            }
         }
 
         style := WinGetStyle("ahk_id" hwnd)
         if style & WS_CAPTION == 0 {
-            trace(() => ["Ignoring: no titlebar {} {}",
-                this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
+            trace(() => ["Ignoring: no titlebar WS={} {}",
+                ws.Index, WinInfo(hwnd)])
             return ""
         } else if style & WS_VISIBLE == 0 || IsWindowCloaked(hwnd) {
-            trace(() => ["Ignoring: hidden {} {}",
-                this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
+            trace(() => ["Ignoring: hidden WS={} {}",
+                ws.Index, WinInfo(hwnd)])
             return ""
         } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_IGNORE") {
-            trace(() => ["Ignoring: ahk_group {} {}",
-                this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
+            trace(() => ["Ignoring: ahk_group WS={} {}",
+                ws.Index, WinInfo(hwnd)])
             return ""
         }
 
@@ -443,20 +487,48 @@ class MiguruWM extends WMEvents {
         WinGetProcessName("ahk_id" hwnd)
 
         monitor := this._monitors.ByWindow(hwnd)
-        ws := this._workspaces[monitor, wsIdx]
+        ws := this._workspaces[monitor, !pinned ? wsIdx : this.activeWsIdx]
 
-        debug(() => ["Managing: {} D={} {}",
-            this.VD.DesktopName(ws.Index), monitor.Index,
-            WinInfo(hwnd)])
+        debug(() => ["Managing: D={} WS={} {}{}",
+            monitor.Index, ws.Index,
+            WinInfo(hwnd), pinned ? " (Pinned)" : ""])
 
         window := {
-            handle: hwnd,
             monitor: monitor,
             workspace: ws,
         }
         this._managed[hwnd] := window
 
+        if pinned {
+            this._pinWindow(hwnd, window)
+        }
         return window
+    }
+
+    _pinWindow(hwnd, window) {
+        window.DefineProp("workspace", {
+            Get: (self) => this._workspaces[self.monitor, this.activeWsIdx],
+            Set: (self, v) => self.DefineProp("workspace", { Value: v }),
+        })
+        this._pinned[hwnd] := true
+    }
+
+    _unpinWindow(hwnd, window, wsIdx := 0) {
+        debug(() => ["Unpinning window {}", WinInfo(hwnd)])
+
+        if wsIdx > 0 {
+            window.workspace := this._workspaces[window.monitor, wsIdx]
+        }
+        this._removePinnedWindow(hwnd, window, wsIdx)
+        this._pinned.Delete(hwnd)
+    }
+
+    _removePinnedWindow(hwnd, window, wsIdx := 0) {
+        for ws in this._workspaces {
+            if ws.Monitor !== window.monitor || ws.Index !== wsIdx {
+                ws.Remove(hwnd, false)
+            }
+        }
     }
 
     ;; When a window gets destroyed or accessing it results in a TargetError,
@@ -467,29 +539,35 @@ class MiguruWM extends WMEvents {
         }
 
         window := this._managed.Delete(hwnd)
-        window.workspace.Remove(hwnd)
-        monitorIdx := this._monitors.Has(window.monitor)
-            ? window.monitor.Index
-            : -1
+        if !this._pinned.Has(hwnd) {
+            window.workspace.Remove(hwnd)
+        } else {
+            this._unpinWindow(hwnd, window)
+        }
 
-        debug(() => ["Dropping: {} D={} {}",
-            this.VD.DesktopName(window.workspace.Index), monitorIdx,
-            WinInfo(hwnd)])
+        debug(() => ["Dropped: D={} WS={} {}",
+            window.monitor.Index, window.workspace.Index, WinInfo(hwnd)])
 
         return window
     }
 
     ;; Remove a window from its workspace and add it to another.
-    _reassociate(window, monitor, workspace) {
-        debug(() => ["Moved: {} D={} -> {} D={} - {}",
-            this.VD.DesktopName(window.workspace.Index), window.monitor.Index,
-            this.VD.DesktopName(workspace.Index), monitor.Index,
-            WinInfo(window.handle)])
+    _reassociate(hwnd, window, monitor, workspace) {
+        debug(() => ["Moved: D={} WS={} -> D={} WS={} - {}",
+            window.monitor.Index, window.workspace.Index,
+            monitor.Index, workspace.Index,
+            WinInfo(hwnd)])
 
-        window.workspace.Remove(window.handle, false)
-        window.monitor := monitor
-        window.workspace := workspace
-        workspace.AddIfNew(window.handle)
+        if !this._pinned.Has(hwnd) {
+            window.workspace.Remove(hwnd, false)
+            window.monitor := monitor
+            window.workspace := workspace
+            workspace.AddIfNew(hwnd)
+        } else {
+            window.monitor := monitor
+            this._removePinnedWindow(hwnd, window)
+            workspace.AddIfNew(hwnd)
+        }
     }
 
     ;; When a window vanishes, remove it from its previous workspace.
@@ -511,7 +589,11 @@ class MiguruWM extends WMEvents {
         }
 
         window := this._managed[hwnd]
-        window.workspace.Remove(hwnd, false)
+        if !this._pinned.Has(hwnd) {
+            window.workspace.Remove(hwnd, false)
+        } else {
+            this._removePinnedWindow(hwnd, window)
+        }
     }
 }
 

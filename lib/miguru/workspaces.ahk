@@ -448,8 +448,9 @@ class WorkspaceList {
                 return
             }
 
-            info("Retiling ({}, {}) tiles={} layout={}",
-                this._monitor.Index, this._index, this._tiled.Count, this._opts.layout)
+            info("Retiling... D={} WS={} T={} L={}",
+                this._monitor.Index, this._index,
+                this._tiled.Count, this._opts.layout)
 
             old := SetDpiAwareness(DPI_PMv2)
             this._retile()
@@ -692,7 +693,19 @@ class WorkspaceList {
     }
 
     __Enum(numberOfVars) {
-        return this._workspaces.__Enum(numberOfVars)
+        mapiter := this._workspaces.__Enum(2)
+        arriter := ""
+
+        iter(&v) {
+            if arriter && arriter(&idx, &v) {
+                return true
+            } else if !mapiter(&handle, &workspaces) {
+                return false
+            }
+            arriter := workspaces.__Enum(1)
+            return iter(&v)
+        }
+        return iter
     }
 
     Update(monitors) {

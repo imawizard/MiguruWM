@@ -1,3 +1,5 @@
+EmptyGUID := ParseGUID("{00000000-0000-0000-0000-000000000000}")
+
 ParseGUID(stringified) {
     guid := Buffer(16)
     DllCall(
@@ -6,7 +8,7 @@ ParseGUID(stringified) {
         "Ptr", guid,
         "HRESULT",
     )
-    return guid
+    return StrGet(guid, -guid.Size / 2, "utf-16")
 }
 
 StringifyGUID(guid) {

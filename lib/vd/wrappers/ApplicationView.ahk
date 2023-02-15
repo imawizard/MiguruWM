@@ -26,4 +26,8 @@ class ApplicationView extends InterfaceWrapper {
     GetVisibility() {
         return this.wrapped.GetVisibility()
     }
+
+    GetAppUserModelId() {
+        return this.wrapped.GetAppUserModelId()
+    }
 }

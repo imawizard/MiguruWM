@@ -21,7 +21,15 @@
 #include wrappers\VirtualDesktopNotificationService.ahk
 #include wrappers\VirtualDesktopPinnedApps.ahk
 
+VD_UNKNOWN_DESKTOP   := -1
+VD_UNASSIGNED_WINDOW := -2
+VD_PINNED_WINDOW     := -3
+VD_PINNED_APP        := -4
+
 class VD {
+    static windowIsPinnedDesktopGUID := ParseGUID("{C2DDEA68-66F2-4CF9-8264-1BFD00FBBBAC}")
+    static appIsPinnedDesktopGUID := ParseGUID("{BB64D5B7-4DE3-4AB2-A87C-DB7601AEA7DC}")
+
     __New(callback := "", maxDesktops := 20) {
         CLSID_ImmersiveShell := "{C2F03A33-21F5-47FA-B4BB-156362A2F239}"
         immersiveShell := ComObject(CLSID_ImmersiveShell, IUnknown.GUID)
@@ -148,6 +156,20 @@ class VD {
         return this._desktopIndexById(current.GetId())
     }
 
+    ;; Retrieves all desktops with their GUID and name.
+    AllDesktops() {
+        res := []
+        desktops := this.managerInternal.GetDesktops()
+        Loop desktops.GetCount() {
+            desktop := desktops.GetAt(A_Index)
+            res.Push({
+                guid: StringifyGUID(desktop.GetId()),
+                name: desktop.GetName() || "Desktop " A_Index
+            })
+        }
+        return res
+    }
+
     ;; Returns the 1-based index of the created desktop, or 0 on error.
     CreateDesktop() {
         desktops := this.managerInternal.GetDesktops()
@@ -181,6 +203,18 @@ class VD {
             }
         }
         return name
+    }
+
+    ;; Returns the GUID of a specific desktop, or the current one's if index is 0.
+    DesktopGUID(index := 0) {
+        if index < 0 {
+            return false
+        } else if index == 0 {
+            desktop := this.managerInternal.GetCurrentDesktop()
+        } else {
+            desktop := this._desktop(index, false)
+        }
+        return StringifyGUID(desktop.GetId())
     }
 
     ;; Renames a specific desktop by its 1-based index, or the current one if
@@ -251,18 +285,58 @@ class VD {
     }
 
     ;; Returns either the 1-based index of the desktop containing a specific
-    ;; window, 0 on error or -1 if the window is not assigned yet.
+    ;; window, or a value less than 1, while a return value of 0 means that the
+    ;; passed window wasn't found on any desktop or is non-existent and negative
+    ;; values are part of an enum.
     DesktopByWindow(hwnd) {
         try {
             guid := this.manager.GetWindowDesktopId(hwnd)
+            switch guid {
+            case EmptyGUID:
+                return VD_UNASSIGNED_WINDOW
+            case VD.windowIsPinnedDesktopGUID:
+                return VD_PINNED_WINDOW
+            case VD.appIsPinnedDesktopGUID:
+                return VD_PINNED_APP
+            }
             desktop := this._desktopIndexById(guid)
-            return desktop ? desktop : -1
+            return desktop ? desktop : VD_UNKNOWN_DESKTOP
         } catch OSError as err {
-            if err.Number !== E_ELEMENTNOTFOUND {
+            if err.Number !== E_ELEMENTNOTFOUND && err.Number !== E_INVALIDARG {
                 throw err
             }
             return 0
         }
+    }
+
+    ;; Returns the GUID of the desktop containing a specific window, or an empty
+    ;; string in case the window wasn't found on any or is non-existent.
+    DesktopGUIDByWindow(hwnd) {
+        try {
+            return StringifyGUID(this.manager.GetWindowDesktopId(hwnd))
+        } catch OSError as err {
+            if err.Number !== E_ELEMENTNOTFOUND && err.Number !== E_INVALIDARG {
+                throw err
+            }
+            return ""
+        }
+    }
+
+    ; Returns true if the specified window or all windows of the app the window
+    ; belongs to are pinned.
+    IsWindowPinned(hwnd) {
+        view := this.viewCollection.GetViewForHwnd(hwnd)
+        if !view.Ptr {
+            return false
+        } else if this.pinnedApps.IsViewPinned(view) {
+            return true
+        }
+
+        appId := view.GetAppUserModelId()
+        if !appId {
+            return false
+        }
+        return this.pinnedApps.IsAppIdPinned(appId)
     }
 
     ; ......................................................................}}}
