@@ -361,56 +361,56 @@ class MiguruWM extends WMEvents {
     ;; Add a window for which an event happened to the global list if it hasn't
     ;; been added yet.
     _manage(hwnd) {
-            if this._managed.Has(hwnd) {
-                trace(() => ["Ignoring: already managed {} D={} {}",
-                    this.VD.DesktopName(this._managed[hwnd].workspace.Index),
-                    this._managed[hwnd].monitor.Index,
-                    WinInfo(hwnd)])
-                return this._managed[hwnd]
-            }
-
-            wsIdx := this.VD.DesktopByWindow(hwnd)
-            if !wsIdx {
-                trace(() => ["Ignoring: unknown desktop {}", WinInfo(hwnd)])
-                return ""
-            } else if wsIdx < 0 {
-                debug(() => ["Desktop not yet assigned {}", WinInfo(hwnd)])
-                return ""
-            }
-
-            style := WinGetStyle("ahk_id" hwnd)
-            if style & WS_CAPTION == 0 {
-                trace(() => ["Ignoring: no titlebar {} {}",
-                    this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
-                return ""
-            } else if style & WS_VISIBLE == 0 || IsWindowCloaked(hwnd) {
-                trace(() => ["Ignoring: hidden {} {}",
-                    this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
-                return ""
-            } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_IGNORE") {
-                trace(() => ["Ignoring: ahk_group {} {}",
-                    this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
-                return ""
-            }
-
-            ;; Throws if window needs elevated access.
-            WinGetProcessName("ahk_id" hwnd)
-
-            monitor := this._monitors.ByWindow(hwnd)
-            ws := this._workspaces[monitor, wsIdx]
-
-            debug(() => ["Managing: {} D={} {}",
-                this.VD.DesktopName(ws.Index), monitor.Index,
+        if this._managed.Has(hwnd) {
+            trace(() => ["Ignoring: already managed {} D={} {}",
+                this.VD.DesktopName(this._managed[hwnd].workspace.Index),
+                this._managed[hwnd].monitor.Index,
                 WinInfo(hwnd)])
+            return this._managed[hwnd]
+        }
 
-            window := {
-                handle: hwnd,
-                monitor: monitor,
-                workspace: ws,
-            }
-            this._managed[hwnd] := window
+        wsIdx := this.VD.DesktopByWindow(hwnd)
+        if !wsIdx {
+            trace(() => ["Ignoring: unknown desktop {}", WinInfo(hwnd)])
+            return ""
+        } else if wsIdx < 0 {
+            debug(() => ["Desktop not yet assigned {}", WinInfo(hwnd)])
+            return ""
+        }
 
-            return window
+        style := WinGetStyle("ahk_id" hwnd)
+        if style & WS_CAPTION == 0 {
+            trace(() => ["Ignoring: no titlebar {} {}",
+                this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
+            return ""
+        } else if style & WS_VISIBLE == 0 || IsWindowCloaked(hwnd) {
+            trace(() => ["Ignoring: hidden {} {}",
+                this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
+            return ""
+        } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_IGNORE") {
+            trace(() => ["Ignoring: ahk_group {} {}",
+                this.VD.DesktopName(wsIdx), WinInfo(hwnd)])
+            return ""
+        }
+
+        ;; Throws if window needs elevated access.
+        WinGetProcessName("ahk_id" hwnd)
+
+        monitor := this._monitors.ByWindow(hwnd)
+        ws := this._workspaces[monitor, wsIdx]
+
+        debug(() => ["Managing: {} D={} {}",
+            this.VD.DesktopName(ws.Index), monitor.Index,
+            WinInfo(hwnd)])
+
+        window := {
+            handle: hwnd,
+            monitor: monitor,
+            workspace: ws,
+        }
+        this._managed[hwnd] := window
+
+        return window
     }
 
     ;; When a window gets destroyed or accessing it results in a TargetError,
