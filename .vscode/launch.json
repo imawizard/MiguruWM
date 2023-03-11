@@ -5,8 +5,8 @@
             "type": "autohotkey",
             "request": "launch",
             "name": "AutoHotkey Debugger",
-            "runtime": "${userHome}/scoop/apps/autohotkey2/current/AutoHotkey64.exe",
-            "program": "${workspaceFolder}/example.ahk",
+            "runtime": "${userHome}/scoop/shims/AutoHotkey.exe",
+            "program": "${workspaceFolder}/mwm.ahk",
             "env": {
                 "AHK_LOG": "info"
             },
@@ -16,12 +16,12 @@
             "type": "autohotkey",
             "request": "launch",
             "name": "AutoHotkey Debugger (trace)",
-            "runtime": "${userHome}/scoop/apps/autohotkey2/current/AutoHotkey64.exe",
-            "program": "${workspaceFolder}/example.ahk",
+            "runtime": "${userHome}/scoop/shims/AutoHotkey.exe",
+            "program": "${workspaceFolder}/mwm.ahk",
             "env": {
                 "AHK_LOG": "trace"
             },
-            "stopOnEntry": false,
+            "stopOnEntry": false
         }
     ]
 }
