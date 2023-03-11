@@ -143,7 +143,11 @@ class WMEvents {
         case WM_REQUEST:
             req := ObjFromPtr(wparam)
             debug(() => ["WM_REQUEST: {}", StringifySL(req)])
-            ret := this._onRequest(req)
+            try {
+                ret := this._onRequest(req)
+            } catch String as err {
+                warn("Request failed: " err)
+            }            
         case WM_DISPLAYCHANGE:
             debug("WM_DISPLAYCHANGE: lparam=0x{:08x} wparam=0x{:08x}",
                 lparam, wparam)

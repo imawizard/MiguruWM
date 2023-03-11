@@ -1,4 +1,3 @@
-#include api.ahk
 #include events.ahk
 #include monitors.ahk
 #include utils.ahk
@@ -46,6 +45,50 @@ CTRL_CLOSE_EVENT := 2
 DetectHiddenWindows(true)
 
 class MiguruWM extends WMEvents {
+    ;; The constructor accepts an object containing options. The defaults are:
+    ;;    #include lib\miguru\miguru.ahk
+    ;;
+    ;;    mwm := MiguruWM({
+    ;;        layout: "tall",
+    ;;        masterSize: 0.5,
+    ;;        masterCount: 1,
+    ;;        padding: 0,
+    ;;        spacing: 0,
+    ;;        tilingMinWidth: 0,
+    ;;        tilingMinHeight: 0,
+    ;;        tilingInsertion: "before-mru",
+    ;;        floatingAlwaysOnTop: false,
+    ;;        nativeMaximize: false,
+    ;;    })
+    ;;    mwm.FocusWindow("next")
+    ;;
+    ;; tilingMinWidth/tilingMinHeight
+    ;;   New windows are automatically tiled, except when their width or height is
+    ;;   smaller than the respective option or they fall into one of the groups
+    ;;   mentioned below, in which case they are floating.
+    ;; tilingInsertion
+    ;;   Specifies where new tiled windows are inserted. Possible values are:
+    ;;   - "first": a new window will become the new master window
+    ;;   - "last": it will become the last window in the secondary pane
+    ;;   - "before-mru": it will become the previous window of the most recently
+    ;;      used one, means FocusWindow("next") would focus that
+    ;;   - "after-mru": it will become the next window of the most recently used one
+    ;; nativeMaximize
+    ;;   If true, Windows are maximized in fullscreen-layout.
+    ;;
+    ;; There are two ahk window-groups:
+    ;;    GroupAdd("MIGURU_AUTOFLOAT", criteria)
+    ;;    GroupAdd("MIGURU_IGNORE", criteria)
+    ;;
+    ;; The first group floats all new windows that match the criteria of one entry.
+    ;; Floating windows won't get positioned or resized automatically like tiled
+    ;; windows. Also when iterating through the windows with FocusWindow(), they
+    ;; come after the tiled ones.
+    ;; New windows that match an entry of the second group won't be picked up. So
+    ;; they are neither moved/resized nor focused with FocusWindow().
+    ;;
+    ;; Additionally, mwm.VD is an instance of vd.ahk:
+    ;;    mwm.VD.RenameDesktop(mwm.VD.Count(), "Last Desktop")
     __New(opts := {}) {
         this._opts := ObjMerge({
             layout: "tall",
@@ -84,7 +127,73 @@ class MiguruWM extends WMEvents {
 
         super.__New()
         this._initWithCurrentDesktopAndWindows()
-        MiguruAPI.Init(this)
+    }
+
+    ;; Focuses a specific monitor which are ordered by coordinates.
+    ;;    Do("focus-monitor", { monitor: 2 })
+    ;;
+    ;; Moves the active window to another monitor's workspace.
+    ;;    Do("send-to-monitor", { monitor: 2[, follow: true] })
+    ;;
+    ;; Cycles through a workspace's windows.
+    ;;  hwnd can be specified as anchor. If not set, the starting point is the
+    ;;  workspace's active window, the most recently active tile or the first
+    ;;  floating window.
+    ;;    Do("focus-window", { target: "next" | "previous" | "master" })
+    ;;
+    ;; Swaps a tiled window with another one.
+    ;;  If hwnd is not specified, it defaults to WinExist("A").
+    ;;    Do("swap-window", { with: "next" | "previous" | "master" })
+    ;;
+    ;; Floats or tiles a specific window or the currently active one.
+    ;;    Do("float-window", { hwnd: WinExist("A"), value: "toggle" | true | false })
+    ;;
+    ;; Like Set(), monitor and workspace can be specified.
+    Do(what, opts := {}) {
+        PostMessage(WM_REQUEST, ObjPtrAddRef(ObjMerge({
+            type: what,
+        }, opts)), , , "ahk_id" A_ScriptHwnd)
+    }
+
+    ;; Sets the layout of a monitor's workspace
+    ;;    Set("layout", { value: "fullscreen" })
+    ;;
+    ;; Shrinks or expands the master pane
+    ;;    Set("master-size", { value: 3 })
+    ;;
+    ;; Changes the space to the border of the screen.
+    ;;    Set("padding", { value: 3 })
+    ;;
+    ;; Changes the gaps between windows.
+    ;;    Set("spacing", { value: 3 })
+    ;;
+    ;; Additional keys are
+    ;;  monitor: 2 | { anchor: "current" | "primary" | "first" | "last", offset: 3 }
+    ;;  workspace: 4 | { anchor: "current", offset: 3 }
+    ;;  delta: 0.01
+    Set(what, opts := {}) {
+        this.Do("set-" what, opts)
+    }
+
+    ;; Returns the number of windows that would be put into the master pane
+    ;;    Get("master-count", opts)
+    ;;
+    ;; Returns the current size of the master pane
+    ;;    Get("master-size", opts)
+    ;;
+    ;; Returns the space to the border of the screen
+    ;;    Get("padding", opts)
+    ;;
+    ;; Returns the gap between windows
+    ;;    Get("spacing", opts)
+    Get(what, opts := {}) {
+        res := SendMessage(WM_REQUEST, ObjPtrAddRef(ObjMerge({
+            type: "get-" what,
+        }, opts)), , , "ahk_id" A_ScriptHwnd)
+        if res <= 0 {
+            return res
+        }
+        return ObjFromPtr(res).value
     }
 
     __Delete() {
@@ -233,158 +342,160 @@ class MiguruWM extends WMEvents {
     }
 
     _onRequest(req) {
-        getWorkspace() {
-            monitor := this.activeMonitor
-            if req.HasProp("monitor") && req.monitor {
-                if req.monitor == "primary" {
-                    monitor := this._monitors.Primary
-                } else if req.monitor > 0 && req.monitor <= 4 {
-                    monitor := this._monitors.ByIndex(req.monitor)
-                } else {
-                    throw "Unexpected '" req.monitor "' as request.monitor"
+        getMonitor() {
+            idx := this.activeMonitor.Index
+            if req.HasProp("monitor") {
+                if req.monitor is Object {
+                    switch req.monitor.anchor {
+                    case "current":
+                        ;; Do nothing
+                    case "primary":
+                        idx := this._monitors.Primary.Index
+                    case "first":
+                        idx := 1
+                    case "last":
+                        idx := this._monitors.Count
+                    default:
+                        throw "Unexpected '" StringifySL(req.monitor) "' as request.monitor"
+                    }
+                    idx += req.HasProp("offset") ? req.offset : 0
+                } else if req.monitor {
+                    idx := req.monitor
                 }
             }
-
-            wsIdx := this.activeWsIdx
-            if req.HasProp("workspace") && req.workspace {
-                if req.workspace > 0 && req.workspace <= 20 {
-                    wsIdx := req.workspace
-                } else {
-                    throw "Unexpected '" req.workspace "' as request.workspace"
-                }
+            if idx > this._monitors.Count {
+                throw "Monitor " idx " doesn't exist"
             }
-
-            return this._workspaces[monitor, wsIdx]
+            return this._monitors.ByIndex(idx)
         }
 
-        focusMonitor(monitor) {
-            ws := this._workspaces[monitor, this.activeWsIdx]
-            if ws.WindowCount > 0 {
-                ws.Focus("active")
-            } else {
-                ;; If there is no tile associated, focus the monitor by
-                ;; activating its taskbar.
-                taskbar := monitor.Taskbar()
-                if !taskbar {
-                    warn("Can't focus monitor {} without a tile or a taskbar",
-                        index)
-                    return
+        getWorkspace(monitor := getMonitor()) {
+            idx := this.activeWsIdx
+            if req.HasProp("workspace") {
+                if req.workspace is Object {
+                    switch req.monitor.anchor {
+                    case "current":
+                        ;; Do nothing
+                    default:
+                        throw "Unexpected '" StringifySL(req.workspace) "' as request.workspace"
+                    }
+                    idx += req.HasProp("offset") ? req.offset : 0
+                } else if req.workspace {
+                    idx := req.workspace
                 }
-
-                WinActivate("ahk_id" taskbar)
-
-                ;; Also place the cursor in the middle of the specified
-                ;; screen for e.g. PowerToys Run.
-                old := A_CoordModeMouse
-                CoordMode("Mouse", "Screen")
-                MouseMove(monitor.Area.CenterX, monitor.Area.CenterY, 0)
-                CoordMode("Mouse", old)
             }
+            return this._workspaces[monitor, idx]
         }
 
         switch req.type {
-        case "focus-monitor", "send-monitor":
-            activeIdx := this.activeMonitor.Index
-            index := req.target == "primary"
-                ? this._monitors.Primary.Index
-                : req.target > 0 ? req.target : activeIdx
-            index += req.delta
+        case "focus-monitor":
+            getWorkspace().Focus()
 
-            if index == activeIdx {
-                debug("Monitor #{} is already active", index)
-                return
-            } else if index < 1 || index > this._monitors.Count {
-                warn("Monitor index {} is invalid", index)
+        case "send-to-monitor":
+            hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
+            window := this._managed.Get(hwnd, 0)
+            if !window {
                 return
             }
 
-            monitor := this._monitors.ByIndex(index)
-            switch req.type {
-            case "focus-monitor":
-                focusMonitor(monitor)
+            monitor := getMonitor()
+            newWs := getWorkspace(monitor)
+            oldWs := window.workspace
+            this._reassociate(hwnd, window, monitor, newWs)
 
-            case "send-monitor":
-                hwnd := WinExist("A")
-                window := this._managed.Get(hwnd, 0)
-                if !window {
-                    return
-                }
+            ;; Retile again to mitigate cross-DPI issues.
+            this._delayed.Add(
+                newWs.Retile.Bind(newWs),
+                this._opts.delays.sendMonitorRetile,
+                "send-monitor-retile",
+            )
 
-                oldWs := window.workspace
-                ws := this._workspaces[monitor, this.activeWsIdx]
-                this._reassociate(hwnd, window, monitor, ws)
-
-                ;; Retile again to mitigate cross-DPI issues.
-                this._delayed.Add(
-                    ws.Retile.Bind(ws),
-                    this._opts.delays.sendMonitorRetile,
-                    "send-monitor-retile",
-                )
-
-                ;; The focus moved together with the active window to another
-                ;; monitor, so just update the active monitor if follow is true.
-                ;; Otherwise focus the recently left monitor again.
-                if req.follow {
-                    this.activeMonitor := monitor
-                } else {
-                    focusMonitor(this.activeMonitor)
-                }
+            ;; The focus moved together with the active window to another
+            ;; monitor, so just update the active monitor if follow is true.
+            ;; Otherwise focus the recently left monitor again.
+            if req.HasProp("follow") && req.follow {
+                this.activeMonitor := monitor
+            } else {
+                ws := this._workspaces[this.activeMonitor, this.activeWsIdx]
+                ws.Focus(unset, unset, true)
             }
 
         case "focus-window":
-            ws := this._workspaces[this.activeMonitor, this.activeWsIdx]
-            ws.Focus(req.target)
+            ws := getWorkspace()
+            hwnd := req.HasProp("hwnd") ? req.hwnd : ""
+            ws.Focus(hwnd, req.target, this._opts.mouseFollowsFocus)
 
         case "swap-window":
             ws := getWorkspace()
-            ws.Swap(req.target)
+            hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
+            ws.Swap(hwnd, req.with)
 
         case "float-window":
-            ws := this._workspaces[this.activeMonitor, this.activeWsIdx]
+            ws := getWorkspace()
             ws.Float(req.hwnd, req.value)
 
-        case "layout":
+        case "get-layout":
+            return ObjPtrAddRef({ value: getWorkspace().Layout })
+        case "set-layout":
             ws := getWorkspace()
-            if !req.HasProp("value") {
-                return ObjPtrAddRef({ layout: ws.Layout })
-            }
             ws.Layout := req.value
 
-        case "master-count":
+        case "get-master-count":
+            return -getWorkspace().MasterCount
+        case "set-master-count":
             ws := getWorkspace()
             if req.HasProp("value") {
                 ws.MasterCount := req.value
-            } else if !req.HasProp("delta") {
-                return ws.MasterCount
+            } else if req.HasProp("delta") {
+                ws.MasterCount += req.delta
             }
-            ws.MasterCount += req.delta
 
-        case "master-size":
+        case "get-master-size":
+            return -getWorkspace().MasterSize
+        case "set-master-size":
             ws := getWorkspace()
             if req.HasProp("value") {
                 ws.MasterSize := req.value
-            } else if !req.HasProp("delta") {
-                return ws.MasterSize
+            } else if req.HasProp("delta") {
+                ws.MasterSize += req.delta
             }
-            ws.MasterSize += req.delta
 
-        case "padding":
+        case "get-padding":
+            return -getWorkspace().Padding
+        case "set-padding":
             ws := getWorkspace()
             if req.HasProp("value") {
                 ws.Padding := req.value
-            } else if !req.HasProp("delta") {
-                return ws.Padding
+            } else if req.HasProp("delta") {
+                ws.Padding += req.delta
             }
-            ws.Padding += req.delta
 
-        case "spacing":
+        case "get-spacing":
+            return -getWorkspace().Spacing
+        case "set-spacing":
             ws := getWorkspace()
             if req.HasProp("value") {
                 ws.Spacing := req.value
-            } else if !req.HasProp("delta") {
-                return ws.Spacing
+            } else if req.HasProp("delta") {
+                ws.Spacing += req.delta
             }
-            ws.Spacing += req.delta
+
+        case "get-monitor-info":
+            out := StrReplace(String(this._monitors), "`t", "  ")
+            if !Logger.Disabled {
+                debug(out)
+            } else {
+                MsgBox(out)
+            }
+
+        case "get-workspace-info":
+            ws := this._workspaces[this.activeMonitor, this.activeWsIdx]
+            out := StrReplace(String(ws), "`t", "  ")
+            if !Logger.Disabled {
+                debug(out)
+            } else {
+                MsgBox(out)
+            }
 
         default:
             throw "Unknown request: " req.type
@@ -532,7 +643,7 @@ class MiguruWM extends WMEvents {
     _removePinnedWindow(hwnd, window, wsIdx := 0) {
         for ws in this._workspaces {
             if ws.Monitor !== window.monitor || ws.Index !== wsIdx {
-                ws.Remove(hwnd, false)
+                ws.Remove(hwnd)
             }
         }
     }
@@ -546,7 +657,7 @@ class MiguruWM extends WMEvents {
 
         window := this._managed.Delete(hwnd)
         if !this._pinned.Has(hwnd) {
-            window.workspace.Remove(hwnd)
+            window.workspace.Remove(hwnd, true, this._opts.mouseFollowsFocus)
         } else {
             this._unpinWindow(hwnd, window)
         }
@@ -565,7 +676,7 @@ class MiguruWM extends WMEvents {
             WinInfo(hwnd)])
 
         if !this._pinned.Has(hwnd) {
-            window.workspace.Remove(hwnd, false)
+            window.workspace.Remove(hwnd)
             window.monitor := monitor
             window.workspace := workspace
             workspace.AddIfNew(hwnd)
@@ -596,7 +707,7 @@ class MiguruWM extends WMEvents {
 
         window := this._managed[hwnd]
         if !this._pinned.Has(hwnd) {
-            window.workspace.Remove(hwnd, false)
+            window.workspace.Remove(hwnd)
         } else {
             this._removePinnedWindow(hwnd, window)
         }

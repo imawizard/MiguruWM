@@ -10,6 +10,7 @@ A_IconTip := "「 Miguru Window Manager 」"
 GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Benachrichtigung ahk_exe Teams.exe")
 GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Notification ahk_exe Teams.exe")
 GroupAdd("MIGURU_AUTOFLOAT", "ahk_exe QuickLook.exe")
+GroupAdd("MIGURU_AUTOFLOAT", "ahk_class MsoSplash ahk_exe outlook.exe")
 
 mwm := MiguruWM({
     padding: 0,
@@ -22,35 +23,35 @@ mod1 := "Alt"
 
 #Hotif GetKeyState(mod1, "P") and !GetKeyState("Shift", "P")
 
-*1::mwm.FocusWorkspace(1)
-*2::mwm.FocusWorkspace(2)
-*3::mwm.FocusWorkspace(3)
-*4::mwm.FocusWorkspace(4)
-*5::mwm.FocusWorkspace(5)
-*6::mwm.FocusWorkspace(6)
-*7::mwm.FocusWorkspace(7)
-*8::mwm.FocusWorkspace(8)
-*9::mwm.FocusWorkspace(9)
+*1::mwm.VD.FocusDesktop(1)
+*2::mwm.VD.FocusDesktop(2)
+*3::mwm.VD.FocusDesktop(3)
+*4::mwm.VD.FocusDesktop(4)
+*5::mwm.VD.FocusDesktop(5)
+*6::mwm.VD.FocusDesktop(6)
+*7::mwm.VD.FocusDesktop(7)
+*8::mwm.VD.FocusDesktop(8)
+*9::mwm.VD.FocusDesktop(9)
 
-*w::mwm.FocusMonitor("primary", -1)
-*e::mwm.FocusMonitor("primary")
-*r::mwm.FocusMonitor("primary", +1)
+*w::mwm.Do("focus-monitor", { monitor: 1 })
+*e::mwm.Do("focus-monitor", { monitor: 2 })
+*r::mwm.Do("focus-monitor", { monitor: 3 })
 
-*j::mwm.FocusWindow("next")
-*k::mwm.FocusWindow("previous")
-*m::mwm.FocusWindow("master")
+*j::mwm.Do("focus-window", { target: "next"     })
+*k::mwm.Do("focus-window", { target: "previous" })
+*m::mwm.Do("focus-window", { target: "master"   })
 
-*h::mwm.SetMasterSize(, -0.01)
-*l::mwm.SetMasterSize(, +0.01)
+*l::mwm.Set("master-size", { delta:  0.01 })
+*h::mwm.Set("master-size", { delta: -0.01 })
 
-*,::mwm.SetMasterCount(, +1)
-*.::mwm.SetMasterCount(, -1)
+*,::mwm.Set("master-count", { delta:  1 })
+*.::mwm.Set("master-count", { delta: -1 })
 
-*t::mwm.FloatWindow(, false)
+*t::mwm.Do("float-window", { value: false })
 *p::OpenSearch()
 *q::Reload()
 
-*Enter::mwm.SwapWindow("master")
+*Enter::mwm.Do("swap-window", { with: "master" })
 *Space::CycleLayouts()
 
 *vk01::{
@@ -59,11 +60,11 @@ mod1 := "Alt"
         return
     }
     mwm.FloatWindow(hwnd)
-    PostMessage(WM_SYSCOMMAND, SC_MOVE, , , "ahk_id" hwnd)
-    PostMessage(WM_KEYDOWN, VK_LEFT, , , "ahk_id" hwnd)
-    PostMessage(WM_KEYUP, VK_LEFT, , , "ahk_id" hwnd)
-    PostMessage(WM_KEYDOWN, VK_RIGHT, , , "ahk_id" hwnd)
-    PostMessage(WM_KEYUP, VK_RIGHT, , , "ahk_id" hwnd)
+    PostMessage(WM_SYSCOMMAND, SC_MOVE,  , , "ahk_id" hwnd)
+    PostMessage(WM_KEYDOWN,    VK_LEFT,  , , "ahk_id" hwnd)
+    PostMessage(WM_KEYUP,      VK_LEFT,  , , "ahk_id" hwnd)
+    PostMessage(WM_KEYDOWN,    VK_RIGHT, , , "ahk_id" hwnd)
+    PostMessage(WM_KEYUP,      VK_RIGHT, , , "ahk_id" hwnd)
     KeyWait("vk01")
     Send("{vk01 Up}")
 }
@@ -74,33 +75,33 @@ mod1 := "Alt"
         return
     }
     mwm.FloatWindow(hwnd)
-    PostMessage(WM_SYSCOMMAND, SC_SIZE, , , "ahk_id" hwnd)
-    PostMessage(WM_KEYDOWN, VK_DOWN, , , "ahk_id" hwnd)
-    PostMessage(WM_KEYUP, VK_DOWN, , , "ahk_id" hwnd)
-    PostMessage(WM_KEYDOWN, VK_RIGHT, , , "ahk_id" hwnd)
-    PostMessage(WM_KEYUP, VK_RIGHT, , , "ahk_id" hwnd)
+    PostMessage(WM_SYSCOMMAND, SC_SIZE,  , , "ahk_id" hwnd)
+    PostMessage(WM_KEYDOWN,    VK_DOWN,  , , "ahk_id" hwnd)
+    PostMessage(WM_KEYUP,      VK_DOWN,  , , "ahk_id" hwnd)
+    PostMessage(WM_KEYDOWN,    VK_RIGHT, , , "ahk_id" hwnd)
+    PostMessage(WM_KEYUP,      VK_RIGHT, , , "ahk_id" hwnd)
     KeyWait("vk02")
     Send("{vk01 Up}")
 }
 
 #Hotif GetKeyState(mod1, "P") and GetKeyState("Shift", "P")
 
-*1::mwm.SendToWorkspace(1)
-*2::mwm.SendToWorkspace(2)
-*3::mwm.SendToWorkspace(3)
-*4::mwm.SendToWorkspace(4)
-*5::mwm.SendToWorkspace(5)
-*6::mwm.SendToWorkspace(6)
-*7::mwm.SendToWorkspace(7)
-*8::mwm.SendToWorkspace(8)
-*9::mwm.SendToWorkspace(9)
+*1::mwm.VD.SendWindowToDesktop(WinExist("A"), 1), mwm.VD.FocusDesktop(1)
+*2::mwm.VD.SendWindowToDesktop(WinExist("A"), 2), mwm.VD.FocusDesktop(2)
+*3::mwm.VD.SendWindowToDesktop(WinExist("A"), 3), mwm.VD.FocusDesktop(3)
+*4::mwm.VD.SendWindowToDesktop(WinExist("A"), 4), mwm.VD.FocusDesktop(4)
+*5::mwm.VD.SendWindowToDesktop(WinExist("A"), 5), mwm.VD.FocusDesktop(5)
+*6::mwm.VD.SendWindowToDesktop(WinExist("A"), 6), mwm.VD.FocusDesktop(6)
+*7::mwm.VD.SendWindowToDesktop(WinExist("A"), 7), mwm.VD.FocusDesktop(7)
+*8::mwm.VD.SendWindowToDesktop(WinExist("A"), 8), mwm.VD.FocusDesktop(8)
+*9::mwm.VD.SendWindowToDesktop(WinExist("A"), 9), mwm.VD.FocusDesktop(9)
 
-*w::mwm.SendToMonitor("primary", -1)
-*e::mwm.SendToMonitor("primary")
-*r::mwm.SendToMonitor("primary", +1)
+*w::mwm.Do("send-to-monitor", { monitor: 1 })
+*e::mwm.Do("send-to-monitor", { monitor: 2 })
+*r::mwm.Do("send-to-monitor", { monitor: 3 })
 
-*j::mwm.SwapWindow("next")
-*k::mwm.SwapWindow("previous")
+*j::mwm.Do("swap-window", { with: "next"     })
+*k::mwm.Do("swap-window", { with: "previous" })
 
 *c::WinClose("A")
 *q::ExitApp()
@@ -125,21 +126,22 @@ CycleLayouts() {
         m[l] := i
     }
 
-    current := mwm.Layout()
+    current := mwm.Get("layout")
     next := cycle[Mod(m[current], cycle.Length) + 1]
 
     TrayTip("Set layout to " next)
-    mwm.SetLayout(next)
+    mwm.Set("layout", { value: next })
 }
 
 ResetLayout() {
     defaults := mwm.Options
 
-    mwm.SetLayout(defaults.layout)
-    mwm.SetMasterSize(defaults.masterSize)
-    mwm.SetMasterCount(defaults.masterCount)
-    mwm.SetPadding(defaults.padding)
-    mwm.SetSpacing(defaults.spacing)
+    mwm.Set("layout", { value: defaults.layout })
+    mwm.Set("master-size", { value: defaults.masterSize })
+    mwm.Set("master-count", { value: defaults.masterCount })
+    mwm.Set("padding", { value: defaults.padding })
+    mwm.Set("spacing", { value: defaults.spacing })
+    TrayTip("Reset layout")
 }
 
 GetSHAppFolderPath(hwnd := 0) {

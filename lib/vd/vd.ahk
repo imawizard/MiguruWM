@@ -53,97 +53,6 @@ class VD {
         this.MaxDesktops := maxDesktops
     }
 
-    __Delete() {
-        this.notificationService.UnregisterAll()
-    }
-
-    _eventListener(callback, event, args) {
-        switch event {
-        case "desktop_changed":
-            callback.Call(event, {
-                now: this._desktopIndexById(args.now.GetId()),
-                was: this._desktopIndexById(args.was.GetId()),
-            })
-        case "desktop_renamed":
-            callback.Call(event, {
-                desktop: this._desktopIndexById(args.desktop.GetId()),
-                name: args.name,
-            })
-        case "desktop_created":
-            callback.Call(event, {
-                desktop: this._desktopIndexById(args.desktop.GetId()),
-            })
-        case "desktop_destroyed":
-            callback.Call(event, {
-                desktopId: args.desktop.GetId(),
-                fallback: this._desktopIndexById(args.fallback.GetId()),
-            })
-        case "desktop_destroy_begin":
-            callback.Call(event, {
-                desktopId: args.desktop.GetId(),
-                fallback: this._desktopIndexById(args.fallback.GetId()),
-            })
-        case "desktop_destroy_failed":
-            callback.Call(event, {
-                desktopId: args.desktop.GetId(),
-                fallback: this._desktopIndexById(args.fallback.GetId()),
-            })
-        case "view_changed":
-            callback.Call(event, {
-                view: args.view,
-            })
-        }
-    }
-
-    _desktop(index, ensure) {
-        if index < 1 {
-            return false
-        }
-
-        desktops := this.managerInternal.GetDesktops()
-        if index <= desktops.GetCount() {
-            return desktops.GetAt(index)
-        }
-
-        if !ensure {
-            return false
-        } else if index > this.MaxDesktops {
-            return false
-        }
-
-        last := false
-        Loop index - desktops.GetCount() {
-            last := this.managerInternal.CreateDesktop()
-        }
-        return last
-    }
-
-    _desktopIndexById(needle) {
-        desktops := this.managerInternal.GetDesktops()
-        Loop desktops.GetCount() {
-            desktop := desktops.GetAt(A_Index)
-            if desktop.GetId() == needle {
-                return A_Index
-            }
-        }
-        return 0
-    }
-
-    _sendWindowToDesktop(hwnd, index, ensure) {
-        view := this.viewCollection.GetViewForHwnd(hwnd)
-        if !view.Ptr {
-            return false
-        }
-        desktop := this._desktop(index, ensure)
-        if !desktop.Ptr {
-            return false
-        }
-        this.managerInternal.MoveViewToDesktop(view, desktop)
-        return desktop
-    }
-
-    ; API .................................................................{{{1
-
     ;; Returns the number of virtual desktops, or 0 on error.
     Count() {
         desktops := this.managerInternal.GetDesktops()
@@ -219,7 +128,7 @@ class VD {
 
     ;; Renames a specific desktop by its 1-based index, or the current one if
     ;; index is 0.
-    RenameDesktop(name, index := 0) {
+    RenameDesktop(index := 0, name := "") {
         if index < 0 {
             return false
         } else if index == 0 {
@@ -339,5 +248,92 @@ class VD {
         return this.pinnedApps.IsAppIdPinned(appId)
     }
 
-    ; ......................................................................}}}
+    __Delete() {
+        this.notificationService.UnregisterAll()
+    }
+
+    _eventListener(callback, event, args) {
+        switch event {
+        case "desktop_changed":
+            callback.Call(event, {
+                now: this._desktopIndexById(args.now.GetId()),
+                was: this._desktopIndexById(args.was.GetId()),
+            })
+        case "desktop_renamed":
+            callback.Call(event, {
+                desktop: this._desktopIndexById(args.desktop.GetId()),
+                name: args.name,
+            })
+        case "desktop_created":
+            callback.Call(event, {
+                desktop: this._desktopIndexById(args.desktop.GetId()),
+            })
+        case "desktop_destroyed":
+            callback.Call(event, {
+                desktopId: args.desktop.GetId(),
+                fallback: this._desktopIndexById(args.fallback.GetId()),
+            })
+        case "desktop_destroy_begin":
+            callback.Call(event, {
+                desktopId: args.desktop.GetId(),
+                fallback: this._desktopIndexById(args.fallback.GetId()),
+            })
+        case "desktop_destroy_failed":
+            callback.Call(event, {
+                desktopId: args.desktop.GetId(),
+                fallback: this._desktopIndexById(args.fallback.GetId()),
+            })
+        case "view_changed":
+            callback.Call(event, {
+                view: args.view,
+            })
+        }
+    }
+
+    _desktop(index, ensure) {
+        if index < 1 {
+            return false
+        }
+
+        desktops := this.managerInternal.GetDesktops()
+        if index <= desktops.GetCount() {
+            return desktops.GetAt(index)
+        }
+
+        if !ensure {
+            return false
+        } else if index > this.MaxDesktops {
+            return false
+        }
+
+        last := false
+        Loop index - desktops.GetCount() {
+            last := this.managerInternal.CreateDesktop()
+        }
+        return last
+    }
+
+    _desktopIndexById(needle) {
+        desktops := this.managerInternal.GetDesktops()
+        Loop desktops.GetCount() {
+            desktop := desktops.GetAt(A_Index)
+            if desktop.GetId() == needle {
+                return A_Index
+            }
+        }
+        return 0
+    }
+
+    _sendWindowToDesktop(hwnd, index, ensure) {
+        view := this.viewCollection.GetViewForHwnd(hwnd)
+        if !view.Ptr {
+            return false
+        }
+        desktop := this._desktop(index, ensure)
+        if !desktop.Ptr {
+            return false
+        }
+        this.managerInternal.MoveViewToDesktop(view, desktop)
+        return desktop
+    }
 }

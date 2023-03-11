@@ -163,7 +163,6 @@ class WorkspaceList {
             } else {
                 this._addFloating(hwnd)
             }
-            this._active := hwnd
             return true
         }
 
@@ -192,7 +191,7 @@ class WorkspaceList {
             WinSetAlwaysOnTop(this._opts.floatingAlwaysOnTop, "ahk_id" hwnd)
         }
 
-        Remove(hwnd, focus := true) {
+        Remove(hwnd, focus := false, mouseFollowsFocus := false) {
             window := this._windows.Get(hwnd, "")
             if !window {
                 return false
@@ -226,7 +225,7 @@ class WorkspaceList {
                 this._active := next
             }
             if focus && next {
-                this._focusWindow(next)
+                this._focusWindow(next, mouseFollowsFocus)
             }
 
             return true
@@ -266,10 +265,10 @@ class WorkspaceList {
             }
         }
 
-        _focusWindow(hwnd) {
+        _focusWindow(hwnd, mouseFollowsFocus) {
             WinActivate("ahk_id" hwnd)
 
-            if this._opts.mouseFollowsFocus {
+            if mouseFollowsFocus {
                 old := SetDpiAwareness(DPI_PMv2)
                 try {
                     WinGetPos(&left, &top, &width, &height, "ahk_id" hwnd)
@@ -286,8 +285,8 @@ class WorkspaceList {
             }
         }
 
-        _nextWindow() {
-            a := this._windows[this._active]
+        _nextWindow(from) {
+            a := this._windows[from]
             if a.type == TILED {
                 if a.node == this._tiled.Last && this._floating.Length > 0 {
                     return this._floating[1]
@@ -303,8 +302,8 @@ class WorkspaceList {
             }
         }
 
-        _previousWindow() {
-            a := this._windows[this._active]
+        _previousWindow(from) {
+            a := this._windows[from]
             if a.type == TILED {
                 if a.node == this._tiled.First && this._floating.Length > 0 {
                     return this._floating[this._floating.Length]
@@ -320,20 +319,45 @@ class WorkspaceList {
             }
         }
 
-        Focus(target) {
-            if this._windows.Count < 1 {
+        Focus(hwnd := "", target := "active", mouseFollowsFocus := false) {
+            if this.WindowCount < 1 {
+                ;; If there is no tile associated, focus the monitor by
+                ;; activating its taskbar.
+                monitor := this._monitor
+                taskbar := monitor.Taskbar()
+                if !taskbar {
+                    warn("Can't focus monitor {} without a tile or a taskbar",
+                        monitor.Index)
+                    return
+                }
+
+                WinActivate("ahk_id" taskbar)
+
+                if mouseFollowsFocus {
+                    ;; Also place the cursor in the middle of the specified
+                    ;; screen for e.g. PowerToys Run.
+                    old := A_CoordModeMouse
+                    CoordMode("Mouse", "Screen")
+                    MouseMove(monitor.Area.CenterX, monitor.Area.CenterY, 0)
+                    CoordMode("Mouse", old)
+                }
                 return
             }
 
+            anchor := this._active ||
+                this.mruTile && this.mruTile.data ||
+                this._floating.Get(1, "")
+
+            hwnd := ""
             switch target {
             case "next":
-                hwnd := this._nextWindow()
+                hwnd := this._nextWindow(anchor)
             case "previous":
-                hwnd := this._previousWindow()
+                hwnd := this._previousWindow(anchor)
             case "master":
                 hwnd := this._tiled.First.data
             case "active":
-                hwnd := this._active
+                hwnd := anchor
             default:
                 throw "Incorrect focus target: " target
             }
@@ -349,7 +373,7 @@ class WorkspaceList {
                         warn("Focus window #{} which was last active but is inactive now",
                             hwnd)
                     }
-                    this._focusWindow(this._active)
+                    this._focusWindow(this._active, mouseFollowsFocus)
                 } else {
                     warn("Nothing to focus")
                 }
@@ -357,31 +381,41 @@ class WorkspaceList {
             }
 
             info("Focus window #{}", hwnd)
-            if !this._focusWindow(hwnd) {
-                return
-            }
+            this._focusWindow(hwnd, mouseFollowsFocus)
 
             t := this._windows[hwnd]
             if t.type == TILED {
                 this._mruTile := t.node
-                if this._opts.layout == "fullscreen" {
+                if StrCompare(this._opts.layout, "fullscreen") == 0 {
                     this.Retile()
                 }
             }
         }
 
-        Swap(target) {
+        Swap(hwnd, with) {
             if this._tiled.Count < 2 {
                 return
             }
 
-            switch target {
+            target := this._mruTile
+            if hwnd {
+                window := this._windows.Get(hwnd, "")
+                if !window || window.type !== TILED {
+                    debug("Window #{} to swap not in workspace", hwnd)
+                    return
+                }
+                target := window.node
+            }
+
+            switch with {
             case "next":
-                this._tiled.Swap(this._mruTile, this._mruTile.next)
+                this._tiled.Swap(target, target.next)
             case "previous":
-                this._tiled.Swap(this._mruTile, this._mruTile.previous)
+                this._tiled.Swap(target, target.previous)
             case "master":
-                this._tiled.Swap(this._mruTile, this._tiled.First)
+                this._tiled.Swap(target, this._tiled.First)
+            default:
+                throw "Incorrect swap parameter: " with
             }
             this.Retile()
         }
@@ -460,7 +494,7 @@ class WorkspaceList {
             } catch WorkspaceList.Workspace.WindowError as err {
                 warn("Removing window: {} {}",
                     err.cause.Message, WinInfo(err.hwnd))
-                this.Remove(err.hwnd, false)
+                this.Remove(err.hwnd)
             } finally {
                 SetDpiAwareness(old)
             }
