@@ -103,11 +103,11 @@ class MonitorList {
     Primary => this._monitors[this._handles[this._primary]]
 
     ToString() {
-        return Stringify({
+        return Type(this) "(" SubStr(Stringify({
             Monitors: this._monitors,
             Count: this.Count,
             Primary: this._handles[this._primary],
-        })
+        }), 2, -1) ")"
     }
 
     __Enum(numberOfVars) {

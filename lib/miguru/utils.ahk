@@ -735,10 +735,12 @@ qsort(arr, fn := "asc") {
 ObjMerge(a, b) {
     c := {}
     for k, v in a.OwnProps() {
-        c.%k% := IsObject(v) ? ObjMerge({}, v) : v
+        c.%k% := Type(v) == "Object" ? ObjMerge({}, v) : v
     }
     for k, v in b.OwnProps() {
-        c.%k% := IsObject(v) ? ObjMerge(c.HasProp(k) && IsObject(c.%k%) ? c.%k% : {}, v) : v
+        c.%k% := Type(v) == "Object" ?
+            ObjMerge(c.HasProp(k) && Type(c.%k%) == "Object" ? c.%k% : {}, v) :
+            v
     }
     return c
 }
@@ -750,8 +752,14 @@ StringifySL(self) {
     s := StrReplace(s, "`n`t", ", ")
     s := StrReplace(s, "`n", "")
     s := StrReplace(s, "`t", "")
-    s := StrReplace(s, "{, ", "{")
+    s := StrReplace(s, "{, ", "{ ")
+    s := StrReplace(s, ", }", " }")
     s := StrReplace(s, "[, ", "[")
+    s := StrReplace(s, ", ]", "]")
+    s := StrReplace(s, "(, ", "(")
+    s := StrReplace(s, ", )", ")")
+    s := StrReplace(s, " {", "= {")
+    s := StrReplace(s, " [", "= [")
     return s
 }
 
@@ -795,7 +803,9 @@ Stringify(self, visited := Map()) {
             if v == "" {
                 continue
             } else if InStr(v, "`n") {
-                s .= "`n`t[" k "] " SubStr(RegExReplace(v, "m)^", "`t"), 2)
+                s .= "`n`t[" k "]"
+                s .= IsAlpha(SubStr(v, 1, 1)) ? " = " : " "
+                s .= SubStr(RegExReplace(v, "m)^", "`t"), 2)
             } else {
                 s .= "`n`t[" k "] = " v
             }
@@ -803,7 +813,7 @@ Stringify(self, visited := Map()) {
         s .= "`n}"
         return s
     } else if self is Object {
-        s := "{"
+        s := ""
         props := []
 
         for k in self.OwnProps() {
@@ -832,14 +842,18 @@ Stringify(self, visited := Map()) {
             if v == "" {
                 continue
             } else if InStr(v, "`n") {
-                s .= "`n`t" prop " " SubStr(RegExReplace(v, "m)^", "`t"), 2)
+                s .= "`n`t" prop
+                s .= IsAlpha(SubStr(v, 1, 1)) ? " = " : " "
+                s .= SubStr(RegExReplace(v, "m)^", "`t"), 2)
             } else {
                 s .= "`n`t" prop " = " v
             }
         }
 
-        s .= "`n}"
-        return s
+        if Type(self) !== "Object" {
+            return Type(self) "(" s "`n)"
+        }
+        return "{" s "`n}"
     } else {
         return "???"
     }
@@ -872,6 +886,23 @@ measure(cb, iterations := 1) {
         i++
     }
     return time(tc)
+}
+
+RemoveWinDecoration(hwnd) {
+    style := WinGetStyle("ahk_id" hwnd)
+    WinSetStyle(style & ~WS_DLGFRAME, "ahk_id" hwnd)
+
+    DllCall(
+        "SetWindowPos",
+        "Ptr", hwnd,
+        "Ptr", HWND_TOP,
+        "Int", 0,
+        "Int", 0,
+        "Int", 0,
+        "Int", 0,
+        "UInt", SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED,
+        "Int",
+    )
 }
 
 WinInfo(hwnd) {
