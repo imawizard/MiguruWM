@@ -508,12 +508,21 @@ class WorkspaceList {
         }
 
         _moveWindow(hwnd, x, y, width, height) {
+            bounds := ExtendedFrameBounds(hwnd)
+            info(() => ["ExtendedFrameBounds({}) are {}",
+                hwnd, StringifySL(bounds)])
+
+            x -= bounds.left
+            y -= bounds.top
+            width += bounds.left + bounds.right
+            height += bounds.top + bounds.bottom
+
             context := DllCall(
                 "GetWindowDpiAwarenessContext",
                 "Ptr", hwnd,
                 "Ptr",
             )
-            dpi := DllCall(
+            hwndDPI := DllCall(
                 "GetDpiFromDpiAwarenessContext",
                 "Ptr", context,
                 "UInt",
@@ -521,27 +530,50 @@ class WorkspaceList {
 
             ;; FIXME: Seemed to work at first, but apparently only for specific
             ;; combinations of monitor dpi, primary dpi and window dpi.
+            ;; There's also the case that an application doesn't react to system
+            ;; dpi changes, e.g. a system dpi-aware application creates a window
+            ;; with the system dpi being e.g. 120. Upon connecting an external
+            ;; display that is set up as primary the system dpi might change to
+            ;; e.g. 96 but the window still reports 120. When restarting the
+            ;; application, however, its window would report 96.
             awareness := ""
-            if dpi == A_ScreenDPI {
-                if this._monitor.DPI == dpi {
+            couldOverflow := false
+            if hwndDPI == A_ScreenDPI {
+                if this._monitor.DPI == A_ScreenDPI {
                     awareness := SetDpiAwareness(DPI_SYSAWARE)
-                    debug("Use DPI_SYSAWARE window={} monitor={} system={}",
-                        dpi, this._monitor.DPI, A_ScreenDPI)
                 } else {
-                    awareness := SetDpiAwareness(DPI_UNAWARE)
-                    debug("Use DPI_UNAWARE window={} monitor={} system={}",
-                        dpi, this._monitor.DPI, A_ScreenDPI)
-                }
-            } else if dpi !== 0 {
-                scale := this._monitor.DPI / dpi
-                x /= scale
-                y /= scale
-                width /= scale
-                height /= scale
+                    ;awareness := SetDpiAwareness(DPI_UNAWARE)
+                    couldOverflow := true
+              }
+            } else if hwndDPI !== 0 {
+                ;awareness := SetDpiAwareness(DPI_UNAWARE)
+                ;scale := this._monitor.DPI / hwndDPI
+                ;x /= scale
+                ;y /= scale
+                ;width /= scale
+                ;height /= scale
+                couldOverflow := true
+            }
+            if couldOverflow {
+                debug("DPI window={} monitor={} system={}",
+                    hwndDPI, this._monitor.DPI, A_ScreenDPI)           
 
-                awareness := SetDpiAwareness(DPI_UNAWARE)
-                debug("Scale manually by 1/{} (window={} monitor={} system={})",
-                    scale, dpi, this._monitor.DPI, A_ScreenDPI)
+                ;; HACK: Keep DPI_PMv2, but since filling out all the available
+                ;; space makes windows that are not properly dpi-aware overflow
+                ;; to the next monitor, shrink their width here by bounds.left.
+                ;; Weirdly, shrinking just by e.g. bounds.left-1 the window
+                ;; already overflows, even though there'd still be space to fill.
+                if x <= this._monitor.Area.Left + bounds.left {
+                    if this._monitor.Index > 1 {
+                        x     += this._monitor.Area.Left + bounds.left - x
+                        width -= this._monitor.Area.Left + bounds.left - x
+                    }
+                }
+                if x + width >= this._monitor.Area.Right - bounds.right {
+                    if this._monitor.Index < MonitorGetCount() {
+                        width := this._monitor.Area.Right - bounds.right - x
+                    }
+                }
             }
 
             try {
@@ -560,10 +592,10 @@ class WorkspaceList {
                     "UInt", SWP_FLAGS,
                     "Int",
                 ) {
-                    warn("SetWindowPos failed for hwnd 0x{:08x} with x={:.2f} y={:.2f} width={:.2f} height={:.2f}",
+                    warn("SetWindowPos failed for hwnd #{} with x={:.2f} y={:.2f} width={:.2f} height={:.2f}",
                         hwnd, x, y, width, height)
                 } else if awareness !== "" {
-                    debug("SetWindowPos(0x{:08x}) to x={:.2f} y={:.2f} width={:.2f} height={:.2f}",
+                    debug("SetWindowPos({}) to x={:.2f} y={:.2f} width={:.2f} height={:.2f}",
                         hwnd, x, y, width, height)
                 }
             } catch {
@@ -620,15 +652,12 @@ class WorkspaceList {
 
             try {
                 Loop count {
-                    bounds := ExtendedFrameBounds(tile.data)
-                    debug(() => ["ExtendedFrameBounds({}) are {}",
-                        tile.data, StringifySL(bounds)])
                     this._moveWindow(
                         tile.data,
-                        x - bounds.left,
-                        y - bounds.top,
-                        totalWidth + bounds.left + bounds.right,
-                        height + bounds.top + bounds.bottom - spacing,
+                        x,
+                        y,
+                        totalWidth,
+                        height - spacing,
                     )
                     y += height + spacing
                     tile := tile.next
@@ -686,15 +715,12 @@ class WorkspaceList {
 
             try {
                 Loop count {
-                    bounds := ExtendedFrameBounds(tile.data)
-                    trace(() => ["ExtendedFrameBounds(0x{:08x}) are {}",
-                        tile.data, StringifySL(bounds)])
                     this._moveWindow(
                         tile.data,
-                        x - bounds.left,
-                        y - bounds.top,
-                        width + bounds.left + bounds.right - spacing,
-                        totalHeight + bounds.top + bounds.bottom,
+                        x,
+                        y,
+                        width - spacing,
+                        totalHeight,
                     )
                     x += width + spacing
                     tile := tile.next
