@@ -262,8 +262,7 @@ class MiguruWM extends WMEvents {
                     return
                 }
             } catch as err {
-                warn("Dropping window: {} {}",
-                    err.Message, WinInfo(hwnd))
+                warn("Dropping window: {} {}", err.Message, WinInfo(hwnd))
                 this._drop(hwnd)
                 return
             }
@@ -390,7 +389,7 @@ class MiguruWM extends WMEvents {
 
         switch req.type {
         case "focus-monitor":
-            getWorkspace().Focus()
+            getWorkspace().Focus(unset, unset, true)
 
         case "send-to-monitor":
             hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
@@ -418,7 +417,7 @@ class MiguruWM extends WMEvents {
                 this.activeMonitor := monitor
             } else {
                 ws := this._workspaces[this.activeMonitor, this.activeWsIdx]
-                ws.Focus(unset, unset, true)
+                ws.Focus()
             }
 
         case "focus-window":
@@ -531,7 +530,6 @@ class MiguruWM extends WMEvents {
         this.activeMonitor := this._monitors.ByWindow(WinExist("A"))
         this.activeWsIdx := this.VD.CurrentDesktop()
 
-
         old := A_DetectHiddenWindows
         DetectHiddenWindows(false)
         windows := WinGetList()
@@ -588,7 +586,7 @@ class MiguruWM extends WMEvents {
         switch wsIdx {
         case 0, VD_UNASSIGNED_WINDOW, VD_UNKNOWN_DESKTOP:
             ;; NOTE: Apparently some kind of racy, sometimes returns unknown at
-            ;; first, but after a short delay the correct desktop, so just retry.
+            ;; first, but after a brief delay the correct desktop, so just retry.
             debug(() => ["Ignoring: unknown/unassigned desktop {}", WinInfo(hwnd)])
             if retrycnt < 0 {
                 retrycnt := 1 ; retry once

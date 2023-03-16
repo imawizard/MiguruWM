@@ -63,7 +63,7 @@ class WorkspaceList {
                 "fullscreen", this._fullscreenRetile,
                 "floating",   this._floatingRetile,
             )
-            this._retile := this._retileFns[this._opts.layout]
+            this._retile := this._retileFns[StrLower(this._opts.layout)]
         }
 
         Monitor     => this._monitor
@@ -90,7 +90,7 @@ class WorkspaceList {
             get => this._opts.layout
             set {
                 this._opts.layout := value
-                this._retile := this._retileFns[this._opts.layout]
+                this._retile := this._retileFns[StrLower(this._opts.layout)]
                 this.Retile()
             }
         }
@@ -184,14 +184,24 @@ class WorkspaceList {
                 this._mruTile := tile
             }
             this._windows[hwnd] := { type: TILED, node: tile }
-            WinSetAlwaysOnTop(false, "ahk_id" hwnd)
+            this._silentlySetAlwaysOnTop(hwnd, false)
             this.Retile()
         }
 
         _addFloating(hwnd) {
             this._floating.Push(hwnd)
             this._windows[hwnd] := { type: FLOATING, index: this._floating.Length }
-            WinSetAlwaysOnTop(this._opts.floatingAlwaysOnTop, "ahk_id" hwnd)
+            this._silentlySetAlwaysOnTop(hwnd, this._opts.floatingAlwaysOnTop)
+        }
+
+        _silentlySetAlwaysOnTop(hwnd, value) {
+            try {
+                WinSetAlwaysOnTop(value, "ahk_id" hwnd)
+            } catch TargetError {
+                ;; Do nothing
+            } catch OSError {
+                ;; Do nothing
+            }
         }
 
         Remove(hwnd, focus := false, mouseFollowsFocus := false) {
@@ -200,7 +210,10 @@ class WorkspaceList {
                 return false
             }
 
-            trace(() => ["Disappeared: {} {}", window.type, WinInfo(hwnd)])
+            trace(() => ["Disappeared: {} {}",
+                window.type == TILED ? "tiled" :
+                window.type == FLOATING ? "floating" : "",
+                WinInfo(hwnd)])
 
             next := ""
             if window.type == TILED {
@@ -258,13 +271,7 @@ class WorkspaceList {
             this._floating.RemoveAt(window.index)
 
             if this._opts.floatingAlwaysOnTop {
-                try {
-                    WinSetAlwaysOnTop(false, "ahk_id" hwnd)
-                } catch TargetError {
-                    ;; Do nothing
-                } catch OSError {
-                    ;; Do nothing
-                }
+                this._silentlySetAlwaysOnTop(hwnd, false)
             }
         }
 
@@ -559,7 +566,7 @@ class WorkspaceList {
             }
             if couldOverflow {
                 debug("DPI window={} monitor={} system={}",
-                    hwndDPI, this._monitor.DPI, A_ScreenDPI)           
+                    hwndDPI, this._monitor.DPI, A_ScreenDPI)
 
                 ;; HACK: Keep DPI_PMv2, but since filling out all the available
                 ;; space makes windows that are not properly dpi-aware overflow
@@ -771,13 +778,11 @@ class WorkspaceList {
         this.Update(monitors)
     }
 
-    Count => this._workspaces.Length
-
     ToString() {
-        return Stringify({
+        return Type(this) "(" SubStr(Stringify({
             Workspaces: this._workspaces,
             Count: this.Count,
-        })
+        }), 2, -1) ")"
     }
 
     __Enum(numberOfVars) {
@@ -814,7 +819,7 @@ class WorkspaceList {
     __Item[monitor, index] {
         get {
             workspaces := this._workspaces[monitor.Handle]
-            ws := workspaces.Get(index, 0)
+            ws := workspaces.Get(index, "")
             if !ws {
                 ws := WorkspaceList.Workspace(monitor, index, ObjClone(this._defaults))
                 workspaces[index] := ws
