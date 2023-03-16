@@ -107,6 +107,7 @@ class MiguruWM extends WMEvents {
             mouseFollowsFocus: false,
 
             delays: {
+                retryManage: 100,
                 windowHidden: 400,
                 onDisplayChange: 1000,
                 sendMonitorRetile: 100,
@@ -225,7 +226,7 @@ class MiguruWM extends WMEvents {
             ;; To not miss any windows that were already created and thus
             ;; e.g. appear for the first time by unhiding instead of
             ;; creation, add new windows on any event.
-            window := this._manage(hwnd)
+            window := this._manage(event, hwnd)
             if !window {
                 return
             }
@@ -268,20 +269,20 @@ class MiguruWM extends WMEvents {
             }
 
             ws := window.workspace
-            if !ws.AddIfNew(hwnd) {
-                switch event {
-                case EV_WINDOW_FOCUSED:
-                    debug(() => ["Focused: D={} WS={} {}",
-                        monitor.Index, wsIdx, WinInfo(hwnd)])
+            ws.AddIfNew(hwnd)
 
-                    ws.ActiveWindow := hwnd
+            switch event {
+            case EV_WINDOW_FOCUSED:
+                debug(() => ["Focused: D={} WS={} {}",
+                    monitor.Index, wsIdx, WinInfo(hwnd)])
 
-                case EV_WINDOW_REPOSITIONED:
-                    debug(() => ["Repositioned: D={} WS={} {}",
-                        monitor.Index, wsIdx, WinInfo(hwnd)])
+                ws.ActiveWindow := hwnd
 
-                    ws.Retile()
-                }
+            case EV_WINDOW_REPOSITIONED:
+                debug(() => ["Repositioned: D={} WS={} {}",
+                    monitor.Index, wsIdx, WinInfo(hwnd)])
+
+                ws.Retile()
             }
 
         case EV_WINDOW_HIDDEN, EV_WINDOW_CLOAKED, EV_WINDOW_MINIMIZED:
@@ -544,7 +545,7 @@ class MiguruWM extends WMEvents {
 
     ;; Add a window for which an event happened to the global list if it hasn't
     ;; been added yet.
-    _manage(hwnd) {
+    _manage(event, hwnd, retrycnt := -1) {
         if this._managed.Has(hwnd) {
             trace(() => ["Ignoring: already managed D={} WS={} {}",
                 this._managed[hwnd].monitor.Index,
@@ -553,40 +554,19 @@ class MiguruWM extends WMEvents {
             return this._managed[hwnd]
         }
 
-        wsIdx := this.VD.DesktopByWindow(hwnd)
-        pinned := false
-        if !wsIdx {
-            trace(() => ["Ignoring: unknown desktop {}", WinInfo(hwnd)])
-            return ""
-        } else if wsIdx < 0 {
-            switch wsIdx {
-            case VD_UNASSIGNED_WINDOW:
-                debug(() => ["Desktop not yet assigned {}", WinInfo(hwnd)])
-                return ""
-            case VD_UNKNOWN_DESKTOP:
-                warn(() => ["Desktop {} is unknown: {}",
-                    this.VD.DesktopGUIDByWindow(hwnd), WinInfo(hwnd)])
-                return ""
-            case VD_PINNED_WINDOW:
-                info(() => ["window is pinned {}", WinInfo(hwnd)])
-                pinned := true
-            case VD_PINNED_APP:
-                info(() => ["app is pinned {}", WinInfo(hwnd)])
-                pinned := true
-            }
-        }
+        trace(() => ["New window {}", WinInfo(hwnd)])
 
         try {
             ;; Throws if window needs elevated access.
             WinGetProcessName("ahk_id" hwnd)
 
-            style := WinGetStyle("ahk_id" hwnd)
-            if style & WS_CAPTION == 0 {
-                trace(() => ["Ignoring: no titlebar WS={} {}",
+            if !DllCall("IsWindowVisible", "Ptr", hwnd, "Int") ||
+                IsWindowCloaked(hwnd) {
+                trace(() => ["Ignoring: hidden WS={} {}",
                     ws.Index, WinInfo(hwnd)])
                 return ""
-            } else if style & WS_VISIBLE == 0 || IsWindowCloaked(hwnd) {
-                trace(() => ["Ignoring: hidden WS={} {}",
+            } else if WinGetStyle("ahk_id" hwnd) & WS_CAPTION == 0 {
+                trace(() => ["Ignoring: no titlebar WS={} {}",
                     ws.Index, WinInfo(hwnd)])
                 return ""
             } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_IGNORE") {
@@ -601,6 +581,28 @@ class MiguruWM extends WMEvents {
         } catch OSError as err {
             warn(() => ["Failed to manage: {} {}", err.Message, WinInfo(hwnd)])
             return ""
+        }
+
+        wsIdx := this.VD.DesktopByWindow(hwnd)
+        pinned := false
+        switch wsIdx {
+        case 0, VD_UNASSIGNED_WINDOW, VD_UNKNOWN_DESKTOP:
+            ;; NOTE: Apparently some kind of racy, sometimes returns unknown at
+            ;; first, but after a short delay the correct desktop, so just retry.
+            debug(() => ["Ignoring: unknown/unassigned desktop {}", WinInfo(hwnd)])
+            if retrycnt < 0 {
+                retrycnt := 1 ; retry once
+            }
+            if retrycnt > 0 {
+                this._retryManage(event, hwnd, retrycnt - 1)
+            }
+            return ""
+        case VD_PINNED_WINDOW:
+            info(() => ["window is pinned {}", WinInfo(hwnd)])
+            pinned := true
+        case VD_PINNED_APP:
+            info(() => ["app is pinned {}", WinInfo(hwnd)])
+            pinned := true
         }
 
         monitor := this._monitors.ByWindow(hwnd)
@@ -620,6 +622,23 @@ class MiguruWM extends WMEvents {
             this._pinWindow(hwnd, window)
         }
         return window
+    }
+
+    _retryManage(event, hwnd, retrycnt, wait := true) {
+        if wait {
+            this._delayed.Add(
+                this._retryManage.Bind(this, event, hwnd, retrycnt, false),
+                this._opts.delays.retryManage,
+                "retry-manage",
+            )
+            return
+        }
+
+        debug("Retry manage for {}", WinInfo(hwnd))
+        if this._manage(event, hwnd, retrycnt) {
+            this._onWindowEvent(EV_WINDOW_SHOWN, hwnd)
+            this._onWindowEvent(EV_WINDOW_FOCUSED, WinExist("A"))
+        }
     }
 
     _pinWindow(hwnd, window) {

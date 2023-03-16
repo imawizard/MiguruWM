@@ -112,21 +112,22 @@ class WorkspaceList {
 
         AddIfNew(hwnd) {
             if this._windows.Has(hwnd) {
+                trace(() => ["Ignoring: already added {}", WinInfo(hwnd)])
                 return false
             }
 
             shouldTile := true
             exstyle := WinGetExStyle("ahk_id" hwnd)
             if exstyle & WS_EX_WINDOWEDGE == 0 {
-                trace(() => ["Floating: no WS_EX_WINDOWEDGE {}", WinInfo(hwnd)])
+                info(() => ["Floating: no WS_EX_WINDOWEDGE {}", WinInfo(hwnd)])
 
                 shouldTile := false
             } else if exstyle & WS_EX_DLGMODALFRAME !== 0 {
-                trace(() => ["Floating: WS_EX_DLGMODALFRAME {}", WinInfo(hwnd)])
+                info(() => ["Floating: WS_EX_DLGMODALFRAME {}", WinInfo(hwnd)])
 
                 shouldTile := false
             } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_AUTOFLOAT") {
-                trace(() => ["Floating: ahk_group  {}", WinInfo(hwnd)])
+                info(() => ["Floating: ahk_group  {}", WinInfo(hwnd)])
 
                 shouldTile := false
             } else {
@@ -141,20 +142,20 @@ class WorkspaceList {
 
                 if this._opts.tilingMinWidth > 0 &&
                     width < this._opts.tilingMinWidth {
-                    trace(() => ["Floating: width {}<{} {}",
+                    info(() => ["Floating: width {}<{} {}",
                         width, this._opts.tilingMinWidth,
                         WinInfo(hwnd)])
 
                     shouldTile := false
                 } else if this._opts.tilingMinHeight > 0 &&
                     height < this._opts.tilingMinHeight {
-                    trace(() => ["Floating: height {}<{} {}",
+                    info(() => ["Floating: height {}<{} {}",
                         height, this._opts.tilingMinHeight,
                         WinInfo(hwnd)])
 
                     shouldTile := false
                 } else {
-                    trace(() => ["Tiling: {}", WinInfo(hwnd)])
+                    info(() => ["Tiling: {}", WinInfo(hwnd)])
                 }
             }
 
@@ -179,7 +180,9 @@ class WorkspaceList {
             default:
                 throw "Incorrect tiling insertion setting: " this._tileInsertion
             }
-            this._mruTile := tile
+            if !this._mruTile {
+                this._mruTile := tile
+            }
             this._windows[hwnd] := { type: TILED, node: tile }
             WinSetAlwaysOnTop(false, "ahk_id" hwnd)
             this.Retile()
