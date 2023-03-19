@@ -50,7 +50,8 @@ EV_WINDOW_MINIMIZED    := 6
 EV_WINDOW_CREATED      := 7
 EV_WINDOW_DESTROYED    := 8
 EV_WINDOW_FOCUSED      := 9
-EV_WINDOW_REPOSITIONED := 10
+EV_WINDOW_POSITIONING  := 10
+EV_WINDOW_REPOSITIONED := 11
 EV_MIN_WINDOW          := EV_WINDOW_SHOWN
 EV_MAX_WINDOW          := EV_WINDOW_REPOSITIONED
 EV_DESKTOP_CHANGED     := 20
@@ -71,6 +72,7 @@ class WMEvents {
         EV_WINDOW_CREATED,      "EV_WINDOW_CREATED",
         EV_WINDOW_DESTROYED,    "EV_WINDOW_DESTROYED",
         EV_WINDOW_FOCUSED,      "EV_WINDOW_FOCUSED",
+        EV_WINDOW_POSITIONING,  "EV_WINDOW_POSITIONING",
         EV_WINDOW_REPOSITIONED, "EV_WINDOW_REPOSITIONED",
         EV_DESKTOP_CHANGED,     "EV_DESKTOP_CHANGED",
         EV_DESKTOP_RENAMED,     "EV_DESKTOP_RENAMED",
@@ -110,7 +112,7 @@ class WMEvents {
         winEvHooks.Register(EVENT_OBJECT_SHOW, EVENT_OBJECT_HIDE)
         winEvHooks.Register(EVENT_OBJECT_FOCUS)
         winEvHooks.Register(EVENT_OBJECT_CLOAKED, EVENT_OBJECT_UNCLOAKED)
-        winEvHooks.Register(EVENT_SYSTEM_MOVESIZEEND)
+        winEvHooks.Register(EVENT_SYSTEM_MOVESIZESTART, EVENT_SYSTEM_MOVESIZEEND)
         this.winEvHooks := winEvHooks
 
         this.VD := VD(
@@ -202,6 +204,8 @@ class WMEvents {
                 PostMessage(WM_EVENT, EV_WINDOW_DESTROYED, hwnd, , "ahk_id" A_ScriptHwnd)
             case EVENT_SYSTEM_FOREGROUND, EVENT_OBJECT_FOCUS:
                 PostMessage(WM_EVENT, EV_WINDOW_FOCUSED, hwnd, , "ahk_id" A_ScriptHwnd)
+            case EVENT_SYSTEM_MOVESIZESTART:
+                PostMessage(WM_EVENT, EV_WINDOW_POSITIONING, hwnd, , "ahk_id" A_ScriptHwnd)
             case EVENT_SYSTEM_MOVESIZEEND:
                 PostMessage(WM_EVENT, EV_WINDOW_REPOSITIONED, hwnd, , "ahk_id" A_ScriptHwnd)
             default:

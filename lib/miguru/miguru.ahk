@@ -6,6 +6,7 @@
 #include layouts\fullscreen.ahk
 #include layouts\tall.ahk
 #include layouts\wide.ahk
+#include FocusIndicator.ahk
 
 WS_THICKFRAME       := 0x00040000
 WS_SYSMENU          := 0x00080000
@@ -24,6 +25,7 @@ WS_EX_CLIENTEDGE    := 0x00000200
 WS_EX_STATICEDGE    := 0x00020000
 WS_EX_APPWINDOW     := 0x00040000
 WS_EX_LAYERED       := 0x00080000
+WS_EX_NOACTIVATE    := 0x08000000
 
 WM_QUIT := 0x012
 
@@ -185,6 +187,11 @@ class MiguruWM extends WMEvents {
             followWindowToMonitor: false,
 
             showPopup: (*) =>,
+            focusIndicator: {
+                Show: (*) =>,
+                Hide: (*) =>,
+                Unmanaged: (*) =>,
+            },
 
             delays: {
                 retryManage: 100,
@@ -391,6 +398,7 @@ class MiguruWM extends WMEvents {
                 if event == EV_WINDOW_FOCUSED {
                     debug("Set active to non-managed {}", WinInfo(hwnd))
                     this._maybeActiveWindow := hwnd
+                    this._opts.focusIndicator.Unmanaged(hwnd)
                 }
                 return
             }
@@ -442,6 +450,7 @@ class MiguruWM extends WMEvents {
 
                 ws.ActiveWindow := hwnd
                 this._maybeActiveWindow := ""
+                this._opts.focusIndicator.Show(hwnd)
 
                 ;; If it's an explorer window, focus the content panel.
                 if WinExist("ahk_id" hwnd
@@ -460,7 +469,11 @@ class MiguruWM extends WMEvents {
                     monitor.Index, ws.Index, WinInfo(hwnd)])
 
                 ws.Retile()
+                this._opts.focusIndicator.Show(hwnd)
             }
+
+        case EV_WINDOW_POSITIONING:
+            this._opts.focusIndicator.Hide()
 
         case EV_WINDOW_HIDDEN, EV_WINDOW_CLOAKED, EV_WINDOW_MINIMIZED:
             this._hide(event, hwnd)
@@ -491,6 +504,16 @@ class MiguruWM extends WMEvents {
             this._opts.showPopup.Call(this.VD.DesktopName(args.now), {
                 activeMonitor: this.activeMonitor.Index,
             })
+
+            oldWs := this._workspaces[this.activeMonitor, args.was]
+            newWs := this._workspaces[this.activeMonitor, args.now]
+
+            oldWs.ActiveWindow := ""
+            if newWs.WindowCount < 1 {
+                this._opts.focusIndicator.Hide()
+            } else {
+                this._opts.focusIndicator.Show(newWs.ActiveWindow)
+            }
 
             ;; Add pinned windows to the newly active workspace or retile.
             if this._pinned.Count > 0 {
@@ -668,11 +691,13 @@ class MiguruWM extends WMEvents {
             ws := getWorkspace()
             hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
             ws.Swap(hwnd, req.with, this._opts.mouseFollowsFocus)
+            this._opts.focusIndicator.Show(WinExist("A"))
 
         case "float-window":
             ws := getWorkspace()
             hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
             ws.Float(hwnd, req.value)
+            this._opts.focusIndicator.Show(WinExist("A"))
 
         case "cycle-layout":
             ws := getWorkspace()
