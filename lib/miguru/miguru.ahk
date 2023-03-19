@@ -122,6 +122,8 @@ class MiguruWM extends WMEvents {
             focusFollowsMouse: false,
             mouseFollowsFocus: false,
 
+            showPopup: (*) =>,
+
             delays: {
                 retryManage: 100,
                 windowHidden: 400,
@@ -342,6 +344,9 @@ class MiguruWM extends WMEvents {
                 this.VD.DesktopName(args.was), this.VD.DesktopName(args.now)])
 
             this.activeWsIdx := args.now
+            this._opts.showPopup.Call(this.VD.DesktopName(args.now), {
+                activeMonitor: this.activeMonitor.Index,
+            })
 
             ;; Add pinned windows to the newly active workspace or retile.
             if this._pinned.Count > 0 {
@@ -473,6 +478,9 @@ class MiguruWM extends WMEvents {
         case "set-layout":
             ws := getWorkspace()
             ws.Layout := req.value
+            this._opts.showPopup.Call(req.value, {
+                activeMonitor: this.activeMonitor.Index,
+            })
 
         case "get-master-count":
             return -getWorkspace().MasterCount
