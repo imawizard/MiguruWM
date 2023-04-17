@@ -1,0 +1,40 @@
+name: mwm
+
+on:
+  push:
+    branches:
+      - ahk-v2
+
+env:
+  AHK_V2_URL: https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.2/AutoHotkey_2.0.2.zip
+  AHK2EXE_URL: https://github.com/AutoHotkey/Ahk2Exe/releases/download/Ahk2Exe1.1.36.02e3/Ahk2Exe1.1.36.02e.zip
+
+jobs:
+  build:
+    runs-on: windows-2019
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Download and extract AutoHotkey
+        run: |
+          irm -OutFile autohotkey.zip $env:AHK_V2_URL
+          unzip autohotkey.zip -d autohotkey
+          irm -OutFile ahk2exe.zip $env:AHK2EXE_URL
+          unzip ahk2exe.zip -d autohotkey\Compiler
+
+      - name: Embed script with Ahk2Exe
+        run: |
+          .\autohotkey\Compiler\Ahk2Exe.exe     `
+            /base .\autohotkey\AutoHotkey64.exe `
+            /resourceid "#2"                    `
+            /in .\lib\miguru\miguru.ahk         `
+            /out .\mwm.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: mwm
+          path: |
+            mwm.exe
+            mwm.ahk

@@ -1,16 +1,25 @@
 #Requires AutoHotkey v2
 #SingleInstance force
 #WinActivateForce
+#Warn VarUnset, Off
 A_MaxHotkeysPerInterval := 1000
 KeyHistory(0), ListLines(false), ProcessSetPriority("H")
 A_IconTip := "「 Miguru Window Manager 」"
 
-#include lib\miguru\miguru.ahk
+#include *i lib\miguru\miguru.ahk
 
 GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Benachrichtigung ahk_exe Teams.exe")
 GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Notification ahk_exe Teams.exe")
 GroupAdd("MIGURU_AUTOFLOAT", "ahk_exe QuickLook.exe")
 GroupAdd("MIGURU_AUTOFLOAT", "ahk_class MsoSplash ahk_exe outlook.exe")
+
+if !IsSet(MiguruWM) {
+    prog := RegExReplace(A_ScriptName, "i)\.ahk$", ".exe")
+    if FileExist(prog) {
+        Run(prog)
+    }
+    ExitApp()
+}
 
 mwm := MiguruWM({
     padding: 0,
