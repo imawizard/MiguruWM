@@ -53,7 +53,6 @@ class IVirtualDesktopPinnedApps_19044 extends IUnknown {
     UnpinView(view) {
         this._funcs["UnpinView"](
             "Ptr", view,
-            "UInt",
             "HRESULT",
         )
     }
