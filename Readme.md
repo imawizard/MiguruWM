@@ -19,24 +19,30 @@ The goal is a basic but hopefully stable window manager that should behave somew
     - Cycle through windows forwards/backwards
     - Layouts: tall, wide, fullscreen (aka monocle) and floating (i.e. no tiling)
 
-- Tested on Win10 Build 19042-19045, *Windows 11 is probably not supported*
+- Tested on Win10 Build 19042-19045, *Windows 11 is currently not supported*
     - Particularly the GUIDs for the virtual desktop COM interfaces are missing/untested
 
 ## Installation
 
+There's a standalone version embedded with Ahk2Exe:
+1. Download the artifact from the latest [workflow-run](https://github.com/imawizard/MiguruWM/actions/workflows/bundle-exe.yml)
+2. Extract the zip and run `mwm.exe`
+
+Or you can clone this repository:
 1. Download and install AutoHotkey v2
-    - Either from their [Github Releases-page](https://github.com/Lexikos/AutoHotkey_L/tags)
+    - Either from their [Github Releases-page](https://github.com/AutoHotkey/AutoHotkey/tags)
     - Or through [Scoop](https://scoop.sh) with `scoop install autohotkey`
 2. Clone this repository with `git clone https://github.com/imawizard/MiguruWM.git`
 3. Run `autohotkey MiguruWM\mwm.ahk`
 
-(See [lib/miguru/api.ahk](lib/miguru/api.ahk) and [lib/vd/vd.ahk](lib/vd/vd.ahk#L134) for api docs)
+Adjust the hotkeys as needed (for api docs, see [lib/miguru/miguru.ahk](lib/miguru/miguru.ahk#L48-L189) and [lib/vd/vd.ahk](lib/vd/vd.ahk#L56-L235)).
 
 ## How to use
 
 The hotkeys are the same as in [Getting started with xmonad](https://xmonad.org/tour.html), in short:
 
 #### General
+
 Hotkey|Description
 --|--
 `Alt-j`|Focus next window
@@ -48,6 +54,7 @@ Hotkey|Description
 `Shift-Alt-q`|Exit script
 
 #### Tiling
+
 Hotkey|Description
 --|--
 `Alt-m`|Focus master window
@@ -56,6 +63,7 @@ Hotkey|Description
 `Shift-Alt-k`|Swap window with previous
 
 #### Floating
+
 Hotkey|Description
 --|--
 `Alt-Left click`|Float and move a window
@@ -63,18 +71,21 @@ Hotkey|Description
 `Alt-t`|Tile floating window
 
 #### Workspaces
+
 Hotkey|Description
 --|--
 `Alt-1~9`|Switch to workspace 1~9
 `Shift-Alt-1~9`|Move window to workspace 1~9
 
 #### Monitors
+
 Hotkey|Description
 --|--
 `Alt-w,e,r`|Focus monitor 1~3
 `Shift-Alt-w,e,r`|Move window to monitor 1~3
 
 #### Layout
+
 Hotkey|Description
 --|--
 `Alt-Space`|Next layout
@@ -83,6 +94,32 @@ Hotkey|Description
 `Alt-l`|Expand master pane
 `Alt-,`|More master windows
 `Alt-.`|Fewer master windows
+
+## Screenshots
+
+<p align="center">
+<i>tall layout</i>
+</p>
+
+![tall](https://user-images.githubusercontent.com/1701648/232513829-b797d47c-7d80-4b92-8af2-e840bd3ddeec.png)
+
+<p align="center">
+<i>tall layout with 2 master windows</i>
+</p>
+
+![tall-2](https://user-images.githubusercontent.com/1701648/232513851-b306525d-511f-4876-968c-29d17c92eeb9.png)
+
+<p align="center">
+<i>wide layout</i>
+</p>
+
+![wide](https://user-images.githubusercontent.com/1701648/232513875-ab26de30-f597-48ee-9ae1-eaf2dbeff23e.png)
+
+<p align="center">
+<i>wide layout with 4 master windows</i>
+</p>
+
+![wide-4](https://user-images.githubusercontent.com/1701648/232513891-0972dd3f-0dd2-43a2-bbdd-c2f83f8d8626.png)
 
 ## Other tiling WMs for Windows
 
