@@ -106,6 +106,10 @@ class WorkspaceList {
                 this._active := value
                 if window.type == TILED {
                     this._mruTile := window.node
+
+                    if StrCompare(this._opts.layout, "fullscreen") == 0 {
+                        this.Retile()
+                    }
                 }
             }
         }
