@@ -76,9 +76,10 @@ class MiguruWM extends WMEvents {
     ;; nativeMaximize
     ;;   If true, Windows are maximized in fullscreen-layout.
     ;;
-    ;; There are two ahk window-groups:
+    ;; There are three ahk window-groups:
     ;;    GroupAdd("MIGURU_AUTOFLOAT", criteria)
     ;;    GroupAdd("MIGURU_IGNORE", criteria)
+    ;;    GroupAdd("MIGURU_DECOLESS", criteria)
     ;;
     ;; The first group floats all new windows that match the criteria of one entry.
     ;; Floating windows won't get positioned or resized automatically like tiled
@@ -568,9 +569,11 @@ class MiguruWM extends WMEvents {
                 trace(() => ["Ignoring: hidden WS={} {}",
                     ws.Index, WinInfo(hwnd)])
                 return ""
+            } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_DECOLESS") {
+                ;; Do nothing
             } else if WinGetStyle("ahk_id" hwnd) & WS_CAPTION == 0 {
-                trace(() => ["Ignoring: no titlebar WS={} {}",
-                    ws.Index, WinInfo(hwnd)])
+                ;; NOTE: Would it make sense to auto-float these windows?
+                debug(() => ["Ignoring: no titlebar {}", WinInfo(hwnd)])
                 return ""
             } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_IGNORE") {
                 trace(() => ["Ignoring: ahk_group WS={} {}",

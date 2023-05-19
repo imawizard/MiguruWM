@@ -13,6 +13,9 @@ GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Notification ahk_exe Teams.exe")
 GroupAdd("MIGURU_AUTOFLOAT", "ahk_exe QuickLook.exe")
 GroupAdd("MIGURU_AUTOFLOAT", "ahk_class MsoSplash ahk_exe outlook.exe")
 
+GroupAdd("MIGURU_DECOLESS", "ahk_exe qutebrowser.exe")
+GroupAdd("MIGURU_DECOLESS", "ahk_exe alacritty.exe")
+
 if !IsSet(MiguruWM) {
     prog := RegExReplace(A_ScriptName, "i)\.ahk$", ".exe")
     if FileExist(prog) {
