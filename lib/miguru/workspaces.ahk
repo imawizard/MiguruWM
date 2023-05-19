@@ -749,7 +749,9 @@ class WorkspaceList {
 
         _fullscreenRetile() {
             if this._mruTile {
+                hwnd := this._mruTile.data
                 opts := this._opts
+
                 if !opts.nativeMaximize {
                     workArea := this._monitor.WorkArea
                     this._tallRetilePane(
@@ -761,13 +763,13 @@ class WorkspaceList {
                         workArea.Height - 2 * opts.padding,
                     )
                 } else {
-                    WinMaximize("ahk_id" this._mruTile.data)
+                    WinMaximize("ahk_id" hwnd)
                 }
 
                 ;; Move window to the foreground, even in front of possible
                 ;; siblings.
-                WinSetAlwaysOnTop(true, "ahk_id" this._mruTile.data)
-                WinSetAlwaysOnTop(false, "ahk_id" this._mruTile.data)
+                this._silentlySetAlwaysOnTop(hwnd, true)
+                this._silentlySetAlwaysOnTop(hwnd, false)
             }
         }
 
