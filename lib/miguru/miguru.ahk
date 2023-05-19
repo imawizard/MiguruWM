@@ -120,6 +120,8 @@ class MiguruWM extends WMEvents {
         this._pinned := Map()
         this._delayed := Timeouts()
 
+        this._maybeActiveWindow := ""
+
         windowTracking := GetSpiInt(SPI_GETACTIVEWINDOWTRACKING)
         if windowTracking !== this._opts.focusFollowsMouse {
             this._oldFFM := windowTracking
@@ -228,6 +230,10 @@ class MiguruWM extends WMEvents {
             ;; creation, add new windows on any event.
             window := this._manage(event, hwnd)
             if !window {
+                if event == EV_WINDOW_FOCUSED {
+                    debug("Set active to non-managed {}", WinInfo(hwnd))
+                    this._maybeActiveWindow := hwnd
+                }
                 return
             }
 
@@ -270,14 +276,13 @@ class MiguruWM extends WMEvents {
             ws := window.workspace
             ws.AddIfNew(hwnd)
 
-            switch event {
-            case EV_WINDOW_FOCUSED:
+            if event == EV_WINDOW_FOCUSED || hwnd == this._maybeActiveWindow {
                 debug(() => ["Focused: D={} WS={} {}",
                     monitor.Index, wsIdx, WinInfo(hwnd)])
 
                 ws.ActiveWindow := hwnd
-
-            case EV_WINDOW_REPOSITIONED:
+                this._maybeActiveWindow := ""
+            } else if event == EV_WINDOW_REPOSITIONED {
                 debug(() => ["Repositioned: D={} WS={} {}",
                     monitor.Index, wsIdx, WinInfo(hwnd)])
 
