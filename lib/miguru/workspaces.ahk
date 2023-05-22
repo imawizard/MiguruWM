@@ -409,31 +409,56 @@ class WorkspaceList {
             }
         }
 
-        Swap(hwnd, with) {
+        Swap(hwnd, with, mouseFollowsFocus := false) {
             if this._tiled.Count < 2 {
                 return
             }
 
-            target := this._mruTile
+            a := this._mruTile
             if hwnd {
                 window := this._windows.Get(hwnd, "")
                 if !window || window.type !== TILED {
                     debug("Window #{} to swap not in workspace", hwnd)
                     return
                 }
-                target := window.node
+                a := window.node
             }
 
             switch with {
             case "next":
-                this._tiled.Swap(target, target.next)
+                b := a.next
             case "previous":
-                this._tiled.Swap(target, target.previous)
+                b := a.previous
             case "master":
-                this._tiled.Swap(target, this._tiled.First)
+                b := this._tiled.First
             default:
                 throw "Incorrect swap parameter: " with
             }
+
+            if mouseFollowsFocus &&
+                (a.data == this._active || b.data == this._active) {
+
+                hwnd := b.data == this._active
+                    ? a.data
+                    : b.data
+
+                old := SetDpiAwareness(DPI_PMv2)
+                try {
+                    WinGetPos(&left, &top, &width, &height,
+                        "ahk_id" hwnd)
+                } catch {
+                    throw
+                } finally {
+                    SetDpiAwareness(old)
+                }
+
+                old := A_CoordModeMouse
+                CoordMode("Mouse", "Screen")
+                MouseMove(left + width // 2, top + height // 2, 0)
+                CoordMode("Mouse", old)
+            }
+
+            this._tiled.Swap(a, b)
             this.Retile()
         }
 

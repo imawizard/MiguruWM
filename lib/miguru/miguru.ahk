@@ -337,6 +337,7 @@ class MiguruWM extends WMEvents {
     _onDesktopEvent(event, args) {
         switch event {
         case EV_DESKTOP_CHANGED:
+
             ;; Discard pending window removals.
             this._delayed.Drop("window-hidden")
 
@@ -467,7 +468,7 @@ class MiguruWM extends WMEvents {
         case "swap-window":
             ws := getWorkspace()
             hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
-            ws.Swap(hwnd, req.with)
+            ws.Swap(hwnd, req.with, this._opts.mouseFollowsFocus)
 
         case "float-window":
             ws := getWorkspace()
