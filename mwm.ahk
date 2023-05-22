@@ -71,7 +71,7 @@ mod1 := "Alt"
     if !hwnd {
         return
     }
-    mwm.FloatWindow(hwnd)
+    mwm.Do("float-window", { hwnd: hwnd, value: true })
     PostMessage(WM_SYSCOMMAND, SC_MOVE,  , , "ahk_id" hwnd)
     PostMessage(WM_KEYDOWN,    VK_LEFT,  , , "ahk_id" hwnd)
     PostMessage(WM_KEYUP,      VK_LEFT,  , , "ahk_id" hwnd)
@@ -86,7 +86,7 @@ mod1 := "Alt"
     if !hwnd {
         return
     }
-    mwm.FloatWindow(hwnd)
+    mwm.Do("float-window", { hwnd: hwnd, value: true })
     PostMessage(WM_SYSCOMMAND, SC_SIZE,  , , "ahk_id" hwnd)
     PostMessage(WM_KEYDOWN,    VK_DOWN,  , , "ahk_id" hwnd)
     PostMessage(WM_KEYUP,      VK_DOWN,  , , "ahk_id" hwnd)

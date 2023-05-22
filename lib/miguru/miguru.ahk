@@ -60,7 +60,7 @@ class MiguruWM extends WMEvents {
     ;;        floatingAlwaysOnTop: false,
     ;;        nativeMaximize: false,
     ;;    })
-    ;;    mwm.FocusWindow("next")
+    ;;    mwm.Do("focus-window", { target: "next" })
     ;;
     ;; tilingMinWidth/tilingMinHeight
     ;;   New windows are automatically tiled, except when their width or height is
@@ -71,8 +71,8 @@ class MiguruWM extends WMEvents {
     ;;   - "first": a new window will become the new master window
     ;;   - "last": it will become the last window in the secondary pane
     ;;   - "before-mru": it will become the previous window of the most recently
-    ;;      used one, means FocusWindow("next") would focus that
     ;;   - "after-mru": it will become the next window of the most recently used one
+    ;;      used one, means Do("focus-window", { target: "next" }) would focus that
     ;; nativeMaximize
     ;;   If true, Windows are maximized in fullscreen-layout.
     ;;
@@ -83,10 +83,10 @@ class MiguruWM extends WMEvents {
     ;;
     ;; The first group floats all new windows that match the criteria of one entry.
     ;; Floating windows won't get positioned or resized automatically like tiled
-    ;; windows. Also when iterating through the windows with FocusWindow(), they
-    ;; come after the tiled ones.
+    ;; windows. Also when iterating through the windows with
+    ;; Do("focus-window", ...), they come after the tiled ones.
     ;; New windows that match an entry of the second group won't be picked up. So
-    ;; they are neither moved/resized nor focused with FocusWindow().
+    ;; they are neither moved/resized nor focused with Do("focus-window", ...).
     ;;
     ;; Additionally, mwm.VD is an instance of vd.ahk:
     ;;    mwm.VD.RenameDesktop(mwm.VD.Count(), "Last Desktop")
