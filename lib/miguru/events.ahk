@@ -150,7 +150,7 @@ class WMEvents {
             } catch String as err {
                 warn("Request failed: " err)
             }
-        case WM_DISPLAYCHANGE:
+        case WM_DISPLAYCHANGE, WM_DPICHANGED:
             debug("WM_DISPLAYCHANGE: lparam=0x{:08x} wparam=0x{:08x}",
                 lparam, wparam)
             ret := this._onDisplayChange()

@@ -537,42 +537,36 @@ class WorkspaceList {
                 "Ptr", hwnd,
                 "Ptr",
             )
-            hwndDPI := DllCall(
-                "GetDpiFromDpiAwarenessContext",
+            hwndAwareness := DllCall(
+                "GetAwarenessFromDpiAwarenessContext",
                 "Ptr", context,
                 "UInt",
             )
 
-            ;; FIXME: Seemed to work at first, but apparently only for specific
-            ;; combinations of monitor dpi, primary dpi and window dpi.
-            ;; There's also the case that an application doesn't react to system
-            ;; dpi changes, e.g. a system dpi-aware application creates a window
-            ;; with the system dpi being e.g. 120. Upon connecting an external
-            ;; display that is set up as primary the system dpi might change to
-            ;; e.g. 96 but the window still reports 120. When restarting the
-            ;; application, however, its window would report 96.
             awareness := ""
             couldOverflow := false
-            if hwndDPI == A_ScreenDPI {
-                if this._monitor.DPI == A_ScreenDPI {
-                    awareness := SetDpiAwareness(DPI_SYSAWARE)
-                } else {
-                    ;awareness := SetDpiAwareness(DPI_UNAWARE)
-                    couldOverflow := true
-              }
-            } else if hwndDPI !== 0 {
-                ;awareness := SetDpiAwareness(DPI_UNAWARE)
-                ;scale := this._monitor.DPI / hwndDPI
-                ;x /= scale
-                ;y /= scale
-                ;width /= scale
-                ;height /= scale
-                couldOverflow := true
-            }
-            if couldOverflow {
-                debug("DPI window={} monitor={} system={}",
-                    hwndDPI, this._monitor.DPI, A_ScreenDPI)
 
+            if hwndAwareness < DPI_AWARENESS_PER_MONITOR_AWARE {
+                hwndDPI := DllCall(
+                    "GetDpiFromDpiAwarenessContext",
+                    "Ptr", context,
+                    "UInt",
+                )
+                debug("Non-dpi aware window: {}", WinInfo(hwnd))
+                debug("  awareness of window={}", hwndAwareness)
+                debug("  dpi of window={} monitor={} system={} ahk={}",
+                    hwndDPI, this._monitor.DPI, A_SystemDPI, A_ScreenDPI)
+
+                if A_ScreenDPI == A_SystemDPI && A_ScreenDPI == this._monitor.DPI {
+                    awareness := SetDpiAwareness(DPI_SYSAWARE)
+                } else if A_ScreenDPI !== A_SystemDPI && A_ScreenDPI > this._monitor.DPI {
+                    awareness := SetDpiAwareness(DPI_UNAWARE)
+                } else {
+                    couldOverflow := true
+                }
+            }
+
+            if couldOverflow {
                 ;; HACK: Keep DPI_PMv2, but since filling out all the available
                 ;; space makes windows that are not properly dpi-aware overflow
                 ;; to the next monitor, shrink their width here by bounds.left.

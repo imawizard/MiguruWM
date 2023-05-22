@@ -44,6 +44,9 @@ CTRL_CLOSE_EVENT := 2
 
 DetectHiddenWindows(true)
 
+;; Built-in constant isn't updated when dpi changes.
+A_SystemDPI := A_ScreenDPI
+
 class MiguruWM extends WMEvents {
     ;; The constructor accepts an object containing options. The defaults are:
     ;;    #include lib\miguru\miguru.ahk
@@ -556,6 +559,7 @@ class MiguruWM extends WMEvents {
         }
 
         this._monitors.Update()
+        global A_SystemDPI := this._monitors.Primary.DPI
 
         gone := this._workspaces.Update(this._monitors)
         for monitor, workspaces in gone {
