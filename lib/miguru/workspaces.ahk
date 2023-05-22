@@ -283,17 +283,15 @@ class WorkspaceList {
             WinActivate("ahk_id" hwnd)
 
             if mouseFollowsFocus {
-                left := 0, top := 0
-                width := 0, height := 0
-
-                RunDpiAware(() =>
-                    WinGetPos(&left, &top, &width, &height, "ahk_id" hwnd)
+                RunDpiAware(() => (
+                    WinGetPos(&left, &top, &width, &height, "ahk_id" hwnd),
+                    DllCall(
+                        "SetCursorPos",
+                        "Int", left + width // 2,
+                        "Int", top + height // 2,
+                        "Int",
+                    ))
                 )
-
-                old := A_CoordModeMouse
-                CoordMode("Mouse", "Screen")
-                MouseMove(left + width // 2, top + height // 2, 0)
-                CoordMode("Mouse", old)
             }
         }
 
@@ -348,10 +346,14 @@ class WorkspaceList {
                 if mouseFollowsFocus {
                     ;; Also place the cursor in the middle of the specified
                     ;; screen for e.g. PowerToys Run.
-                    old := A_CoordModeMouse
-                    CoordMode("Mouse", "Screen")
-                    MouseMove(monitor.Area.CenterX, monitor.Area.CenterY, 0)
-                    CoordMode("Mouse", old)
+                    RunDpiAware(() =>
+                        DllCall(
+                            "SetCursorPos",
+                            "Int", monitor.Area.CenterX,
+                            "Int", monitor.Area.CenterY,
+                            "Int",
+                        )
+                    )
                 }
                 return
             }
@@ -437,18 +439,16 @@ class WorkspaceList {
                     ? a.data
                     : b.data
 
-                left := 0, top := 0
-                width := 0, height := 0
-
-                RunDpiAware(() =>
+                RunDpiAware(() => (
                     WinGetPos(&left, &top, &width, &height,
-                        "ahk_id" hwnd)
+                        "ahk_id" hwnd),
+                    DllCall(
+                        "SetCursorPos",
+                        "Int", left + width // 2,
+                        "Int", top + height // 2,
+                        "Int",
+                    ))
                 )
-
-                old := A_CoordModeMouse
-                CoordMode("Mouse", "Screen")
-                MouseMove(left + width // 2, top + height // 2, 0)
-                CoordMode("Mouse", old)
             }
 
             this._tiled.Swap(a, b)
