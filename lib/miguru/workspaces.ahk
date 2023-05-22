@@ -477,12 +477,10 @@ class WorkspaceList {
         }
 
         Padding {
-            get => this._opts.padding // 2
+            get => ObjClone(this._opts.padding)
             set {
-                if value >= 0 {
-                    this._opts.padding := Integer(value) * 2
-                    this.Retile()
-                }
+                this._opts.padding := ObjMerge(this._opts.padding, value)
+                this.Retile()
             }
         }
 
@@ -632,34 +630,42 @@ class WorkspaceList {
             slaveCount := this._tiled.Count - masterCount
             workArea := this._monitor.WorkArea
 
+            usableWidth := workArea.Width
+                - opts.padding.left
+                - opts.padding.right
+            usableHeight := workArea.Height
+                - opts.padding.top
+                - opts.padding.bottom
+
             if masterCount >= 1 && slaveCount >= 1 {
-                masterWidth := Round(workArea.Width * opts.masterSize)
+                masterWidth := Round(usableWidth * opts.masterSize)
                 firstSlave := this._tallRetilePane(
                     this._tiled.First,
                     masterCount,
-                    workArea.left + opts.padding,
-                    workArea.top + opts.padding,
-                    masterWidth - opts.padding - opts.spacing // 2,
-                    workArea.Height - 2 * opts.padding,
+                    workArea.left + opts.padding.left,
+                    workArea.top + opts.padding.top,
+                    masterWidth - opts.spacing // 2,
+                    usableHeight,
                 )
 
-                slaveWidth := workArea.Width - masterWidth
+                slaveWidth := usableWidth - masterWidth
                 this._tallRetilePane(
                     firstSlave,
                     slaveCount,
-                    workArea.left + masterWidth + opts.spacing // 2,
-                    workArea.top + opts.padding,
-                    slaveWidth - opts.padding - opts.spacing // 2,
-                    workArea.Height - 2 * opts.padding,
+                    workArea.left + opts.padding.left
+                        + masterWidth + opts.spacing // 2,
+                    workArea.top + opts.padding.top,
+                    slaveWidth - opts.spacing // 2,
+                    usableHeight,
                 )
             } else {
                 this._tallRetilePane(
                     this._tiled.First,
                     masterCount || this._tiled.Count,
-                    workArea.left + opts.padding,
-                    workArea.top + opts.padding,
-                    workArea.Width - 2 * opts.padding,
-                    workArea.Height - 2 * opts.padding,
+                    workArea.left + opts.padding.left,
+                    workArea.top + opts.padding.top,
+                    usableWidth,
+                    usableHeight,
                 )
             }
         }
@@ -697,34 +703,42 @@ class WorkspaceList {
             slaveCount := this._tiled.Count - masterCount
             workArea := this._monitor.WorkArea
 
+            usableWidth := workArea.Width
+                - opts.padding.left
+                - opts.padding.right
+            usableHeight := workArea.Height
+                - opts.padding.top
+                - opts.padding.bottom
+
             if masterCount >= 1 && slaveCount >= 1 {
-                masterHeight := Round(workArea.Height * opts.masterSize)
+                masterHeight := Round(usableHeight * opts.masterSize)
                 firstSlave := this._wideRetilePane(
                     this._tiled.First,
                     masterCount,
-                    workArea.left + opts.padding,
-                    workArea.top + opts.padding,
-                    workArea.Width - 2 * opts.padding,
-                    masterHeight - opts.padding - opts.spacing // 2,
+                    workArea.left + opts.padding.left,
+                    workArea.top + opts.padding.top,
+                    usableWidth,
+                    masterHeight - opts.spacing // 2,
                 )
 
-                slaveHeight := workArea.Height - masterHeight
+                slaveHeight := usableHeight - masterHeight
                 this._wideRetilePane(
                     firstSlave,
                     slaveCount,
-                    workArea.left + opts.padding,
-                    workArea.top + masterHeight + opts.spacing // 2,
-                    workArea.Width - 2 * opts.padding,
-                    slaveHeight - opts.padding - opts.spacing // 2,
+                    workArea.left + opts.padding.left,
+                    workArea.top + opts.padding.top
+                        + masterHeight + opts.spacing // 2,
+                    usableWidth,
+                    slaveHeight - opts.spacing // 2,
                 )
             } else {
                 this._wideRetilePane(
                     this._tiled.First,
                     masterCount || this._tiled.Count,
-                    workArea.left + opts.padding,
-                    workArea.top + opts.padding,
-                    workArea.Width - 2 * opts.padding,
-                    workArea.Height - 2 * opts.padding,
+                    workArea.left + opts.padding.left,
+                    workArea.top + opts.padding.top,
+                    usableWidth,
+                    usableHeight,
                 )
             }
         }
@@ -766,10 +780,10 @@ class WorkspaceList {
                     this._tallRetilePane(
                         this._mruTile,
                         1,
-                        workArea.left + opts.padding,
-                        workArea.top + opts.padding,
-                        workArea.Width - 2 * opts.padding,
-                        workArea.Height - 2 * opts.padding,
+                        workArea.left + opts.padding.left,
+                        workArea.top + opts.padding.top,
+                        workArea.Width - opts.padding.left - opts.padding.right,
+                        workArea.Height - opts.padding.top - opts.padding.bottom,
                     )
                 } else {
                     WinMaximize("ahk_id" hwnd)

@@ -52,7 +52,12 @@ class MiguruWM extends WMEvents {
     ;;        layout: "tall",
     ;;        masterSize: 0.5,
     ;;        masterCount: 1,
-    ;;        padding: 0,
+    ;;        padding: {
+    ;;            left: 0,
+    ;;            top: 0,
+    ;;            right: 0,
+    ;;            bottom: 0,
+    ;;        },
     ;;        spacing: 0,
     ;;        tilingMinWidth: 0,
     ;;        tilingMinHeight: 0,
@@ -102,7 +107,7 @@ class MiguruWM extends WMEvents {
             layout: "tall",
             masterSize: 0.5,
             masterCount: 1,
-            padding: 0,
+            padding: {left: 0, top: 0, right: 0, bottom: 0},
             spacing: 0,
 
             tilingMinWidth: 0,
@@ -173,7 +178,7 @@ class MiguruWM extends WMEvents {
     ;;    Set("master-size", { value: 3 })
     ;;
     ;; Changes the space to the border of the screen.
-    ;;    Set("padding", { value: 3 })
+    ;;    Set("padding", { value: { left: 3, right: 3 }, delta: { top: -1, bottom: -1 } })
     ;;
     ;; Changes the gaps between windows.
     ;;    Set("spacing", { value: 3 })
@@ -493,7 +498,19 @@ class MiguruWM extends WMEvents {
             if req.HasProp("value") {
                 ws.Padding := req.value
             } else if req.HasProp("delta") {
-                ws.Padding += req.delta
+                v := ws.Padding
+                d := ObjMerge({
+                    left: 0,
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                }, req.delta)
+                ws.Padding := {
+                    left: v.left + d.left,
+                    top: v.top + d.top,
+                    right: v.right + d.right,
+                    bottom: v.bottom + d.bottom,
+                }
             }
 
         case "get-spacing":
