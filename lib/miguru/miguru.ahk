@@ -290,6 +290,19 @@ class MiguruWM extends WMEvents {
 
                 ws.ActiveWindow := hwnd
                 this._maybeActiveWindow := ""
+
+                ; If it's an explorer window, focus the content panel.
+                if WinExist("ahk_id" hwnd
+                    " ahk_exe explorer.exe ahk_class CabinetWClass") {
+                    try {
+                        ControlFocus("DirectUIHWND2", "ahk_id" hwnd)
+                    } catch TargetError {
+                        ;; Do nothing
+                    } catch OSError {
+                        ;; Do nothing
+                    }
+                }
+
             } else if event == EV_WINDOW_REPOSITIONED {
                 debug(() => ["Repositioned: D={} WS={} {}",
                     monitor.Index, wsIdx, WinInfo(hwnd)])
