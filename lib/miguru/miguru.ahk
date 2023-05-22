@@ -63,9 +63,9 @@ class MiguruWM extends WMEvents {
     ;;    mwm.Do("focus-window", { target: "next" })
     ;;
     ;; tilingMinWidth/tilingMinHeight
-    ;;   New windows are automatically tiled, except when their width or height is
-    ;;   smaller than the respective option or they fall into one of the groups
-    ;;   mentioned below, in which case they are floating.
+    ;;   New windows are automatically tiled, except when their width or height
+    ;;   is smaller than the respective option or they fall into one of the
+    ;;   groups mentioned below, in which case they are floating.
     ;; tilingInsertion
     ;;   Specifies where new tiled windows are inserted. Possible values are:
     ;;   - "first": a new window will become the new master window
@@ -73,6 +73,10 @@ class MiguruWM extends WMEvents {
     ;;   - "before-mru": it will become the previous window of the most recently
     ;;   - "after-mru": it will become the next window of the most recently used one
     ;;      used one, means Do("focus-window", { target: "next" }) would focus that
+    ;;      used one, means Do("focus-window", { target: "next" }) would focus
+    ;;      the most recently used one
+    ;;   - "after-mru": it will become the next window of the most recently used
+    ;;      one
     ;; nativeMaximize
     ;;   If true, Windows are maximized in fullscreen-layout.
     ;;
@@ -87,6 +91,9 @@ class MiguruWM extends WMEvents {
     ;; Do("focus-window", ...), they come after the tiled ones.
     ;; New windows that match an entry of the second group won't be picked up. So
     ;; they are neither moved/resized nor focused with Do("focus-window", ...).
+    ;; they are neither moved/resized nor focused with Do("focus-window").
+    ;; The last group is for windows that have no title bar like e.g. alacritty
+    ;; or qutebrowser and would get ignored if not an entry of that group.
     ;;
     ;; Additionally, mwm.VD is an instance of vd.ahk:
     ;;    mwm.VD.RenameDesktop(mwm.VD.Count(), "Last Desktop")
@@ -566,8 +573,7 @@ class MiguruWM extends WMEvents {
 
             if !DllCall("IsWindowVisible", "Ptr", hwnd, "Int") ||
                 IsWindowCloaked(hwnd) {
-                trace(() => ["Ignoring: hidden WS={} {}",
-                    ws.Index, WinInfo(hwnd)])
+                trace(() => ["Ignoring: hidden {}", WinInfo(hwnd)])
                 return ""
             } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_DECOLESS") {
                 ;; Do nothing
@@ -576,8 +582,7 @@ class MiguruWM extends WMEvents {
                 debug(() => ["Ignoring: no titlebar {}", WinInfo(hwnd)])
                 return ""
             } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_IGNORE") {
-                trace(() => ["Ignoring: ahk_group WS={} {}",
-                    ws.Index, WinInfo(hwnd)])
+                trace(() => ["Ignoring: ahk_group {}", WinInfo(hwnd)])
                 return ""
             }
         } catch TargetError {

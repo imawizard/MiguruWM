@@ -1,6 +1,6 @@
-# 「見苦窓経営」笑 - MiguruWM
+# 「見苦窓経営」笑
 
-**mwm.ahk** is an automatically tiling window manager for Windows 10 à la Amethyst/xmonad.
+**MiguruWM** is an automatically tiling window manager for Windows 10 à la Amethyst/xmonad.
 
 ## Motivation
 
@@ -35,7 +35,15 @@ Or you can clone this repository:
 2. Clone this repository with `git clone https://github.com/imawizard/MiguruWM.git`
 3. Run `autohotkey MiguruWM\mwm.ahk`
 
-Adjust the hotkeys as needed (for api docs, see [lib/miguru/miguru.ahk](lib/miguru/miguru.ahk#L48-L189) and [lib/vd/vd.ahk](lib/vd/vd.ahk#L56-L235)).
+## Documentation
+
+- [`mwm := MiguruWM(...)`](lib/miguru/miguru.ahk#L48-L92)
+- [`mwm.Do(...)`](lib/miguru/miguru.ahk#L133-L153)
+- [`mwm.Set(...)`](lib/miguru/miguru.ahk#L159-L175)
+- [`mwm.Get(...)`](lib/miguru/miguru.ahk#L179-L190)
+- [`mwm.VD`](lib/vd/vd.ahk#L56-L236)
+
+For help on how to adjust the hotkeys, see the [AutoHotkey documentation](https://www.autohotkey.com/docs/v2/Hotkeys.htm).
 
 ## How to use
 

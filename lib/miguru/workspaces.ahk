@@ -194,7 +194,10 @@ class WorkspaceList {
 
         _addFloating(hwnd) {
             this._floating.Push(hwnd)
-            this._windows[hwnd] := { type: FLOATING, index: this._floating.Length }
+            this._windows[hwnd] := {
+                type: FLOATING,
+                index: this._floating.Length,
+            }
             this._silentlySetAlwaysOnTop(hwnd, this._opts.floatingAlwaysOnTop)
         }
 
@@ -380,8 +383,8 @@ class WorkspaceList {
                 if this._active {
                     if this._active == WinExist("A") {
                         ;; If e.g. the currently active window is unmanaged,
-                        ;; this._active still holds the last active window for the
-                        ;; workspace, so just focus that.
+                        ;; this._active still holds the last active window for
+                        ;; the workspace, so just focus that.
                         info("Focus window #{} which was last active", hwnd)
                     } else {
                         warn("Focus window #{} which was last active but is inactive now",
@@ -606,10 +609,12 @@ class WorkspaceList {
                     "UInt", SWP_FLAGS,
                     "Int",
                 ) {
-                    warn("SetWindowPos failed for hwnd #{} with x={:.2f} y={:.2f} width={:.2f} height={:.2f}",
+                    warn("SetWindowPos failed for hwnd #{}"
+                        " with x={:.2f} y={:.2f} width={:.2f} height={:.2f}",
                         hwnd, x, y, width, height)
                 } else if awareness !== "" {
-                    debug("SetWindowPos({}) to x={:.2f} y={:.2f} width={:.2f} height={:.2f}",
+                    debug("SetWindowPos({})"
+                        " to x={:.2f} y={:.2f} width={:.2f} height={:.2f}",
                         hwnd, x, y, width, height)
                 }
             } catch {
@@ -660,7 +665,9 @@ class WorkspaceList {
         }
 
         _tallRetilePane(tile, count, x, startY, totalWidth, totalHeight) {
-            spacing := this._opts.spacing > 0 && count > 1 ? this._opts.spacing // 2 : 0
+            spacing := this._opts.spacing > 0 && count > 1
+                ? this._opts.spacing // 2
+                : 0
             height := Round((totalHeight - spacing * Max(count - 2, 0)) / count)
             y := startY
 
@@ -723,7 +730,9 @@ class WorkspaceList {
         }
 
         _wideRetilePane(tile, count, startX, y, totalWidth, totalHeight) {
-            spacing := this._opts.spacing > 0 && count > 1 ? this._opts.spacing // 2 : 0
+            spacing := this._opts.spacing > 0 && count > 1
+                ? this._opts.spacing // 2
+                : 0
             width := Round((totalWidth - spacing * Max(count - 2, 0)) / count)
             x := startX
 
@@ -827,7 +836,8 @@ class WorkspaceList {
             workspaces := this._workspaces[monitor.Handle]
             ws := workspaces.Get(index, "")
             if !ws {
-                ws := WorkspaceList.Workspace(monitor, index, ObjClone(this._defaults))
+                opts := ObjClone(this._defaults)
+                ws := WorkspaceList.Workspace(monitor, index, opts)
                 workspaces[index] := ws
             }
             return ws

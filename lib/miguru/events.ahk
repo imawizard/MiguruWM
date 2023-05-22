@@ -133,11 +133,13 @@ class WMEvents {
         switch msg {
         case WM_EVENT:
             if wparam <= EV_MAX_WINDOW {
-                trace(() => ["{}: {}", WMEvents.Stringified[wparam], WinInfo(lparam)])
+                trace(() => ["{}: {}",
+                    WMEvents.Stringified[wparam], WinInfo(lparam)])
                 ret := this._onWindowEvent(wparam, lparam)
             } else if wparam <= EV_MAX_DESKTOP {
                 args := ObjFromPtr(lparam)
-                trace(() => ["{}: {}", WMEvents.Stringified[wparam], StringifySL(args)])
+                trace(() => ["{}: {}",
+                    WMEvents.Stringified[wparam], StringifySL(args)])
                 ret := this._onDesktopEvent(wparam, args)
             }
         case WM_REQUEST:

@@ -8,13 +8,17 @@ A_IconTip := "「 Miguru Window Manager 」"
 
 #include *i lib\miguru\miguru.ahk
 
-GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Benachrichtigung ahk_exe Teams.exe")
-GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Notification ahk_exe Teams.exe")
-GroupAdd("MIGURU_AUTOFLOAT", "ahk_exe QuickLook.exe")
-GroupAdd("MIGURU_AUTOFLOAT", "ahk_class MsoSplash ahk_exe outlook.exe")
+GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Benachrichtigung" " ahk_exe Teams.exe"                                                  )
+GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Notification"     " ahk_exe Teams.exe"                                                  )
+GroupAdd("MIGURU_AUTOFLOAT",                                    " ahk_exe QuickLook.exe"                                              )
+GroupAdd("MIGURU_AUTOFLOAT",                                    " ahk_exe outlook.exe"              " ahk_class MsoSplash"            )
+GroupAdd("MIGURU_AUTOFLOAT",                                    " ahk_exe explorer.exe"             " ahk_class OperationStatusWindow")
+GroupAdd("MIGURU_AUTOFLOAT",                                    " ahk_exe taskmgr.exe"                                                )
+GroupAdd("MIGURU_AUTOFLOAT", "Calculator"                       " ahk_exe ApplicationFrameHost.exe"                                   )
+GroupAdd("MIGURU_AUTOFLOAT",                                    " ahk_exe zeal.exe"                                                   )
 
-GroupAdd("MIGURU_DECOLESS", "ahk_exe qutebrowser.exe")
-GroupAdd("MIGURU_DECOLESS", "ahk_exe alacritty.exe")
+GroupAdd("MIGURU_DECOLESS",                                     " ahk_exe qutebrowser.exe"                                            )
+GroupAdd("MIGURU_DECOLESS",                                     " ahk_exe alacritty.exe"                                              )
 
 if !IsSet(MiguruWM) {
     prog := RegExReplace(A_ScriptName, "i)\.ahk$", ".exe")
