@@ -7,6 +7,7 @@ KeyHistory(0), ListLines(false), ProcessSetPriority("H")
 A_IconTip := "「 Miguru Window Manager 」"
 
 #include *i lib\miguru\miguru.ahk
+#include *i lib\Popup.ahk
 
 GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Benachrichtigung" " ahk_exe Teams.exe"                                                  )
 GroupAdd("MIGURU_AUTOFLOAT", "Microsoft Teams-Notification"     " ahk_exe Teams.exe"                                                  )
@@ -29,6 +30,7 @@ if !IsSet(MiguruWM) {
 }
 
 mwm := MiguruWM({
+    layout: "Tall",
     padding: {
         left: 0,
         top: 0,
@@ -36,6 +38,7 @@ mwm := MiguruWM({
         bottom: 0,
     },
     spacing: 0,
+    showPopup: (text) => Popup(text),
 })
 
 mod1 := "Alt"
@@ -136,10 +139,10 @@ mod1 := "Alt"
 
 CycleLayouts() {
     cycle := [
-        "tall",
-        "wide",
-        "fullscreen",
-        "floating",
+        "Tall",
+        "Wide",
+        "Fullscreen",
+        "Floating",
     ]
 
     m := Map()
@@ -150,7 +153,6 @@ CycleLayouts() {
     current := mwm.Get("layout")
     next := cycle[Mod(m[current], cycle.Length) + 1]
 
-    TrayTip("Set layout to " next)
     mwm.Set("layout", { value: next })
 }
 
@@ -162,7 +164,6 @@ ResetLayout() {
     mwm.Set("master-count", { value: defaults.masterCount })
     mwm.Set("padding", { value: defaults.padding })
     mwm.Set("spacing", { value: defaults.spacing })
-    TrayTip("Reset layout")
 }
 
 GetSHAppFolderPath(hwnd := 0) {
