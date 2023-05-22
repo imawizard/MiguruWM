@@ -30,6 +30,17 @@ GetDpiAwareness() {
     )
 }
 
+RunDpiAware(fn) {
+    old := SetDpiAwareness(DPI_PMv2)
+    try {
+        fn()
+    } catch {
+        throw
+    } finally {
+        SetDpiAwareness(old)
+    }
+}
+
 DWMWA_NCRENDERING_ENABLED            := 1
 DWMWA_NCRENDERING_POLICY             := 2
 DWMWA_TRANSITIONS_FORCEDISABLED      := 3

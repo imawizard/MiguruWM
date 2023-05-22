@@ -135,14 +135,11 @@ class WorkspaceList {
 
                 shouldTile := false
             } else {
-                old := SetDpiAwareness(DPI_PMv2)
-                try {
+                width := 0, height := 0
+
+                RunDpiAware(() =>
                     WinGetPos(, , &width, &height, "ahk_id" hwnd)
-                } catch {
-                    throw
-                } finally {
-                    SetDpiAwareness(old)
-                }
+                )
 
                 if this._opts.tilingMinWidth > 0 &&
                     width < this._opts.tilingMinWidth {
@@ -286,14 +283,12 @@ class WorkspaceList {
             WinActivate("ahk_id" hwnd)
 
             if mouseFollowsFocus {
-                old := SetDpiAwareness(DPI_PMv2)
-                try {
+                left := 0, top := 0
+                width := 0, height := 0
+
+                RunDpiAware(() =>
                     WinGetPos(&left, &top, &width, &height, "ahk_id" hwnd)
-                } catch {
-                    throw
-                } finally {
-                    SetDpiAwareness(old)
-                }
+                )
 
                 old := A_CoordModeMouse
                 CoordMode("Mouse", "Screen")
@@ -442,15 +437,13 @@ class WorkspaceList {
                     ? a.data
                     : b.data
 
-                old := SetDpiAwareness(DPI_PMv2)
-                try {
+                left := 0, top := 0
+                width := 0, height := 0
+
+                RunDpiAware(() =>
                     WinGetPos(&left, &top, &width, &height,
                         "ahk_id" hwnd)
-                } catch {
-                    throw
-                } finally {
-                    SetDpiAwareness(old)
-                }
+                )
 
                 old := A_CoordModeMouse
                 CoordMode("Mouse", "Screen")
@@ -528,15 +521,12 @@ class WorkspaceList {
                 this._monitor.Index, this._index,
                 this._tiled.Count, this._opts.layout)
 
-            old := SetDpiAwareness(DPI_PMv2)
             try {
-                this._retile()
+                RunDpiAware(() => this._retile())
             } catch WorkspaceList.Workspace.WindowError as err {
                 warn("Removing window: {} {}",
                     err.cause.Message, WinInfo(err.hwnd))
                 this.Remove(err.hwnd)
-            } finally {
-                SetDpiAwareness(old)
             }
         }
 
