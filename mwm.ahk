@@ -38,7 +38,8 @@ mwm := MiguruWM({
         bottom: 0,
     },
     spacing: 0,
-    showPopup: (text) => Popup(text),
+
+    showPopup: (text, opts) => Popup(text, opts),
 })
 
 mod1 := "Alt"
@@ -71,7 +72,7 @@ mod1 := "Alt"
 *,::mwm.Set("master-count", { delta:  1 })
 *.::mwm.Set("master-count", { delta: -1 })
 
-*t::mwm.Do("float-window", { value: false })
+*t::mwm.Do("float-window", { hwnd: WinExist("A"), value: false })
 *p::OpenSearch()
 *q::Reload()
 

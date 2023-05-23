@@ -296,7 +296,7 @@ class MiguruWM extends WMEvents {
 
             if event == EV_WINDOW_FOCUSED || hwnd == this._maybeActiveWindow {
                 debug(() => ["Focused: D={} WS={} {}",
-                    monitor.Index, wsIdx, WinInfo(hwnd)])
+                    monitor.Index, ws.Index, WinInfo(hwnd)])
 
                 ws.ActiveWindow := hwnd
                 this._maybeActiveWindow := ""
@@ -315,7 +315,7 @@ class MiguruWM extends WMEvents {
 
             } else if event == EV_WINDOW_REPOSITIONED {
                 debug(() => ["Repositioned: D={} WS={} {}",
-                    monitor.Index, wsIdx, WinInfo(hwnd)])
+                    monitor.Index, ws.Index, WinInfo(hwnd)])
 
                 ws.Retile()
             }
