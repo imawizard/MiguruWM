@@ -280,8 +280,6 @@ class WorkspaceList {
         }
 
         _focusWindow(hwnd, mouseFollowsFocus) {
-            WinActivate("ahk_id" hwnd)
-
             if mouseFollowsFocus {
                 RunDpiAware(() => (
                     WinGetPos(&left, &top, &width, &height, "ahk_id" hwnd),
@@ -293,6 +291,8 @@ class WorkspaceList {
                     ))
                 )
             }
+
+            WinActivate("ahk_id" hwnd)
         }
 
         _nextWindow(from) {
