@@ -748,17 +748,21 @@ qsort(arr, fn := "asc") {
     return sorted
 }
 
-ObjMerge(a, b) {
-    c := {}
-    for k, v in a.OwnProps() {
-        c.%k% := Type(v) == "Object" ? ObjMerge({}, v) : v
+ObjMerge(v*) {
+    res := {}
+    for , v in v {
+        for k, v in v.OwnProps() {
+            res.%k% := Type(v) == "Object"
+            ? ObjMerge(
+                res.HasProp(k) && Type(res.%k%) == "Object"
+                    ? res.%k%
+                    : {},
+                v,
+            )
+            : v
+        }
     }
-    for k, v in b.OwnProps() {
-        c.%k% := Type(v) == "Object" ?
-            ObjMerge(c.HasProp(k) && Type(c.%k%) == "Object" ? c.%k% : {}, v) :
-            v
-    }
-    return c
+    return res
 }
 
 ObjClone(v) => ObjMerge({}, v)
