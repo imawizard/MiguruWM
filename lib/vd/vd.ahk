@@ -231,8 +231,8 @@ class VD {
         }
     }
 
-    ; Returns true if the specified window or all windows of the app the window
-    ; belongs to are pinned.
+    ;; Returns true if the specified window or all windows of the app the window
+    ;; belongs to are pinned.
     IsWindowPinned(hwnd) {
         view := this.viewCollection.GetViewForHwnd(hwnd)
         if !view.Ptr {

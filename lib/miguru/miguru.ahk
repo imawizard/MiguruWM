@@ -301,7 +301,7 @@ class MiguruWM extends WMEvents {
                 ws.ActiveWindow := hwnd
                 this._maybeActiveWindow := ""
 
-                ; If it's an explorer window, focus the content panel.
+                ;; If it's an explorer window, focus the content panel.
                 if WinExist("ahk_id" hwnd
                     " ahk_exe explorer.exe ahk_class CabinetWClass") {
                     try {
