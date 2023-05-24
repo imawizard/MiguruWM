@@ -4,7 +4,6 @@
 #Warn VarUnset, Off
 A_MaxHotkeysPerInterval := 1000
 KeyHistory(0), ListLines(false), ProcessSetPriority("H")
-A_IconTip := "「 Miguru Window Manager 」"
 
 #include *i lib\miguru\miguru.ahk
 #include *i lib\Popup.ahk
@@ -41,6 +40,8 @@ mwm := MiguruWM({
 
     showPopup: (text, opts) => Popup(text, opts),
 })
+
+MiguruWM.SetupTrayMenu()
 
 mod1 := "Alt"
 

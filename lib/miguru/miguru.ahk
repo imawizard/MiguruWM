@@ -217,6 +217,58 @@ class MiguruWM extends WMEvents {
         return ObjFromPtr(res).value
     }
 
+    static Version {
+        get => IsSet(MIGURU_VERSION)
+            ? MIGURU_VERSION
+            : "x.y.z"
+    }
+
+    static SetupTrayMenu() {
+        tray := A_TrayMenu
+
+        tray.Delete()
+        tray.Add("Version " this.Version, (*) =>)
+        tray.Disable("1&")
+        tray.Add()
+        tray.Add("Disable", TogglePause)
+        tray.Add("Start Miguru on Login", ToggleAutostart)
+        tray.Add("Edit script ...", (*) => Edit())
+        tray.Add()
+        tray.Add("Visit homepage ...", (*) =>
+            Run("https://github.com/imawizard/MiguruWM"))
+        tray.Add("Relaunch Miguru", (*) => Reload())
+        tray.Add()
+        tray.Add("Quit Miguru", (*) => ExitApp())
+
+        TogglePause(*) {
+            if !A_IsPaused {
+                tray.Rename("Disable", "Enable")
+                Pause(true)
+            } else {
+                tray.Rename("Enable", "Disable")
+                Pause(false)
+            }
+        }
+
+        link := A_Startup "\" A_ScriptName ".lnk"
+        if FileExist(link) {
+            tray.Check("Start Miguru on Login")
+        }
+
+        ToggleAutostart(*) {
+            if !FileExist(link) {
+                FileCreateShortcut(A_ScriptFullPath, link, A_ScriptDir)
+                tray.Check("Start Miguru on Login")
+            } else {
+                FileDelete(link)
+                tray.Uncheck("Start Miguru on Login")
+            }
+        }
+
+        A_IconTip := "「 Miguru Window Manager 」"
+        TraySetIcon("*", , true)
+    }
+
     __Delete() {
         if this.HasProp("_oldFFM") {
             SetSpiInt(SPI_SETACTIVEWINDOWTRACKING, this._oldFFM)
