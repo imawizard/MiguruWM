@@ -62,6 +62,7 @@ class WorkspaceList {
                 "wide",       this._wideRetile,
                 "fullscreen", this._fullscreenRetile,
                 "floating",   this._floatingRetile,
+                "threecolumns", this._threeColumnsRetile
             )
             this._retile := this._retileFns[StrLower(this._opts.layout)]
         }
@@ -808,6 +809,122 @@ class WorkspaceList {
         _floatingRetile() {
             ;; Do nothing
         }
+
+        _threeColumnsRetile() {
+            opts := this._opts
+            masterCount := Min(opts.masterCount, this._tiled.Count)
+            slaveCount := this._tiled.Count - masterCount
+            workArea := this._monitor.WorkArea
+
+            usableWidth := workArea.Width
+                - opts.padding.left
+                - opts.padding.right
+            usableHeight := workArea.Height
+                - opts.padding.top
+                - opts.padding.bottom
+
+            if masterCount >=1 && slaveCount >= 1 {
+                ; 1.3 should be replaced by an option
+                masterWidth := Round(usableWidth * opts.masterSize * 1.3)
+                slaveWidth := usableWidth - masterWidth
+                ; args: tile, count, x, startY, totalWidth, totalHeight
+                if(slaveCount == 1){
+                    firstSlave := this._tallRetilePane(
+                        this._tiled.First,
+                        masterCount,
+                        workArea.left + opts.padding.left,
+                        workArea.top + opts.padding.top,
+                        masterWidth - opts.spacing // 2,
+                        usableHeight,
+                    )
+                    this._tallRetilePane(
+                        firstSlave,
+                        slaveCount,
+                        workArea.left + opts.padding.left + masterWidth + opts.spacing // 2,
+                        workArea.top + opts.padding.top,
+                        slaveWidth -  opts.spacing // 2,
+                        usableHeight,
+                    )
+                }
+                else{
+                    masterWidth := Round(usableWidth * opts.masterSize * 1.3)
+                    slaveWidth := Round((usableWidth - masterWidth) // 2)
+                    firstSlave := this._tallRetilePane(
+                        this._tiled.First,
+                        masterCount,
+                        workArea.left + opts.padding.left + 
+                                    slaveWidth + opts.spacing // 2,
+                        workArea.top + opts.padding.top,
+                        masterWidth - opts.spacing,
+                        usableHeight,
+                    )
+                    this._threeColumnsRetilePane(
+                        firstSlave,
+                        slaveCount,
+                        workArea.left + opts.padding.left,
+                        workArea.top + opts.padding.top,
+                        workArea.right - opts.padding.right - slaveWidth + opts.spacing // 2,
+                        workArea.top + opts.padding.top,
+                        slaveWidth - opts.spacing // 2,
+                        usableHeight,
+                    )
+                }
+            }
+            else {
+                this._tallRetilePane(
+                    this._tiled.First,
+                    masterCount || this._tiled.Count,
+                    workArea.left + opts.padding.left,
+                    workArea.top + opts.padding.top,
+                    usableWidth,
+                    usableHeight,
+                )
+            }
+        }
+
+        _threeColumnsRetilePane(tile, count, left_x, left_y, right_x, right_y, totalWidth, totalHeight){
+            spacing := this._opts.spacing > 0 && count > 1 ? this._opts.spacing // 2 : 0
+            slave_left_num := Integer(count/2)
+            slave_right_num := count - slave_left_num
+            spacing_right := this._opts.spacing > 0 && slave_right_num > 1 ? this._opts.spacing // 2 : 0
+            spacing_left  := this._opts.spacing > 0 && slave_left_num > 1 ? this._opts.spacing // 2 : 0
+            height_right := Round((totalHeight - spacing_right * Max(slave_right_num - 2, 0)) / slave_right_num)
+            height_left := Round((totalHeight - spacing_left * Max(slave_left_num - 2, 0)) / slave_left_num)
+            cur_slave := 1
+
+            try {
+                Loop count {
+                    if(cur_slave <= slave_right_num){
+                        this._moveWindow(
+                            tile.data,
+                            right_x,
+                            right_y,
+                            totalWidth,
+                            height_right - spacing_right,
+                        )
+                        right_y += height_right + spacing_right
+                    }
+                    else{
+                        this._moveWindow(
+                            tile.data,
+                            left_x,
+                            left_y,
+                            totalWidth,
+                            height_left - spacing_left,
+                        )
+                        left_y += height_left + spacing_left
+                    }
+                    tile := tile.next
+                    cur_slave := cur_slave + 1
+                }
+            } catch TargetError as err {
+                throw WorkspaceList.Workspace.WindowError(tile.data, err)
+            } catch OSError as err {
+                throw WorkspaceList.Workspace.WindowError(tile.data, err)
+            }
+            return tile
+        }
+
     }
 
     __New(monitors, defaults) {
