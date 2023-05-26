@@ -62,7 +62,8 @@ class WorkspaceList {
                 "wide",       this._wideRetile,
                 "fullscreen", this._fullscreenRetile,
                 "floating",   this._floatingRetile,
-                "threecolumns", this._threeColumnsRetile
+                "threecolumns", this._threeColumnsRetile,
+                "spiral",       this._spiralRetile
             )
             this._retile := this._retileFns[StrLower(this._opts.layout)]
         }
@@ -916,6 +917,137 @@ class WorkspaceList {
                     }
                     tile := tile.next
                     cur_slave := cur_slave + 1
+                }
+            } catch TargetError as err {
+                throw WorkspaceList.Workspace.WindowError(tile.data, err)
+            } catch OSError as err {
+                throw WorkspaceList.Workspace.WindowError(tile.data, err)
+            }
+            return tile
+        }
+
+        _spiralRetile() {
+            opts := this._opts
+            masterCount := Min(opts.masterCount, this._tiled.Count)
+            slaveCount := this._tiled.Count - masterCount
+            workArea := this._monitor.WorkArea
+
+            usableWidth := workArea.Width
+                - opts.padding.left
+                - opts.padding.right
+            usableHeight := workArea.Height
+                - opts.padding.top
+                - opts.padding.bottom
+
+            if masterCount >=1 && slaveCount >= 1 {
+                masterWidth := Round(usableWidth * opts.masterSize)
+                firstSlave := this._tallRetilePane(
+                    this._tiled.First,
+                    masterCount,
+                    workArea.left + opts.padding.left,
+                    workArea.top + opts.padding.top,
+                    masterWidth - opts.spacing // 2,
+                    usableHeight,
+                )
+                slaveWidth := usableWidth - masterWidth
+                this._spiralRetilePane(
+                    firstSlave,
+                    slaveCount,
+                    workArea.left + opts.padding.left + masterWidth + opts.spacing // 2,
+                    workArea.top + opts.padding.top,
+                    slaveWidth - opts.spacing // 2,
+                    usableHeight,
+                    "down"
+                )
+            }
+            else {
+                this._tallRetilePane(
+                    this._tiled.First,
+                    masterCount || this._tiled.Count,
+                    workArea.left + opts.padding.left,
+                    workArea.top + opts.padding.top,
+                    usableWidth,
+                    usableHeight, 
+                )
+            }
+        }
+
+        _spiralRetilePane(tile, count, x, y, totalWidth, totalHeight,splitDirection){
+            spacing := this._opts.spacing > 0 && count > 1 ? this._opts.spacing // 2 : 0
+            height := Round((totalHeight - spacing * Max(count - 2, 0)) / count)
+
+            ; get sub container based on current window
+            ; if the split_dir is LEFT, then sub container would be spawned in
+            ; the left, with same height and width of current window
+            get_sub_continaer(dir,x,y,w,h){
+                if(dir=="right")
+                    return ["down",x + w + spacing * 2, y, w, h]
+                else if(dir=="down")
+                    return ["left",x, y + h + spacing * 2, w, h]
+                else if(dir=="left")
+                    return ["up",x -spacing*2 - w, y, w, h]
+                else if(dir=="up")
+                    return ["right",x, y - h - spacing*2, w, h]
+            }
+
+            ; get the first window in current container
+            ; if the split_dir is LEFT, then the first window in current
+            ; container should be spawned in the right side of this container,
+            ; with width/2 and height/2, leaving space for sub container in the
+            ; left 
+
+            ; but if there are no sub-containers any more, then the window
+            ; should fill all the space of current container
+            get_first_window_in_container(dir,x,y,w,h){
+                if(dir=="right")
+                    return [x, y, Round(w/2) - spacing, h]
+                else if(dir=="down")
+                    return [x, y, w, Round(h/2) - spacing]
+                else if(dir=="left")
+                    return [x + Round(w/2) + spacing, y, Round(w/2) - spacing, h]
+                else if(dir=="up")
+                    return [x, y + Round(h/2) + spacing, w, Round(h/2) - spacing]
+            }
+
+            slave_cnt := 1
+
+            cur_container := [splitDirection,x,y,totalWidth,totalHeight]
+            split_dir := cur_container[1]
+            container_x := cur_container[2]
+            container_y := cur_container[3]
+            container_w := cur_container[4]
+            container_h := cur_container[5]
+
+            try {
+            Loop count {
+                    cur_window := get_first_window_in_container(split_dir,container_x,container_y,container_w,container_h)
+                    cur_x := cur_window[1]
+                    cur_y := cur_window[2]
+                    cur_w := cur_window[3]
+                    cur_h := cur_window[4]
+                    if(slave_cnt == count){
+                        cur_x := container_x
+                        cur_y := container_y
+                        cur_w := container_w
+                        cur_h := container_h
+                    }
+                    this._moveWindow(
+                        tile.data,
+                        cur_x,
+                        cur_y,
+                        cur_w,
+                        cur_h,
+                    )
+                    tile := tile.next
+
+                    cur_container := get_sub_continaer(split_dir,cur_x,cur_y,cur_w,cur_h)
+                    split_dir := cur_container[1]
+                    container_x := cur_container[2]
+                    container_y := cur_container[3]
+                    container_w := cur_container[4]
+                    container_h := cur_container[5]
+
+                    slave_cnt := slave_cnt + 1
                 }
             } catch TargetError as err {
                 throw WorkspaceList.Workspace.WindowError(tile.data, err)
