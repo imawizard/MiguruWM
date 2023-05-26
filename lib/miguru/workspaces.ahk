@@ -828,7 +828,6 @@ class WorkspaceList {
                 ; 1.3 should be replaced by an option
                 masterWidth := Round(usableWidth * opts.masterSize * 1.3)
                 slaveWidth := usableWidth - masterWidth
-                ; args: tile, count, x, startY, totalWidth, totalHeight
                 if(slaveCount == 1){
                     firstSlave := this._tallRetilePane(
                         this._tiled.First,
@@ -885,6 +884,7 @@ class WorkspaceList {
 
         _threeColumnsRetilePane(tile, count, left_x, left_y, right_x, right_y, totalWidth, totalHeight){
             spacing := this._opts.spacing > 0 && count > 1 ? this._opts.spacing // 2 : 0
+
             slave_left_num := Integer(count/2)
             slave_right_num := count - slave_left_num
             spacing_right := this._opts.spacing > 0 && slave_right_num > 1 ? this._opts.spacing // 2 : 0
