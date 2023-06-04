@@ -141,15 +141,13 @@ class WorkspaceList {
                     WinGetPos(, , &width, &height, "ahk_id" hwnd)
                 )
 
-                if this._opts.tilingMinWidth > 0 &&
-                    width < this._opts.tilingMinWidth {
+                if width < this._opts.tilingMinWidth {
                     info(() => ["Floating: width {}<{} {}",
                         width, this._opts.tilingMinWidth,
                         WinInfo(hwnd)])
 
                     shouldTile := false
-                } else if this._opts.tilingMinHeight > 0 &&
-                    height < this._opts.tilingMinHeight {
+                } else if height < this._opts.tilingMinHeight {
                     info(() => ["Floating: height {}<{} {}",
                         height, this._opts.tilingMinHeight,
                         WinInfo(hwnd)])
@@ -338,7 +336,7 @@ class WorkspaceList {
                 if !taskbar {
                     warn("Can't focus monitor {} without a tile or a taskbar",
                         monitor.Index)
-                    return
+                    return false
                 }
 
                 WinActivate("ahk_id" taskbar)
@@ -355,7 +353,7 @@ class WorkspaceList {
                         )
                     )
                 }
-                return
+                return true
             }
 
             anchor := this._active ||
@@ -388,10 +386,11 @@ class WorkspaceList {
                             hwnd)
                     }
                     this._focusWindow(this._active, mouseFollowsFocus)
+                    return true
                 } else {
                     warn("Nothing to focus")
+                    return false
                 }
-                return
             }
 
             info("Focus window #{}", hwnd)
@@ -404,6 +403,7 @@ class WorkspaceList {
                     this.Retile()
                 }
             }
+            return true
         }
 
         Swap(hwnd, with, mouseFollowsFocus := false) {
@@ -477,6 +477,9 @@ class WorkspaceList {
         MasterCount {
             get => this._opts.masterCount
             set {
+                if !IsNumber(value) {
+                    throw "Must be a number"
+                }
                 if value >= 0 && value <= 6 {
                     this._opts.masterCount := value
                     this.Retile()
@@ -487,6 +490,9 @@ class WorkspaceList {
         MasterSize {
             get => Round(this._opts.masterSize, 2)
             set {
+                if !IsNumber(value) {
+                    throw "Must be a number"
+                }
                 if value >= 0.0 && value <= 1.0 {
                     this._opts.masterSize := value
                     this.Retile()
@@ -505,6 +511,9 @@ class WorkspaceList {
         Spacing {
             get => this._opts.spacing // 2
             set {
+                if !IsInteger(value) {
+                    throw "Must be an integer"
+                }
                 if value >= 0 {
                     this._opts.spacing := Integer(value) * 2
                     this.Retile()

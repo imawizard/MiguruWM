@@ -30,6 +30,8 @@ if !IsSet(MiguruWM) {
 
 mwm := MiguruWM({
     layout: "Tall",
+    masterSize: 0.5,
+    masterCount: 1,
     padding: {
         left: 0,
         top: 0,
@@ -37,6 +39,24 @@ mwm := MiguruWM({
         bottom: 0,
     },
     spacing: 0,
+
+    tilingMinWidth: 0,
+    tilingMinHeight: 0,
+    tilingInsertion: "before-mru",
+    floatingAlwaysOnTop: false,
+    nativeMaximize: false,
+
+    focusFollowsMouse: false,
+    mouseFollowsFocus: false,
+
+    followWindowToMonitor: false,
+
+    delays: {
+        retryManage: 100,
+        windowHidden: 400,
+        onDisplayChange: 1000,
+        sendMonitorRetile: 100,
+    },
 
     showPopup: (text, opts) => Popup(text, opts),
 })

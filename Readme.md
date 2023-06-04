@@ -45,10 +45,10 @@ When updating, download the newest artifact and replace **mwm.exe**, but keep yo
 
 When modifying **mwm.ahk** to your liking, see the following docs:
 
-- [`mwm := MiguruWM(...)`](lib/miguru/miguru.ahk#L51-L108)
-- [`mwm.Do(...)`](lib/miguru/miguru.ahk#L153-L173)
-- [`mwm.Set(...)`](lib/miguru/miguru.ahk#L179-L195)
-- [`mwm.Get(...)`](lib/miguru/miguru.ahk#L199-L210)
+- [`mwm := MiguruWM(...)`](lib/miguru/miguru.ahk#L51-L168)
+- [`mwm.Do(...)`](lib/miguru/miguru.ahk#L216-L249)
+- [`mwm.Set(...)`](lib/miguru/miguru.ahk#L255-L279)
+- [`mwm.Get(...)`](lib/miguru/miguru.ahk#L283-L294)
 - [`mwm.VD`](lib/vd/vd.ahk#L56-L236)
 
 The hotkeys I use can be found [here](https://github.com/imawizard/Amalgamation.keylayout/blob/master/windows/mwm.ahk).
