@@ -49,78 +49,141 @@ A_SystemDPI := A_ScreenDPI
 
 class MiguruWM extends WMEvents {
     ;; The constructor accepts an object containing options. The defaults are:
-    ;;    #include lib\miguru\miguru.ahk
+    ;;   #include lib\miguru\miguru.ahk
     ;;
-    ;;    mwm := MiguruWM({
-    ;;        layout: "tall",
-    ;;        masterSize: 0.5,
-    ;;        masterCount: 1,
-    ;;        padding: {
-    ;;            left: 0,
-    ;;            top: 0,
-    ;;            right: 0,
-    ;;            bottom: 0,
-    ;;        },
-    ;;        spacing: 0,
-    ;;        tilingMinWidth: 0,
-    ;;        tilingMinHeight: 0,
-    ;;        tilingInsertion: "before-mru",
-    ;;        floatingAlwaysOnTop: false,
-    ;;        nativeMaximize: false,
-    ;;    })
-    ;;    mwm.Do("focus-window", { target: "next" })
+    ;;   mwm := MiguruWM({
     ;;
-    ;; tilingMinWidth/tilingMinHeight
-    ;;   New windows are automatically tiled, except when their width or height
-    ;;   is smaller than the respective option or they fall into one of the
-    ;;   groups mentioned below, in which case they are floating.
-    ;; tilingInsertion
-    ;;   Specifies where new tiled windows are inserted. Possible values are:
-    ;;   - "first": a new window will become the new master window
-    ;;   - "last": it will become the last window in the secondary pane
-    ;;   - "before-mru": it will become the previous window of the most recently
-    ;;   - "after-mru": it will become the next window of the most recently used one
-    ;;      used one, means Do("focus-window", { target: "next" }) would focus that
-    ;;      used one, means Do("focus-window", { target: "next" }) would focus
-    ;;      the most recently used one
-    ;;   - "after-mru": it will become the next window of the most recently used
-    ;;      one
-    ;; nativeMaximize
-    ;;   If true, Windows are maximized in fullscreen-layout.
+    ;;     # Default layout for all workspaces.
+    ;;     layout: "tall",
+    ;;
+    ;;     # Default size of a workspace's master pane.
+    ;;     masterSize: 0.5,
+    ;;
+    ;;     # Default number of windows to put in the master pane.
+    ;;     masterCount: 1,
+    ;;
+    ;;     # Default gap between the edges of the display and the windows.
+    ;;     padding: {
+    ;;         left: 0,
+    ;;         top: 0,
+    ;;         right: 0,
+    ;;         bottom: 0,
+    ;;     },
+    ;;
+    ;;     ;; Default gap in-between of windows.
+    ;;     spacing: 0,
+    ;;
+    ;;     # New windows are automatically tiled, except when their width or
+    ;;     # height is smaller than the respective option or they fall into one
+    ;;     # of the groups mentioned below, in which case they are floating.
+    ;;     tilingMinWidth: 0,
+    ;;     tilingMinHeight: 0,
+    ;;
+    ;;     # Specify where new tiled windows are inserted. Possible values are:
+    ;;     # - "first": a new window will become the new master window
+    ;;     # - "last": it will become the last window in the secondary pane
+    ;;     # - "before-mru": it will become the previous window of the most
+    ;;     #    recently
+    ;;     # - "after-mru": it will become the next window of the most recently
+    ;;     #    used one, means Do("focus-window", { target: "next" }) would
+    ;;     #    focus the most recently used one
+    ;;     # - "after-mru": it will become the next window of the most recently
+    ;;     #    used one
+    ;;     tilingInsertion: "before-mru",
+    ;;
+    ;;     # If true, floating windows will be put above tiling windows.
+    ;;     floatingAlwaysOnTop: false,
+    ;;
+    ;;     # If true, Windows are maximized in fullscreen-layout.
+    ;;     nativeMaximize: false,
+    ;;
+    ;;     # If true, uses SPI_SETACTIVEWINDOWTRACKING to activate focusing
+    ;;     # windows through moving the mouse.
+    ;;     focusFollowsMouse: false,
+    ;;
+    ;;     # If true, move the mouse to the center of a window when calling
+    ;;     # `Do("focus-window", ...)`.
+    ;;     mouseFollowsFocus: false,
+    ;;
+    ;;     # If true, calling `Do("send-to-monitor", ...) focuses the monitor
+    ;;     # the window was send to.
+    ;;     followWindowToMonitor: false,
+    ;;
+    ;;     # Callback that gets called to show popup messages.
+    ;;     # `opts.activeMonitor` is the index of the current monitor (from left
+    ;;     # to right).
+    ;;     showPopup: (text, opts) => ...,
+    ;;
+    ;;     # Adjust the delay to wait for certain actions. Higher values give
+    ;;     # more precise window handling, but less nice user experience.
+    ;;     delays: {
+    ;;
+    ;;       # Specify the delay to try picking up new windows again if the
+    ;;       # some apparently racy winapi/com functions failed the first time.
+    ;;       retryManage: 100,
+    ;;
+    ;;       # Specify the delay to wait before handling a window's hide-event
+    ;;       # as a close. Smaller values make retiling snappier when a window
+    ;;       # disappears. However, it increases the possibility of falsely
+    ;;       # recognizing the hide-event when switching virtual desktops as a
+    ;;       # close which would result in windows being seen as new when
+    ;;       # switching back to that virtual desktop, repositioning the windows
+    ;;       # again and possibly differently.
+    ;;       windowHidden: 400,
+    ;;
+    ;;       # Specify the delay to wait before windows are retiled when dis-/
+    ;;       # connecting monitors. Again, a smaller values result in snappier
+    ;;       # behaviour, but since it takes some time for message propagation
+    ;;       # and windows to react to the display-change it could result in
+    ;;       # incorrect window sizing and positioning.
+    ;;       onDisplayChange: 1000,
+    ;;
+    ;;       # Specify the delay to wait before retiling a window's new monitor
+    ;;       # a second time. Because when sending a window to another monitor,
+    ;;       # the first shown-event is apparently that early that other winapi
+    ;;       # functions for sizing and positioning don't yet work correctly
+    ;;       # when dpi changes are involved.
+    ;;       sendMonitorRetile: 100,
+    ;;     },
+    ;;   })
     ;;
     ;; There are three ahk window-groups:
-    ;;    GroupAdd("MIGURU_AUTOFLOAT", criteria)
-    ;;    GroupAdd("MIGURU_IGNORE", criteria)
-    ;;    GroupAdd("MIGURU_DECOLESS", criteria)
     ;;
-    ;; The first group floats all new windows that match the criteria of one entry.
-    ;; Floating windows won't get positioned or resized automatically like tiled
-    ;; windows. Also when iterating through the windows with
-    ;; Do("focus-window", ...), they come after the tiled ones.
-    ;; New windows that match an entry of the second group won't be picked up. So
-    ;; they are neither moved/resized nor focused with Do("focus-window", ...).
-    ;; they are neither moved/resized nor focused with Do("focus-window").
-    ;; The last group is for windows that have no title bar like e.g. alacritty
-    ;; or qutebrowser and would get ignored if not an entry of that group.
+    ;;   # Float all new windows that match the criteria of an entry. Floating
+    ;;   # windows won't get positioned or resized automatically like tiled
+    ;;   # windows. Also when iterating through the windows with
+    ;;   # `Do("focus-window", ...)`, they come after the tiled ones.
+    ;;   GroupAdd("MIGURU_AUTOFLOAT", criteria)
     ;;
-    ;; Additionally, mwm.VD is an instance of vd.ahk:
-    ;;    mwm.VD.RenameDesktop(mwm.VD.Count(), "Last Desktop")
+    ;;   # New windows that match an entry won't be picked up. So they are
+    ;;   # neither moved/resized nor focused with `Do("focus-window", ...)`.
+    ;;   GroupAdd("MIGURU_IGNORE", criteria)
+    ;;
+    ;;   # Explicitly handle windows that have no title bar like e.g. alacritty
+    ;;   # or qutebrowser and would get ignored otherwise.
+    ;;   GroupAdd("MIGURU_DECOLESS", criteria)
+    ;;
+    ;; Additionally, mwm.VD is an instance of ..\vd\vd.ahk:
+    ;;   mwm.VD.RenameDesktop(mwm.VD.Count(), "Last Desktop")
     __New(opts := {}) {
         this._opts := ObjMerge({
             layout: "tall",
             masterSize: 0.5,
             masterCount: 1,
-            padding: {left: 0, top: 0, right: 0, bottom: 0},
+            padding: { left: 0, top: 0, right: 0, bottom: 0 },
             spacing: 0,
 
             tilingMinWidth: 0,
             tilingMinHeight: 0,
             tilingInsertion: "before-mru",
             floatingAlwaysOnTop: false,
+
             nativeMaximize: false,
 
             focusFollowsMouse: false,
             mouseFollowsFocus: false,
+
+            followWindowToMonitor: false,
 
             showPopup: (*) =>,
 
@@ -151,62 +214,83 @@ class MiguruWM extends WMEvents {
     }
 
     ;; Focuses a specific monitor which are ordered by coordinates.
-    ;;    Do("focus-monitor", { monitor: 2 })
+    ;;   # Possible string-values for `monitor` and `monitor.anchor` are:
+    ;;   # "current", "mru", "next", "previous", "primary", "first" and "last"
+    ;;   Do("focus-monitor", { monitor: 1
+    ;;                                  | "first"
+    ;;                                  | { anchor: "first", offset: 0 } })
     ;;
     ;; Moves the active window to another monitor's workspace.
-    ;;    Do("send-to-monitor", { monitor: 2[, follow: true] })
+    ;;   # If `follow` false, then the focus is kept on the currently active
+    ;;   # monitor (default is `followWindowToMonitor`).
+    ;;   Do("send-to-monitor", { monitor: ...[, follow: true] })
     ;;
     ;; Cycles through a workspace's windows.
-    ;;  hwnd can be specified as anchor. If not set, the starting point is the
-    ;;  workspace's active window, the most recently active tile or the first
-    ;;  floating window.
-    ;;    Do("focus-window", { target: "next" | "previous" | "master" })
+    ;;   # Possible values for `target` are:
+    ;;   # "next", "previous" and "master"
+    ;;   # `hwnd` can be specified as anchor. If not set, the starting point is
+    ;;   # the workspace's active window, the most recently active tile or the
+    ;;   # first floating window.
+    ;;   Do("focus-window", { [hwnd: WinExist("ahk_exe explorer.exe"),]
+    ;;                        target: "next" })
     ;;
     ;; Swaps a tiled window with another one.
-    ;;  If hwnd is not specified, it defaults to WinExist("A").
-    ;;    Do("swap-window", { with: "next" | "previous" | "master" })
+    ;;   # Possible values for `with` are:
+    ;;   # "next", "previous", "master"
+    ;;   # If `hwnd` is not specified, it defaults to `WinExist("A")`.
+    ;;   Do("swap-window", { [hwnd: WinExist("ahk_exe explorer.exe"),]
+    ;;                        with: "next" })
     ;;
     ;; Floats or tiles a specific window or the currently active one.
-    ;;    Do("float-window", { hwnd: WinExist("A"), value: "toggle" | true | false })
-    ;;
-    ;; Like Set(), monitor and workspace can be specified.
+    ;;   # Possible values for `value` are:
+    ;;   # true, false, "toggle"
+    ;;   Do("float-window", { hwnd: WinExist("A"),
+    ;;                        value: "toggle" })
     Do(what, opts := {}) {
         PostMessage(WM_REQUEST, ObjPtrAddRef(ObjMerge({
             type: what,
         }, opts)), , , "ahk_id" A_ScriptHwnd)
     }
 
-    ;; Sets the layout of a monitor's workspace
-    ;;    Set("layout", { value: "fullscreen" })
+    ;; Sets the layout of a monitor's workspace.
+    ;;   # Possible string-values for `workspace` and `workspace.anchor` are:
+    ;;   # "current", "mru", "next", "previous", "first" and "last"
+    ;;   Set("layout", { [workspace: 1 | "first"
+    ;;                                 | { anchor: "first", offset: 0 },]
+    ;;                   value: "fullscreen" })
     ;;
-    ;; Shrinks or expands the master pane
-    ;;    Set("master-size", { value: 3 })
+    ;; Put less or more windows in the master pane.
+    ;;   Set("master-count", { [workspace: ...,]
+    ;;                         [value: 2,]
+    ;;                         [delta: 1,] })
+    ;;
+    ;; Shrinks or expands the master pane.
+    ;;   Set("master-size", { [workspace: ...,]
+    ;;                        [value: 0.6,]
+    ;;                        [delta: 0.04,] })
     ;;
     ;; Changes the space to the border of the screen.
-    ;;    Set("padding", { value: { left: 3, right: 3 }, delta: { top: -1, bottom: -1 } })
+    ;;    Set("padding", { [value: { left: 3, right: 3 },]
+    ;;                     [delta: { top: -1, bottom: -1 },] })
     ;;
     ;; Changes the gaps between windows.
-    ;;    Set("spacing", { value: 3 })
-    ;;
-    ;; Additional keys are
-    ;;  monitor: 2 | { anchor: "current" | "primary" | "first" | "last", offset: 3 }
-    ;;  workspace: 4 | { anchor: "current", offset: 3 }
-    ;;  delta: 0.01
+    ;;    Set("spacing", { [value: 3,]
+    ;;                     [delta: -2,] })
     Set(what, opts := {}) {
         this.Do("set-" what, opts)
     }
 
     ;; Returns the number of windows that would be put into the master pane
-    ;;    Get("master-count", opts)
+    ;;    Get("master-count"[, { ... }])
     ;;
     ;; Returns the current size of the master pane
-    ;;    Get("master-size", opts)
+    ;;    Get("master-size"[, { ... }])
     ;;
     ;; Returns the space to the border of the screen
-    ;;    Get("padding", opts)
+    ;;    Get("padding"[, { ... }])
     ;;
     ;; Returns the gap between windows
-    ;;    Get("spacing", opts)
+    ;;    Get("spacing"[, { ... }])
     Get(what, opts := {}) {
         res := SendMessage(WM_REQUEST, ObjPtrAddRef(ObjMerge({
             type: "get-" what,
@@ -287,6 +371,7 @@ class MiguruWM extends WMEvents {
                 debug("Active Display: #{} -> #{}",
                     this.activeMonitor.Index, monitor.Index)
 
+                this.lastMonitor := this.activeMonitor
                 this.activeMonitor := monitor
             }
 
@@ -398,6 +483,7 @@ class MiguruWM extends WMEvents {
             debug(() => ["Active Desktop: {} -> {}",
                 this.VD.DesktopName(args.was), this.VD.DesktopName(args.now)])
 
+            this.lastWsIdx := this.activeWsIdx
             this.activeWsIdx := args.now
             this._opts.showPopup.Call(this.VD.DesktopName(args.now), {
                 activeMonitor: this.activeMonitor.Index,
@@ -439,25 +525,44 @@ class MiguruWM extends WMEvents {
         getMonitor() {
             idx := this.activeMonitor.Index
             if req.HasProp("monitor") {
+                anchor := ""
+                offset := 0
+
                 if req.monitor is Object {
-                    switch req.monitor.anchor {
-                    case "current":
-                        ;; Do nothing
-                    case "primary":
-                        idx := this._monitors.Primary.Index
-                    case "first":
-                        idx := 1
-                    case "last":
-                        idx := this._monitors.Count
-                    default:
+                    anchor := req.monitor.anchor
+                    if req.monitor.HasProp("offset") {
+                        offset := req.monitor.offset
+                    }
+                } else if req.monitor {
+                    anchor := req.monitor
+                }
+
+                switch anchor {
+                case "current":
+                    ;; Do nothing
+                case "primary":
+                    idx := this._monitors.Primary.Index
+                case "next":
+                    idx += 1
+                case "previous":
+                    idx -= 1
+                case "first":
+                    idx := 1
+                case "last":
+                    idx := this._monitors.Count
+                case "mru":
+                    if this.lastMonitor {
+                        idx := this.lastMonitor.Index
+                    }
+                default:
+                    if !IsInteger(anchor) {
                         throw "Unexpected '" StringifySL(req.monitor) "' as request.monitor"
                     }
-                    idx += req.HasProp("offset") ? req.offset : 0
-                } else if req.monitor {
-                    idx := req.monitor
+                    idx := anchor
                 }
+                idx += offset
             }
-            if idx > this._monitors.Count {
+            if idx < 1 || idx > this._monitors.Count {
                 throw "Monitor " idx " doesn't exist"
             }
             return this._monitors.ByIndex(idx)
@@ -466,24 +571,47 @@ class MiguruWM extends WMEvents {
         getWorkspace(monitor := getMonitor()) {
             idx := this.activeWsIdx
             if req.HasProp("workspace") {
+                anchor := ""
+                offset := 0
+
                 if req.workspace is Object {
-                    switch req.monitor.anchor {
-                    case "current":
-                        ;; Do nothing
-                    default:
+                    anchor := req.workspace.anchor
+                    if req.workspace.HasProp("offset") {
+                        offset := req.workspace.offset
+                    }
+                } else if req.workspace {
+                    anchor := req.workspace
+                }
+
+                switch anchor {
+                case "current":
+                    ;; Do nothing
+                case "next":
+                    idx += 1
+                case "previous":
+                    idx -= 1
+                case "first":
+                    idx := 1
+                case "last":
+                    idx := this.VD.GetCount()
+                case "mru":
+                    if this.lastWsIdx {
+                        idx := this.lastWsIdx
+                    }
+                default:
+                    if !IsInteger(anchor) {
                         throw "Unexpected '" StringifySL(req.workspace) "' as request.workspace"
                     }
-                    idx += req.HasProp("offset") ? req.offset : 0
-                } else if req.workspace {
-                    idx := req.workspace
+                    idx := anchor
                 }
+                idx += offset
             }
             return this._workspaces[monitor, idx]
         }
 
         switch req.type {
         case "focus-monitor":
-            getWorkspace().Focus(unset, unset, true)
+            getWorkspace().Focus(, , true)
 
         case "send-to-monitor":
             hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
@@ -497,22 +625,28 @@ class MiguruWM extends WMEvents {
             oldWs := window.workspace
             this._reassociate(hwnd, window, monitor, newWs)
 
+            follow := req.HasProp("follow")
+                ? req.follow
+                : this._opts.followWindowToMonitor
+
+            ;; The focus moved together with the active window to another
+            ;; monitor, so just update the active monitor if follow is true.
+            ;; Otherwise focus the recently left monitor again.
+            if follow {
+                this.lastMonitor := this.activeMonitor
+                this.activeMonitor := monitor
+            } else {
+                ws := this._workspaces[this.activeMonitor, this.activeWsIdx]
+                ws.ActiveWindow := hwnd
+                ws.Focus()
+            }
+
             ;; Retile again to mitigate cross-DPI issues.
             this._delayed.Add(
                 newWs.Retile.Bind(newWs),
                 this._opts.delays.sendMonitorRetile,
                 "send-monitor-retile",
             )
-
-            ;; The focus moved together with the active window to another
-            ;; monitor, so just update the active monitor if follow is true.
-            ;; Otherwise focus the recently left monitor again.
-            if req.HasProp("follow") && req.follow {
-                this.activeMonitor := monitor
-            } else {
-                ws := this._workspaces[this.activeMonitor, this.activeWsIdx]
-                ws.Focus()
-            }
 
         case "focus-window":
             ws := getWorkspace()
@@ -526,14 +660,15 @@ class MiguruWM extends WMEvents {
 
         case "float-window":
             ws := getWorkspace()
-            ws.Float(req.hwnd, req.value)
+            hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
+            ws.Float(hwnd, req.value)
 
         case "get-layout":
             return ObjPtrAddRef({ value: getWorkspace().Layout })
         case "set-layout":
             ws := getWorkspace()
             ws.Layout := req.value
-            this._opts.showPopup.Call(req.value, {
+            this._opts.showPopup.Call(ws.Layout, {
                 activeMonitor: this.activeMonitor.Index,
             })
 
@@ -638,7 +773,9 @@ class MiguruWM extends WMEvents {
 
     _initWithCurrentDesktopAndWindows() {
         this.activeMonitor := this._monitors.ByWindow(WinExist("A"))
+        this.lastMonitor := ""
         this.activeWsIdx := this.VD.CurrentDesktop()
+        this.lastWsIdx := 0
 
         old := A_DetectHiddenWindows
         DetectHiddenWindows(false)
