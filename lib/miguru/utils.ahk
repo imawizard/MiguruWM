@@ -735,6 +735,7 @@ qsort(arr, fn := "asc") {
         "UInt", arr.Length,
         "UInt", 4,
         "Ptr", callback,
+        "Cdecl",
     )
     CallbackFree(callback)
 
@@ -770,6 +771,7 @@ ObjClone(v) => ObjMerge({}, v)
 StringifySL(self) {
     s := Stringify(self)
     s := StrReplace(s, "`n`t", ", ")
+    s := StrReplace(s, "`n}", " }")
     s := StrReplace(s, "`n", "")
     s := StrReplace(s, "`t", "")
     s := StrReplace(s, "{, ", "{ ")

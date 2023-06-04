@@ -313,6 +313,8 @@ class MiguruWM extends WMEvents {
             case 0, VD_UNASSIGNED_WINDOW, VD_UNKNOWN_DESKTOP:
                 warn(() => ["Invalid desktop for managed window {}",
                     WinInfo(hwnd)])
+                this._drop(hwnd)
+                return
             case VD_PINNED_APP, VD_PINNED_WINDOW:
                 if !this._pinned.Has(hwnd) {
                     debug(() => ["Window got pinned {}", WinInfo(hwnd)])
@@ -337,14 +339,14 @@ class MiguruWM extends WMEvents {
                 if WinGetMinMax("ahk_id" hwnd) < 0 {
                     return
                 }
+
+                ws := window.workspace
+                ws.AddIfNew(hwnd)
             } catch as err {
                 warn("Dropping window: {} {}", err.Message, WinInfo(hwnd))
                 this._drop(hwnd)
                 return
             }
-
-            ws := window.workspace
-            ws.AddIfNew(hwnd)
 
             if event == EV_WINDOW_FOCUSED || hwnd == this._maybeActiveWindow {
                 debug(() => ["Focused: D={} WS={} {}",
