@@ -24,17 +24,12 @@ jobs:
           unzip ahk2exe.zip -d autohotkey\Compiler
 
       - name: Embed script with Ahk2Exe
-        run: |
-          .\autohotkey\Compiler\Ahk2Exe.exe     `
-            /base .\autohotkey\AutoHotkey64.exe `
-            /resourceid "#2"                    `
-            /in .\lib\miguru\miguru.ahk         `
-            /out .\mwm.exe
+        run: .\scripts\embed.ps1
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: mwm
           path: |
-            mwm.exe
-            mwm.ahk
+            build/mwm.exe
+            build/mwm.ahk
