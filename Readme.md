@@ -1,6 +1,6 @@
 # 「見苦窓経営」笑
 
-**MiguruWM** is an automatically tiling window manager for Windows 10 à la Amethyst/xmonad.
+**Miguru** is an automatically tiling window manager for Windows 10 à la Amethyst/xmonad.
 
 ## Motivation
 
@@ -24,11 +24,17 @@ The goal is a basic but hopefully stable window manager that should behave somew
 
 ## Installation
 
-There's a standalone version embedded with Ahk2Exe:
+**Miguru** is more of an AutoHotkey library (which lies in **lib/*** or is embedded in **mwm.exe**) and a default hotkey handler **mwm.ahk**.
+
+### Standalone version (embedded with Ahk2Exe)
+
 1. Download the artifact from the latest [workflow-run](https://github.com/imawizard/MiguruWM/actions/workflows/bundle-exe.yml)
 2. Extract the zip and run `mwm.exe`
 
-Or you can clone this repository:
+When updating, download the newest artifact and replace **mwm.exe**, but keep your **mwm.ahk** if you have modified it.
+
+### Cloning the repository
+
 1. Download and install AutoHotkey v2
     - Either from their [Github Releases-page](https://github.com/AutoHotkey/AutoHotkey/tags)
     - Or through [Scoop](https://scoop.sh) with `scoop install autohotkey`
@@ -37,17 +43,21 @@ Or you can clone this repository:
 
 ## Documentation
 
+When modifying **mwm.ahk** to your liking, see the following docs:
+
 - [`mwm := MiguruWM(...)`](lib/miguru/miguru.ahk#L51-L108)
 - [`mwm.Do(...)`](lib/miguru/miguru.ahk#L153-L173)
 - [`mwm.Set(...)`](lib/miguru/miguru.ahk#L179-L195)
 - [`mwm.Get(...)`](lib/miguru/miguru.ahk#L199-L210)
 - [`mwm.VD`](lib/vd/vd.ahk#L56-L236)
 
+The hotkeys I use can be found [here](https://github.com/imawizard/Amalgamation.keylayout/blob/master/windows/mwm.ahk).
+
 For help on how to adjust the hotkeys, see the [AutoHotkey documentation](https://www.autohotkey.com/docs/v2/Hotkeys.htm).
 
 ## How to use
 
-The hotkeys are the same as in [Getting started with xmonad](https://xmonad.org/tour.html), in short:
+The default hotkeys in **mwm.ahk** are the same as in [Getting started with xmonad](https://xmonad.org/tour.html), in short:
 
 #### General
 
@@ -128,6 +138,15 @@ Hotkey|Description
 </p>
 
 ![wide-4](https://user-images.githubusercontent.com/1701648/232513891-0972dd3f-0dd2-43a2-bbdd-c2f83f8d8626.png)
+
+## Bugs and Logging
+
+If you encounter incorrect behaviour, you can try turning on [logs](lib/miguru/utils.ahk#L541-L556) to get further information on what's happening by running the script from PowerShell like so:
+
+```ps1
+$env:AHK_LOG = "trace"
+autohotkey MiguruWM\mwm.ahk
+```
 
 ## Other tiling WMs for Windows
 
