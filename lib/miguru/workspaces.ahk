@@ -978,20 +978,28 @@ class WorkspaceList {
                 dir := cur_window[1]
                 x := cur_window[2], y := cur_window[3]
                 w := cur_window[4], h := cur_window[5]
-                if dir=="right"     return ["down", x + w + spacing * 2, y, w, h]
-                if dir=="down"      return ["left", x, y + h + spacing * 2, w, h]
-                if dir=="left"      return ["up"  , x - spacing * 2 - w, y, w, h]
-                if dir=="up"        return ["right",x, y - h - spacing * 2, w, h]
+                if dir=="right"     
+                    return ["down", x + w + spacing * 2, y, w, h]
+                if dir=="down"      
+                    return ["left", x, y + h + spacing * 2, w, h]
+                if dir=="left"      
+                    return ["up"  , x - spacing * 2 - w, y, w, h]
+                if dir=="up"        
+                    return ["right",x, y - h - spacing * 2, w, h]
             }
 
             get_first_window_in_container(cur_container){
                 dir := cur_container[1]
                 x := cur_container[2], y := cur_container[3]
                 w := cur_container[4], h := cur_container[5]
-                if dir=="right"     return ["right", x, y, Round(w/2) - spacing, h]
-                if dir=="down"      return ["down" , x, y, w, Round(h/2) - spacing]
-                if dir=="left"      return ["left" , x + Round(w/2) + spacing, y, Round(w/2) - spacing, h]
-                if dir=="up"        return ["up"   , x, y + Round(h/2) + spacing, w, Round(h/2) - spacing]
+                if dir=="right"     
+                    return ["right", x, y, Round(w/2) - spacing, h]
+                if dir=="down"      
+                    return ["down" , x, y, w, Round(h/2) - spacing]
+                if dir=="left"      
+                    return ["left" , x + Round(w/2) + spacing, y, Round(w/2) - spacing, h]
+                if dir=="up"        
+                    return ["up"   , x, y + Round(h/2) + spacing, w, Round(h/2) - spacing]
             }
 
             cur_container := [splitDirection,x,y,totalWidth,totalHeight]
