@@ -824,11 +824,11 @@ class WorkspaceList {
                 - opts.padding.top
                 - opts.padding.bottom
 
-            if masterCount >=1 && slaveCount >= 1 {
+            if masterCount >= 1 && slaveCount >= 1 {
                 ; 1.3 should be replaced by an option
                 masterWidth := Round(usableWidth * opts.masterSize * 1.3)
                 slaveWidth := usableWidth - masterWidth
-                if(slaveCount == 1){
+                if slaveCount == 1 {
                     firstSlave := this._tallRetilePane(
                         this._tiled.First,
                         masterCount,
@@ -891,11 +891,10 @@ class WorkspaceList {
             spacing_left  := this._opts.spacing > 0 && slave_left_num > 1 ? this._opts.spacing // 2 : 0
             height_right := Round((totalHeight - spacing_right * Max(slave_right_num - 2, 0)) / slave_right_num)
             height_left := Round((totalHeight - spacing_left * Max(slave_left_num - 2, 0)) / slave_left_num)
-            cur_slave := 1
 
             try {
                 Loop count {
-                    if(cur_slave <= slave_right_num){
+                    if A_Index <= slave_right_num {
                         this._moveWindow(
                             tile.data,
                             right_x,
@@ -916,7 +915,6 @@ class WorkspaceList {
                         left_y += height_left + spacing_left
                     }
                     tile := tile.next
-                    cur_slave := cur_slave + 1
                 }
             } catch TargetError as err {
                 throw WorkspaceList.Workspace.WindowError(tile.data, err)
@@ -972,65 +970,41 @@ class WorkspaceList {
             }
         }
 
-        _spiralRetilePane(tile, count, x, y, totalWidth, totalHeight,splitDirection){
+        _spiralRetilePane(tile, count, x, y, totalWidth, totalHeight, splitDirection){
             spacing := this._opts.spacing > 0 && count > 1 ? this._opts.spacing // 2 : 0
             height := Round((totalHeight - spacing * Max(count - 2, 0)) / count)
 
-            ; get sub container based on current window
-            ; if the split_dir is LEFT, then sub container would be spawned in
-            ; the left, with same height and width of current window
-            get_sub_continaer(dir,x,y,w,h){
-                if(dir=="right")
-                    return ["down",x + w + spacing * 2, y, w, h]
-                else if(dir=="down")
-                    return ["left",x, y + h + spacing * 2, w, h]
-                else if(dir=="left")
-                    return ["up",x -spacing*2 - w, y, w, h]
-                else if(dir=="up")
-                    return ["right",x, y - h - spacing*2, w, h]
+            get_sub_container(cur_window){
+                dir := cur_window[1]
+                x := cur_window[2], y := cur_window[3]
+                w := cur_window[4], h := cur_window[5]
+                if dir=="right"     return ["down", x + w + spacing * 2, y, w, h]
+                if dir=="down"      return ["left", x, y + h + spacing * 2, w, h]
+                if dir=="left"      return ["up"  , x - spacing * 2 - w, y, w, h]
+                if dir=="up"        return ["right",x, y - h - spacing * 2, w, h]
             }
 
-            ; get the first window in current container
-            ; if the split_dir is LEFT, then the first window in current
-            ; container should be spawned in the right side of this container,
-            ; with width/2 and height/2, leaving space for sub container in the
-            ; left 
-
-            ; but if there are no sub-containers any more, then the window
-            ; should fill all the space of current container
-            get_first_window_in_container(dir,x,y,w,h){
-                if(dir=="right")
-                    return [x, y, Round(w/2) - spacing, h]
-                else if(dir=="down")
-                    return [x, y, w, Round(h/2) - spacing]
-                else if(dir=="left")
-                    return [x + Round(w/2) + spacing, y, Round(w/2) - spacing, h]
-                else if(dir=="up")
-                    return [x, y + Round(h/2) + spacing, w, Round(h/2) - spacing]
+            get_first_window_in_container(cur_container){
+                dir := cur_container[1]
+                x := cur_container[2], y := cur_container[3]
+                w := cur_container[4], h := cur_container[5]
+                if dir=="right"     return ["right", x, y, Round(w/2) - spacing, h]
+                if dir=="down"      return ["down" , x, y, w, Round(h/2) - spacing]
+                if dir=="left"      return ["left" , x + Round(w/2) + spacing, y, Round(w/2) - spacing, h]
+                if dir=="up"        return ["up"   , x, y + Round(h/2) + spacing, w, Round(h/2) - spacing]
             }
-
-            slave_cnt := 1
 
             cur_container := [splitDirection,x,y,totalWidth,totalHeight]
-            split_dir := cur_container[1]
-            container_x := cur_container[2]
-            container_y := cur_container[3]
-            container_w := cur_container[4]
-            container_h := cur_container[5]
 
             try {
             Loop count {
-                    cur_window := get_first_window_in_container(split_dir,container_x,container_y,container_w,container_h)
-                    cur_x := cur_window[1]
-                    cur_y := cur_window[2]
-                    cur_w := cur_window[3]
-                    cur_h := cur_window[4]
-                    if(slave_cnt == count){
-                        cur_x := container_x
-                        cur_y := container_y
-                        cur_w := container_w
-                        cur_h := container_h
-                    }
+                    ; the formatted code might be confusing
+                    ; let me know if it needs more comments
+                    cur_window := get_first_window_in_container(cur_container)
+                    cur_x := (A_Index == count) ? cur_container[2] : cur_window[2]
+                    cur_y := (A_Index == count) ? cur_container[3] : cur_window[3]
+                    cur_w := (A_Index == count) ? cur_container[4] : cur_window[4]
+                    cur_h := (A_Index == count) ? cur_container[5] : cur_window[5]
                     this._moveWindow(
                         tile.data,
                         cur_x,
@@ -1039,15 +1013,7 @@ class WorkspaceList {
                         cur_h,
                     )
                     tile := tile.next
-
-                    cur_container := get_sub_continaer(split_dir,cur_x,cur_y,cur_w,cur_h)
-                    split_dir := cur_container[1]
-                    container_x := cur_container[2]
-                    container_y := cur_container[3]
-                    container_w := cur_container[4]
-                    container_h := cur_container[5]
-
-                    slave_cnt := slave_cnt + 1
+                    cur_container := get_sub_container(cur_window)
                 }
             } catch TargetError as err {
                 throw WorkspaceList.Workspace.WindowError(tile.data, err)
