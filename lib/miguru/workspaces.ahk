@@ -36,6 +36,12 @@ SWP_FLAGS := 0
     | SWP_NOSENDCHANGING
     | SWP_NOZORDER
 
+ZERO_SPACING := {
+    total: 0,
+    half: 0,
+    rest: 0,
+}
+
 class WorkspaceList {
     class Workspace {
         __New(monitor, index, opts) {
@@ -503,10 +509,17 @@ class WorkspaceList {
         }
 
         Spacing {
-            get => this._opts.spacing // 2
+            get => this._opts.spacing.total
             set {
                 if value >= 0 {
-                    this._opts.spacing := Integer(value) * 2
+                    total := value
+                    half := total // 2
+                    rest := total - half * 2
+                    this._opts.spacing := {
+                        total: total,
+                        half: half,
+                        rest: rest,
+                    }
                     this.Retile()
                 }
             }
@@ -635,6 +648,7 @@ class WorkspaceList {
 
         _tallRetile() {
             opts := this._opts
+            spacing := opts.spacing
             masterCount := Min(opts.masterCount, this._tiled.Count)
             slaveCount := this._tiled.Count - masterCount
             workArea := this._monitor.WorkArea
@@ -653,8 +667,9 @@ class WorkspaceList {
                     masterCount,
                     workArea.left + opts.padding.left,
                     workArea.top + opts.padding.top,
-                    masterWidth - opts.spacing // 2,
+                    masterWidth - spacing.half,
                     usableHeight,
+                    masterCount > 1 ? spacing : ZERO_SPACING,
                 )
 
                 slaveWidth := usableWidth - masterWidth
@@ -662,10 +677,11 @@ class WorkspaceList {
                     firstSlave,
                     slaveCount,
                     workArea.left + opts.padding.left
-                        + masterWidth + opts.spacing // 2,
+                        + masterWidth + spacing.rest + spacing.half,
                     workArea.top + opts.padding.top,
-                    slaveWidth - opts.spacing // 2,
+                    slaveWidth - spacing.rest - spacing.half,
                     usableHeight,
+                    slaveCount > 1 ? spacing : ZERO_SPACING,
                 )
             } else {
                 this._tallRetilePane(
@@ -675,27 +691,55 @@ class WorkspaceList {
                     workArea.top + opts.padding.top,
                     usableWidth,
                     usableHeight,
+                    ZERO_SPACING,
                 )
             }
         }
 
-        _tallRetilePane(tile, count, x, startY, totalWidth, totalHeight) {
-            spacing := this._opts.spacing > 0 && count > 1
-                ? this._opts.spacing // 2
-                : 0
-            height := Round((totalHeight - spacing * Max(count - 2, 0)) / count)
-            y := startY
+        _tallRetilePane(tile, count, x, startY, totalWidth, totalHeight, spacing) {
+            height := (totalHeight - spacing.rest * (count - 1)) // count
+            left := totalHeight - height * count
 
+            height += left // count
+            pivot := Mod(left, count)
+            if pivot > 0 {
+                height++
+            }
+
+            y := startY
             try {
                 Loop count {
-                    this._moveWindow(
-                        tile.data,
-                        x,
-                        y,
-                        totalWidth,
-                        height - spacing,
-                    )
-                    y += height + spacing
+
+                    if A_Index == pivot {
+                        height--
+                    }
+
+                    if A_Index == 1 {
+                        this._moveWindow(
+                            tile.data,
+                            x,
+                            y,
+                            totalWidth,
+                            height - spacing.half,
+                        )
+                    } else if A_Index == count {
+                        this._moveWindow(
+                            tile.data,
+                            x,
+                            y + spacing.half,
+                            totalWidth,
+                            height - spacing.half,
+                        )
+                    } else {
+                        this._moveWindow(
+                            tile.data,
+                            x,
+                            y + spacing.half,
+                            totalWidth,
+                            height - spacing.half * 2,
+                        )
+                    }
+                    y += height
                     tile := tile.next
                 }
             } catch TargetError as err {
@@ -720,6 +764,9 @@ class WorkspaceList {
                 - opts.padding.bottom
 
             if masterCount >= 1 && slaveCount >= 1 {
+                spacingHalf := opts.spacing // 2
+                spacingRest := opts.spacing - spacingHalf
+
                 masterHeight := Round(usableHeight * opts.masterSize)
                 firstSlave := this._wideRetilePane(
                     this._tiled.First,
@@ -727,7 +774,7 @@ class WorkspaceList {
                     workArea.left + opts.padding.left,
                     workArea.top + opts.padding.top,
                     usableWidth,
-                    masterHeight - opts.spacing // 2,
+                    masterHeight - spacingHalf,
                 )
 
                 slaveHeight := usableHeight - masterHeight
@@ -736,9 +783,9 @@ class WorkspaceList {
                     slaveCount,
                     workArea.left + opts.padding.left,
                     workArea.top + opts.padding.top
-                        + masterHeight + opts.spacing // 2,
+                        + masterHeight + spacingRest + spacingHalf,
                     usableWidth,
-                    slaveHeight - opts.spacing // 2,
+                    slaveHeight - spacingRest - spacingHalf,
                 )
             } else {
                 this._wideRetilePane(
@@ -754,7 +801,7 @@ class WorkspaceList {
 
         _wideRetilePane(tile, count, startX, y, totalWidth, totalHeight) {
             spacing := this._opts.spacing > 0 && count > 1
-                ? this._opts.spacing // 2
+                ? this._opts.spacing
                 : 0
             width := Round((totalWidth - spacing * Max(count - 2, 0)) / count)
             x := startX
@@ -765,10 +812,10 @@ class WorkspaceList {
                         tile.data,
                         x,
                         y,
-                        width - spacing,
+                        width - spacing * 2,
                         totalHeight,
                     )
-                    x += width + spacing
+                    x += width + spacing * 2
                     tile := tile.next
                 }
             } catch TargetError as err {
@@ -793,6 +840,7 @@ class WorkspaceList {
                         workArea.top + opts.padding.top,
                         workArea.Width - opts.padding.left - opts.padding.right,
                         workArea.Height - opts.padding.top - opts.padding.bottom,
+                        ZERO_SPACING,
                     )
                 } else {
                     WinMaximize("ahk_id" hwnd)
