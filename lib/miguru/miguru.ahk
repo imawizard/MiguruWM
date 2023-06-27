@@ -325,12 +325,12 @@ class MiguruWM extends WMEvents {
         tray.Add("Quit Miguru", (*) => ExitApp())
 
         TogglePause(*) {
-            if !A_IsPaused {
+            if !A_IsSuspended {
                 tray.Rename("Disable", "Enable")
-                Pause(true)
+                Suspend(true)
             } else {
                 tray.Rename("Enable", "Disable")
-                Pause(false)
+                Suspend(false)
             }
         }
 
@@ -362,6 +362,10 @@ class MiguruWM extends WMEvents {
     Options => ObjClone(this._opts)
 
     _onWindowEvent(event, hwnd) {
+        if A_IsSuspended {
+            return
+        }
+
         switch event {
         case EV_WINDOW_FOCUSED:
             monitor := this._monitors.ByWindow(hwnd)
