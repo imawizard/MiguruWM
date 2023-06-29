@@ -298,7 +298,7 @@ class WorkspaceList {
             if a.type == TILED {
                 if a.node == this._tiled.Last && this._floating.Length > 0 {
                     return this._floating[1]
-                } else if this._tiled.Count > 1 {
+                } else {
                     return a.node.next.data
                 }
             } else if a.type == FLOATING {
@@ -306,6 +306,8 @@ class WorkspaceList {
                     return this._floating[a.index + 1]
                 } else if this._tiled.Count > 0 {
                     return this._tiled.First.data
+                } else {
+                    return this._floating[1]
                 }
             }
         }
@@ -315,7 +317,7 @@ class WorkspaceList {
             if a.type == TILED {
                 if a.node == this._tiled.First && this._floating.Length > 0 {
                     return this._floating[this._floating.Length]
-                } else if this._tiled.Count > 1 {
+                } else {
                     return a.node.previous.data
                 }
             } else if a.type == FLOATING {
@@ -323,6 +325,8 @@ class WorkspaceList {
                     return this._floating[a.index - 1]
                 } else if this._tiled.Count > 0 {
                     return this._tiled.Last.data
+                } else {
+                    return this._floating[this._floating.Length]
                 }
             }
         }
