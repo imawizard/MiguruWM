@@ -206,10 +206,10 @@ class WorkspaceList {
             }
         }
 
-        Remove(hwnd, focus := false, mouseFollowsFocus := false) {
+        Remove(hwnd) {
             window := this._windows.Get(hwnd, "")
             if !window {
-                return false
+                return ""
             }
 
             trace(() => ["Disappeared: {} {}",
@@ -236,17 +236,15 @@ class WorkspaceList {
                     next := this._mruTile.data
                 }
             } else {
-                return false
+                return ""
             }
 
             if hwnd == this._active {
                 this._active := next
+                return next
+            } else {
+                return ""
             }
-            if focus && next {
-                this._focusWindow(next, mouseFollowsFocus)
-            }
-
-            return true
         }
 
         _removeTiled(window) {
@@ -277,25 +275,11 @@ class WorkspaceList {
             }
         }
 
-        _focusWindow(hwnd, mouseFollowsFocus) {
-            if mouseFollowsFocus {
-                RunDpiAware(() => (
-                    WinGetPos(&left, &top, &width, &height, "ahk_id" hwnd),
-                    DllCall(
-                        "SetCursorPos",
-                        "Int", left + width // 2,
-                        "Int", top + height // 2,
-                        "Int",
-                    ))
-                )
-            }
-
-            WinActivate("ahk_id" hwnd)
-        }
-
         _nextWindow(from) {
-            a := this._windows[from]
-            if a.type == TILED {
+            a := this._windows.Get(from, "")
+            if !a {
+                return ""
+            } else if a.type == TILED {
                 if a.node == this._tiled.Last && this._floating.Length > 0 {
                     return this._floating[1]
                 } else {
@@ -313,8 +297,10 @@ class WorkspaceList {
         }
 
         _previousWindow(from) {
-            a := this._windows[from]
-            if a.type == TILED {
+            a := this._windows.Get(from, "")
+            if !a {
+                return ""
+            } else if a.type == TILED {
                 if a.node == this._tiled.First && this._floating.Length > 0 {
                     return this._floating[this._floating.Length]
                 } else {
@@ -331,83 +317,28 @@ class WorkspaceList {
             }
         }
 
-        Focus(hwnd := "", target := "active", mouseFollowsFocus := false) {
+        GetWindow(target := "") {
             if this.WindowCount < 1 {
-                ;; If there is no tile associated, focus the monitor by
-                ;; activating its taskbar.
-                monitor := this._monitor
-                taskbar := monitor.Taskbar()
-                if !taskbar {
-                    warn("Can't focus monitor {} without a tile or a taskbar",
-                        monitor.Index)
-                    return false
-                }
-
-                WinActivate("ahk_id" taskbar)
-
-                if mouseFollowsFocus {
-                    ;; Also place the cursor in the middle of the specified
-                    ;; screen for e.g. PowerToys Run.
-                    RunDpiAware(() =>
-                        DllCall(
-                            "SetCursorPos",
-                            "Int", monitor.Area.CenterX,
-                            "Int", monitor.Area.CenterY,
-                            "Int",
-                        )
-                    )
-                }
-                return true
+                return ""
             }
 
-            anchor := this._active ||
-                this.mruTile && this.mruTile.data ||
+            ;; Start with the active, the mru or the first floating window.
+            hwnd := this._active ||
+                this._mruTile && this._mruTile.data ||
                 this._floating.Get(1, "")
 
-            hwnd := ""
             switch target {
-            case "next":
-                hwnd := this._nextWindow(anchor)
-            case "previous":
-                hwnd := this._previousWindow(anchor)
             case "master":
-                hwnd := this._tiled.First.data
-            case "active":
-                hwnd := anchor
+                return this._tiled.First ? this._tiled.First.data : ""
+            case "next":
+                return this._nextWindow(hwnd)
+            case "previous":
+                return this._previousWindow(hwnd)
+            case "":
+                return hwnd
             default:
-                throw "Incorrect focus target: " target
+                throw "Incorrect window target: " target
             }
-
-            if !hwnd {
-                if this._active {
-                    if this._active == WinExist("A") {
-                        ;; If e.g. the currently active window is unmanaged,
-                        ;; this._active still holds the last active window for
-                        ;; the workspace, so just focus that.
-                        info("Focus window #{} which was last active", hwnd)
-                    } else {
-                        warn("Focus window #{} which was last active but is inactive now",
-                            hwnd)
-                    }
-                    this._focusWindow(this._active, mouseFollowsFocus)
-                    return true
-                } else {
-                    warn("Nothing to focus")
-                    return false
-                }
-            }
-
-            info("Focus window #{}", hwnd)
-            this._focusWindow(hwnd, mouseFollowsFocus)
-
-            t := this._windows[hwnd]
-            if t.type == TILED {
-                this._mruTile := t.node
-                if StrCompare(this._opts.layout, "fullscreen") == 0 {
-                    this.Retile()
-                }
-            }
-            return true
         }
 
         Swap(hwnd, with, mouseFollowsFocus := false) {
