@@ -615,7 +615,9 @@ class MiguruWM extends WMEvents {
 
         switch req.type {
         case "focus-monitor":
-            getWorkspace().Focus(, , true)
+            monitor := getMonitor()
+            ws := this._workspaces[monitor, this.activeWsIdx]
+            this._focusWorkspace(ws)
 
         case "send-to-monitor":
             hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
@@ -633,6 +635,9 @@ class MiguruWM extends WMEvents {
                 ? req.follow
                 : this._opts.followWindowToMonitor
 
+            ;; Make the thrown window the active one.
+            newWs.ActiveWindow := hwnd
+
             ;; The focus moved together with the active window to another
             ;; monitor, so just update the active monitor if follow is true.
             ;; Otherwise focus the recently left monitor again.
@@ -641,8 +646,7 @@ class MiguruWM extends WMEvents {
                 this.activeMonitor := monitor
             } else {
                 ws := this._workspaces[this.activeMonitor, this.activeWsIdx]
-                ws.ActiveWindow := hwnd
-                ws.Focus()
+                this._focusWorkspace(ws)
             }
 
             ;; Retile again to mitigate cross-DPI issues.
@@ -654,8 +658,12 @@ class MiguruWM extends WMEvents {
 
         case "focus-window":
             ws := getWorkspace()
-            hwnd := req.HasProp("hwnd") ? req.hwnd : ""
-            ws.Focus(hwnd, req.target, this._opts.mouseFollowsFocus)
+            hwnd := ws.GetWindow(req.target)
+            if !hwnd {
+                warn("Nothing to focus")
+                return
+            }
+            this._focusWindow(hwnd)
 
         case "swap-window":
             ws := getWorkspace()
@@ -748,6 +756,55 @@ class MiguruWM extends WMEvents {
         default:
             throw "Unknown request: " req.type
        }
+    }
+
+    _focusMonitor(monitor) {
+        ;; If there is no tile associated, focus the monitor by
+        ;; activating its taskbar.
+        taskbar := monitor.Taskbar()
+        if !taskbar {
+            warn("Can't focus monitor {} without a taskbar", monitor.Index)
+            return
+        }
+
+        WinActivate("ahk_id" taskbar)
+
+        ;; Also place the cursor in the middle of the specified
+        ;; screen for e.g. PowerToys Run.
+        RunDpiAware(() =>
+            DllCall(
+                "SetCursorPos",
+                "Int", monitor.WorkArea.CenterX,
+                "Int", monitor.WorkArea.CenterY,
+                "Int",
+            )
+        )
+        return
+    }
+
+    _focusWindow(hwnd, mouseFollowsFocus := this._opts.mouseFollowsFocus) {
+        if mouseFollowsFocus {
+            RunDpiAware(() => (
+                WinGetPos(&left, &top, &width, &height, "ahk_id" hwnd),
+                DllCall(
+                    "SetCursorPos",
+                    "Int", left + width // 2,
+                    "Int", top + height // 2,
+                    "Int",
+                ))
+            )
+        }
+
+        try WinActivate("ahk_id" hwnd)
+    }
+
+    _focusWorkspace(ws) {
+        hwnd := ws.GetWindow()
+        if hwnd {
+            this._focusWindow(hwnd)
+        } else {
+            this._focusMonitor(ws.Monitor)
+        }
     }
 
     _onDisplayChange(wait := true) {
@@ -925,7 +982,16 @@ class MiguruWM extends WMEvents {
 
         window := this._managed.Delete(hwnd)
         if !this._pinned.Has(hwnd) {
-            window.workspace.Remove(hwnd, true, this._opts.mouseFollowsFocus)
+            ;; FIXME: There seems to be cases where – when closing e.g. an
+            ;; explorer window – a "hidden" event occurs first, then a "focus"
+            ;; event according to z-order and lastly a "destroyed" event.
+            ;; Because of the focus-switch the destroyed window is not the
+            ;; active one anymore and Remove() won't return a window that were
+            ;; to be activated.
+            next := window.workspace.Remove(hwnd)
+            if next && window.workspace.Index == this.activeWsIdx {
+                this._focusWindow(next, false)
+            }
         } else {
             this._unpinWindow(hwnd, window)
         }
