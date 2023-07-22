@@ -28,8 +28,15 @@ if !IsSet(MiguruWM) {
     ExitApp()
 }
 
+tall := TallLayout()
+wide := WideLayout()
+fullscreen := FullscreenLayout({ nativeMaximize: false })
+floating := FloatingLayout()
+columns := WideLayout({ displayName: "Columns", masterCountMax: 0 })
+rows := TallLayout({ displayName: "Rows", masterCountMax: 0 })
+
 mwm := MiguruWM({
-    layout: "Tall",
+    layout: tall,
     masterSize: 0.5,
     masterCount: 1,
     padding: {
@@ -44,7 +51,6 @@ mwm := MiguruWM({
     tilingMinHeight: 0,
     tilingInsertion: "before-mru",
     floatingAlwaysOnTop: false,
-    nativeMaximize: false,
 
     focusFollowsMouse: false,
     mouseFollowsFocus: false,
@@ -93,42 +99,15 @@ mod1 := "Alt"
 *,::mwm.Set("master-count", { delta:  1 })
 *.::mwm.Set("master-count", { delta: -1 })
 
-*t::mwm.Do("float-window", { hwnd: WinExist("A"), value: false })
+*t::mwm.Do("float-window", { value: false })
 *p::OpenSearch()
 *q::Reload()
 
 *Enter::mwm.Do("swap-window", { with: "master" })
-*Space::CycleLayouts()
+*Space::mwm.Do("cycle-layout", { value: [tall, wide, fullscreen, floating, columns, rows] })
 
-*vk01::{
-    MouseGetPos(, , &hwnd)
-    if !hwnd {
-        return
-    }
-    mwm.Do("float-window", { hwnd: hwnd, value: true })
-    PostMessage(WM_SYSCOMMAND, SC_MOVE,  , , "ahk_id" hwnd)
-    PostMessage(WM_KEYDOWN,    VK_LEFT,  , , "ahk_id" hwnd)
-    PostMessage(WM_KEYUP,      VK_LEFT,  , , "ahk_id" hwnd)
-    PostMessage(WM_KEYDOWN,    VK_RIGHT, , , "ahk_id" hwnd)
-    PostMessage(WM_KEYUP,      VK_RIGHT, , , "ahk_id" hwnd)
-    KeyWait("vk01")
-    Send("{vk01 Up}")
-}
-
-*vk02::{
-    MouseGetPos(, , &hwnd)
-    if !hwnd {
-        return
-    }
-    mwm.Do("float-window", { hwnd: hwnd, value: true })
-    PostMessage(WM_SYSCOMMAND, SC_SIZE,  , , "ahk_id" hwnd)
-    PostMessage(WM_KEYDOWN,    VK_DOWN,  , , "ahk_id" hwnd)
-    PostMessage(WM_KEYUP,      VK_DOWN,  , , "ahk_id" hwnd)
-    PostMessage(WM_KEYDOWN,    VK_RIGHT, , , "ahk_id" hwnd)
-    PostMessage(WM_KEYUP,      VK_RIGHT, , , "ahk_id" hwnd)
-    KeyWait("vk02")
-    Send("{vk01 Up}")
-}
+*vk01::MoveActiveWindow()
+*vk02::ResizeActiveWindow()
 
 #Hotif GetKeyState(mod1, "P") and GetKeyState("Shift", "P")
 
@@ -149,7 +128,7 @@ mod1 := "Alt"
 *j::mwm.Do("swap-window", { with: "next"     })
 *k::mwm.Do("swap-window", { with: "previous" })
 
-*c::WinClose("A")
+*c::try WinClose("A")
 *q::ExitApp()
 
 *Enter::OpenTerminal()
@@ -158,25 +137,6 @@ mod1 := "Alt"
 ; ..........................................................................}}}
 
 ; Helper functions ........................................................{{{1
-
-CycleLayouts() {
-    cycle := [
-        "Tall",
-        "Wide",
-        "Fullscreen",
-        "Floating",
-    ]
-
-    m := Map()
-    for i, l in cycle {
-        m[l] := i
-    }
-
-    current := mwm.Get("layout")
-    next := cycle[Mod(m[current], cycle.Length) + 1]
-
-    mwm.Set("layout", { value: next })
-}
 
 ResetLayout() {
     defaults := mwm.Options
@@ -224,6 +184,38 @@ OpenSearch() {
 
 ShowDesktop() {
     Send("#d")
+}
+
+MoveActiveWindow() {
+    MouseGetPos(, , &hwnd)
+    if !hwnd {
+        return
+    }
+    WinActivate("ahk_id" hwnd)
+    mwm.Do("float-window", { hwnd: hwnd, value: true })
+    PostMessage(WM_SYSCOMMAND, SC_MOVE,  , , "ahk_id" hwnd)
+    PostMessage(WM_KEYDOWN,    VK_LEFT,  , , "ahk_id" hwnd)
+    PostMessage(WM_KEYUP,      VK_LEFT,  , , "ahk_id" hwnd)
+    PostMessage(WM_KEYDOWN,    VK_RIGHT, , , "ahk_id" hwnd)
+    PostMessage(WM_KEYUP,      VK_RIGHT, , , "ahk_id" hwnd)
+    KeyWait("vk01")
+    Send("{vk01 Up}")
+}
+
+ResizeActiveWindow() {
+    MouseGetPos(, , &hwnd)
+    if !hwnd {
+        return
+    }
+    WinActivate("ahk_id" hwnd)
+    mwm.Do("float-window", { hwnd: hwnd, value: true })
+    PostMessage(WM_SYSCOMMAND, SC_SIZE,  , , "ahk_id" hwnd)
+    PostMessage(WM_KEYDOWN,    VK_DOWN,  , , "ahk_id" hwnd)
+    PostMessage(WM_KEYUP,      VK_DOWN,  , , "ahk_id" hwnd)
+    PostMessage(WM_KEYDOWN,    VK_RIGHT, , , "ahk_id" hwnd)
+    PostMessage(WM_KEYUP,      VK_RIGHT, , , "ahk_id" hwnd)
+    KeyWait("vk02")
+    Send("{vk01 Up}")
 }
 
 ; ..........................................................................}}}

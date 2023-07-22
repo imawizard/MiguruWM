@@ -768,6 +768,13 @@ ObjMerge(v*) {
 
 ObjClone(v) => ObjMerge({}, v)
 
+class WindowError {
+    __New(hwnd, err) {
+        this.hwnd := hwnd
+        this.cause := err
+    }
+}
+
 StringifySL(self) {
     s := Stringify(self)
     s := StrReplace(s, "`n`t", ", ")
