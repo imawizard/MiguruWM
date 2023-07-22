@@ -23,6 +23,18 @@ class FocusIndicator {
         this._gui.Destroy()
     }
 
+    HideWhenPositioning {
+        get => true
+    }
+
+    ShowOnFocusRequest {
+        get => this._inlay !== true
+    }
+
+    SetMonitorList(monitors) {
+        ;; Do nothing
+    }
+
     Color {
         get => this._gui.BackColor
         set => this._gui.BackColor := value
