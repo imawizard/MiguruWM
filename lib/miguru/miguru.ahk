@@ -2,6 +2,10 @@
 #include monitors.ahk
 #include utils.ahk
 #include workspaces.ahk
+#include layouts\floating.ahk
+#include layouts\fullscreen.ahk
+#include layouts\tall.ahk
+#include layouts\wide.ahk
 
 WS_THICKFRAME       := 0x00040000
 WS_SYSMENU          := 0x00080000
@@ -94,9 +98,6 @@ class MiguruWM extends WMEvents {
     ;;     # If true, floating windows will be put above tiling windows.
     ;;     floatingAlwaysOnTop: false,
     ;;
-    ;;     # If true, Windows are maximized in fullscreen-layout.
-    ;;     nativeMaximize: false,
-    ;;
     ;;     # If true, uses SPI_SETACTIVEWINDOWTRACKING to activate focusing
     ;;     # windows through moving the mouse.
     ;;     focusFollowsMouse: false,
@@ -177,8 +178,6 @@ class MiguruWM extends WMEvents {
             tilingMinHeight: 0,
             tilingInsertion: "before-mru",
             floatingAlwaysOnTop: false,
-
-            nativeMaximize: false,
 
             focusFollowsMouse: false,
             mouseFollowsFocus: false,
@@ -675,12 +674,23 @@ class MiguruWM extends WMEvents {
             hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
             ws.Float(hwnd, req.value)
 
+        case "cycle-layout":
+            ws := getWorkspace()
+            cycle := req.value
+            m := Map()
+            for i, l in cycle {
+                m[l] := i
+            }
+            current := m.Get(ws.Layout, 0)
+            next := cycle[Mod(current, cycle.Length) + 1]
+            this.Set("layout", { value: next })
+
         case "get-layout":
-            return ObjPtrAddRef({ value: getWorkspace().Layout })
+            return ObjPtrAddRef({ value: getWorkspace().Layout.DisplayName })
         case "set-layout":
             ws := getWorkspace()
             ws.Layout := req.value
-            this._opts.showPopup.Call(ws.Layout, {
+            this._opts.showPopup.Call(ws.Layout.DisplayName, {
                 activeMonitor: this.activeMonitor.Index,
             })
 

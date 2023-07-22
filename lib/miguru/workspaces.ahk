@@ -56,14 +56,6 @@ class WorkspaceList {
                 "before-mru", INSERT_BEFORE_MRU,
                 "after-mru",  INSERT_AFTER_MRU,
             )[this._opts.tilingInsertion]
-
-            this._retileFns := Map(
-                "tall",       this._tallRetile,
-                "wide",       this._wideRetile,
-                "fullscreen", this._fullscreenRetile,
-                "floating",   this._floatingRetile,
-            )
-            this._retile := this._retileFns[StrLower(this._opts.layout)]
         }
 
         Monitor     => this._monitor
@@ -90,7 +82,7 @@ class WorkspaceList {
             get => this._opts.layout
             set {
                 this._opts.layout := value
-                this._retile := this._retileFns[StrLower(this._opts.layout)]
+                value.Init(this)
                 this.Retile()
             }
         }
@@ -106,11 +98,8 @@ class WorkspaceList {
                 this._active := value
                 if window.type == TILED {
                     this._mruTile := window.node
-
-                    if StrCompare(this._opts.layout, "fullscreen") == 0 {
-                        this.Retile()
-                    }
                 }
+                this._opts.layout.ActiveWindowChanged(this)
             }
         }
 
@@ -183,7 +172,7 @@ class WorkspaceList {
                 this._mruTile := tile
             }
             this._windows[hwnd] := { type: TILED, node: tile }
-            this._silentlySetAlwaysOnTop(hwnd, false)
+            try WinSetAlwaysOnTop(false, "ahk_id" hwnd)
             this.Retile()
         }
 
@@ -193,17 +182,7 @@ class WorkspaceList {
                 type: FLOATING,
                 index: this._floating.Length,
             }
-            this._silentlySetAlwaysOnTop(hwnd, this._opts.floatingAlwaysOnTop)
-        }
-
-        _silentlySetAlwaysOnTop(hwnd, value) {
-            try {
-                WinSetAlwaysOnTop(value, "ahk_id" hwnd)
-            } catch TargetError {
-                ;; Do nothing
-            } catch OSError {
-                ;; Do nothing
-            }
+            try WinSetAlwaysOnTop(this._opts.floatingAlwaysOnTop, "ahk_id" hwnd)
         }
 
         Remove(hwnd) {
@@ -271,7 +250,7 @@ class WorkspaceList {
             this._floating.RemoveAt(window.index)
 
             if this._opts.floatingAlwaysOnTop {
-                this._silentlySetAlwaysOnTop(hwnd, false)
+                try WinSetAlwaysOnTop(false, "ahk_id" hwnd)
             }
         }
 
@@ -415,7 +394,7 @@ class WorkspaceList {
                 if !IsNumber(value) {
                     throw "Must be a number"
                 }
-                if value >= 0 && value <= 6 {
+                if value >= 1 && value <= 6 {
                     this._opts.masterCount := value
                     this.Retile()
                 }
@@ -463,21 +442,14 @@ class WorkspaceList {
 
             info("Retiling... D={} WS={} T={} L={}",
                 this._monitor.Index, this._index,
-                this._tiled.Count, this._opts.layout)
+                this._tiled.Count, this._opts.layout.DisplayName)
 
             try {
-                RunDpiAware(() => this._retile())
-            } catch WorkspaceList.Workspace.WindowError as err {
+                RunDpiAware(() => this._opts.layout.Retile(this))
+            } catch WindowError as err {
                 warn("Removing window: {} {}",
                     err.cause.Message, WinInfo(err.hwnd))
                 this.Remove(err.hwnd)
-            }
-        }
-
-        class WindowError {
-            __New(hwnd, err) {
-                this.hwnd := hwnd
-                this.cause := err
             }
         }
 
@@ -575,182 +547,6 @@ class WorkspaceList {
                     SetDpiAwareness(awareness)
                 }
             }
-        }
-
-        _tallRetile() {
-            opts := this._opts
-            masterCount := Min(opts.masterCount, this._tiled.Count)
-            slaveCount := this._tiled.Count - masterCount
-            workArea := this._monitor.WorkArea
-
-            usableWidth := workArea.Width
-                - opts.padding.left
-                - opts.padding.right
-            usableHeight := workArea.Height
-                - opts.padding.top
-                - opts.padding.bottom
-
-            if masterCount >= 1 && slaveCount >= 1 {
-                masterWidth := Round(usableWidth * opts.masterSize)
-                firstSlave := this._tallRetilePane(
-                    this._tiled.First,
-                    masterCount,
-                    workArea.left + opts.padding.left,
-                    workArea.top + opts.padding.top,
-                    masterWidth - opts.spacing // 2,
-                    usableHeight,
-                )
-
-                slaveWidth := usableWidth - masterWidth
-                this._tallRetilePane(
-                    firstSlave,
-                    slaveCount,
-                    workArea.left + opts.padding.left
-                        + masterWidth + opts.spacing // 2,
-                    workArea.top + opts.padding.top,
-                    slaveWidth - opts.spacing // 2,
-                    usableHeight,
-                )
-            } else {
-                this._tallRetilePane(
-                    this._tiled.First,
-                    masterCount || this._tiled.Count,
-                    workArea.left + opts.padding.left,
-                    workArea.top + opts.padding.top,
-                    usableWidth,
-                    usableHeight,
-                )
-            }
-        }
-
-        _tallRetilePane(tile, count, x, startY, totalWidth, totalHeight) {
-            spacing := this._opts.spacing > 0 && count > 1
-                ? this._opts.spacing // 2
-                : 0
-            height := Round((totalHeight - spacing * Max(count - 2, 0)) / count)
-            y := startY
-
-            try {
-                Loop count {
-                    this._moveWindow(
-                        tile.data,
-                        x,
-                        y,
-                        totalWidth,
-                        height - spacing,
-                    )
-                    y += height + spacing
-                    tile := tile.next
-                }
-            } catch TargetError as err {
-                throw WorkspaceList.Workspace.WindowError(tile.data, err)
-            } catch OSError as err {
-                throw WorkspaceList.Workspace.WindowError(tile.data, err)
-            }
-            return tile
-        }
-
-        _wideRetile() {
-            opts := this._opts
-            masterCount := Min(opts.masterCount, this._tiled.Count)
-            slaveCount := this._tiled.Count - masterCount
-            workArea := this._monitor.WorkArea
-
-            usableWidth := workArea.Width
-                - opts.padding.left
-                - opts.padding.right
-            usableHeight := workArea.Height
-                - opts.padding.top
-                - opts.padding.bottom
-
-            if masterCount >= 1 && slaveCount >= 1 {
-                masterHeight := Round(usableHeight * opts.masterSize)
-                firstSlave := this._wideRetilePane(
-                    this._tiled.First,
-                    masterCount,
-                    workArea.left + opts.padding.left,
-                    workArea.top + opts.padding.top,
-                    usableWidth,
-                    masterHeight - opts.spacing // 2,
-                )
-
-                slaveHeight := usableHeight - masterHeight
-                this._wideRetilePane(
-                    firstSlave,
-                    slaveCount,
-                    workArea.left + opts.padding.left,
-                    workArea.top + opts.padding.top
-                        + masterHeight + opts.spacing // 2,
-                    usableWidth,
-                    slaveHeight - opts.spacing // 2,
-                )
-            } else {
-                this._wideRetilePane(
-                    this._tiled.First,
-                    masterCount || this._tiled.Count,
-                    workArea.left + opts.padding.left,
-                    workArea.top + opts.padding.top,
-                    usableWidth,
-                    usableHeight,
-                )
-            }
-        }
-
-        _wideRetilePane(tile, count, startX, y, totalWidth, totalHeight) {
-            spacing := this._opts.spacing > 0 && count > 1
-                ? this._opts.spacing // 2
-                : 0
-            width := Round((totalWidth - spacing * Max(count - 2, 0)) / count)
-            x := startX
-
-            try {
-                Loop count {
-                    this._moveWindow(
-                        tile.data,
-                        x,
-                        y,
-                        width - spacing,
-                        totalHeight,
-                    )
-                    x += width + spacing
-                    tile := tile.next
-                }
-            } catch TargetError as err {
-                throw WorkspaceList.Workspace.WindowError(tile.data, err)
-            } catch OSError as err {
-                throw WorkspaceList.Workspace.WindowError(tile.data, err)
-            }
-            return tile
-        }
-
-        _fullscreenRetile() {
-            if this._mruTile {
-                hwnd := this._mruTile.data
-                opts := this._opts
-
-                if !opts.nativeMaximize {
-                    workArea := this._monitor.WorkArea
-                    this._tallRetilePane(
-                        this._mruTile,
-                        1,
-                        workArea.left + opts.padding.left,
-                        workArea.top + opts.padding.top,
-                        workArea.Width - opts.padding.left - opts.padding.right,
-                        workArea.Height - opts.padding.top - opts.padding.bottom,
-                    )
-                } else {
-                    WinMaximize("ahk_id" hwnd)
-                }
-
-                ;; Move window to the foreground, even in front of possible
-                ;; siblings.
-                this._silentlySetAlwaysOnTop(hwnd, true)
-                this._silentlySetAlwaysOnTop(hwnd, false)
-            }
-        }
-
-        _floatingRetile() {
-            ;; Do nothing
         }
     }
 
