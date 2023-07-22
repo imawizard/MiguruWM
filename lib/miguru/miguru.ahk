@@ -7,6 +7,7 @@
 #include layouts\tall.ahk
 #include layouts\wide.ahk
 #include FocusIndicator.ahk
+#include HazeOver.ahk
 
 WS_THICKFRAME       := 0x00040000
 WS_SYSMENU          := 0x00080000
@@ -191,6 +192,9 @@ class MiguruWM extends WMEvents {
                 Show: (*) =>,
                 Hide: (*) =>,
                 Unmanaged: (*) =>,
+                SetMonitorList: (*) =>,
+                HideWhenPositioning: false,
+                ShowOnFocusRequest: false,
             },
 
             delays: {
@@ -208,6 +212,7 @@ class MiguruWM extends WMEvents {
         this._delayed := Timeouts()
 
         this._maybeActiveWindow := ""
+        this._opts.focusIndicator.SetMonitorList(this._monitors)
 
         windowTracking := GetSpiInt(SPI_GETACTIVEWINDOWTRACKING)
         if windowTracking !== this._opts.focusFollowsMouse {
@@ -473,7 +478,9 @@ class MiguruWM extends WMEvents {
             }
 
         case EV_WINDOW_POSITIONING:
-            this._opts.focusIndicator.Hide()
+            if this._opts.focusIndicator.HideWhenPositioning {
+                this._opts.focusIndicator.Hide()
+            }
 
         case EV_WINDOW_HIDDEN, EV_WINDOW_CLOAKED, EV_WINDOW_MINIMIZED:
             this._hide(event, hwnd)
@@ -685,6 +692,10 @@ class MiguruWM extends WMEvents {
                 warn("Nothing to focus")
                 return
             }
+
+            if this._opts.focusIndicator.ShowOnFocusRequest {
+                this._opts.focusIndicator.Show(hwnd)
+            }
             this._focusWindow(hwnd)
 
         case "swap-window":
@@ -854,6 +865,7 @@ class MiguruWM extends WMEvents {
 
         this._monitors.Update()
         global A_SystemDPI := this._monitors.Primary.DPI
+        this._opts.focusIndicator.SetMonitorList(this._monitors)
 
         gone := this._workspaces.Update(this._monitors)
         for monitor, workspaces in gone {
