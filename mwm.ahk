@@ -34,6 +34,7 @@ fullscreen := FullscreenLayout({ nativeMaximize: false })
 floating := FloatingLayout()
 columns := WideLayout({ displayName: "Columns", masterCountMax: 0 })
 rows := TallLayout({ displayName: "Rows", masterCountMax: 0 })
+threeColumn := ThreeColumnsLayout({ displayName: "Three Columns", masterPos: "mid", slaveReverse: true})
 
 mwm := MiguruWM({
     layout: tall,
@@ -45,7 +46,7 @@ mwm := MiguruWM({
         right: 0,
         bottom: 0,
     },
-    spacing: 0,
+    spacing: 50,
 
     tilingMinWidth: 0,
     tilingMinHeight: 0,
@@ -104,7 +105,7 @@ mod1 := "Alt"
 *q::Reload()
 
 *Enter::mwm.Do("swap-window", { with: "master" })
-*Space::mwm.Do("cycle-layout", { value: [tall, wide, fullscreen, floating, columns, rows] })
+*Space::mwm.Do("cycle-layout", { value: [tall, threeColumn, wide, fullscreen, floating, columns, rows] })
 
 *vk01::MoveActiveWindow()
 *vk02::ResizeActiveWindow()
