@@ -7,6 +7,7 @@
 #include layouts\tall.ahk
 #include layouts\wide.ahk
 #include layouts\threeColumns.ahk
+#include layouts\spiral.ahk
 #include FocusIndicator.ahk
 #include HazeOver.ahk
 
