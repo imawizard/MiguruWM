@@ -687,7 +687,24 @@ class MiguruWM extends WMEvents {
 
         case "focus-window":
             ws := getWorkspace()
-            hwnd := ws.GetWindow(req.target)
+            switch req.target {
+            case "next-of-same-app":
+                active := ""
+                try active := WinExist("A")
+                if active {
+                    if req.HasProp("acrossWorkspaces")
+                        ? req.acrossWorkspaces
+                        : false {
+                        hwnd := GetNextWindowOfApp(active)
+                    } else {
+                        fn := (this, found) =>
+                            ws.Index == this.VD.DesktopByWindow(found)
+                        hwnd := GetNextWindowOfApp(active, fn.Bind(this))
+                    }
+                }
+            default:
+                hwnd := ws.GetWindow(req.target)
+            }
             if !hwnd {
                 warn("Nothing to focus")
                 return

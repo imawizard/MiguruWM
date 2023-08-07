@@ -947,3 +947,21 @@ WinInfo(hwnd) {
     }
     return info
 }
+
+GetNextWindowOfApp(hwnd, filter := (_) => true) {
+    winclass := WinGetClass("ahk_id" hwnd)
+    procname := WinGetProcessName("ahk_id" hwnd)
+    windows := WinGetList("ahk_class" winclass)
+    i := windows.Length + 1
+    loop {
+        if --i == 0 {
+            break
+        }
+        window := windows[i]
+        tmp := WinGetProcessName("ahk_id" window)
+        if tmp == procname && filter(window) {
+            return window
+        }
+    }
+    return ""
+}
