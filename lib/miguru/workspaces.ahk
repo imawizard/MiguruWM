@@ -168,7 +168,7 @@ class WorkspaceList {
             default:
                 throw "Incorrect tiling insertion setting: " this._tileInsertion
             }
-            if !this._mruTile {
+            if !this._mruTile || this._active == hwnd {
                 this._mruTile := tile
             }
             this._windows[hwnd] := { type: TILED, node: tile }

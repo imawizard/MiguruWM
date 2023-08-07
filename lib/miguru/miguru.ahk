@@ -738,6 +738,40 @@ class MiguruWM extends WMEvents {
             next := cycle[Mod(current, cycle.Length) + 1]
             this.Set("layout", { value: next })
 
+        case "center-window":
+            ws := getWorkspace()
+            hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
+            ws.Float(hwnd, true)
+            CenterWindow(hwnd)
+            this._opts.focusIndicator.Show(WinExist("A"))
+
+        case "resize-window":
+            ws := getWorkspace()
+            hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
+            ws.Float(hwnd, true)
+            value := req.HasProp("value") ? req.value : 0
+            if this._opts.focusIndicator.HideWhenPositioning {
+                this._opts.focusIndicator.Hide()
+            }
+            switch value {
+            case "maximize":
+                WinMaximize("ahk_id" hwnd)
+            case "fullscreen":
+                opts := ws._opts
+                workArea := ws._monitor.WorkArea
+
+                ws._moveWindow(
+                    hwnd,
+                    workArea.left + opts.padding.left,
+                    workArea.top + opts.padding.top,
+                    workArea.Width - opts.padding.left - opts.padding.right,
+                    workArea.Height - opts.padding.top - opts.padding.bottom,
+                )
+            default:
+                ResizeWindow(hwnd, value)
+            }
+            this._opts.focusIndicator.Show(WinExist("A"))
+
         case "get-layout":
             return ObjPtrAddRef({ value: getWorkspace().Layout.DisplayName })
         case "set-layout":

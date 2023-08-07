@@ -965,3 +965,39 @@ GetNextWindowOfApp(hwnd, filter := (_) => true) {
     }
     return ""
 }
+
+CenterWindow(hwnd) {
+    WinGetPos(, , &width, &height, "ahk_id" hwnd)
+    info := Buffer(10 * 4)
+    NumPut("UInt", 10 * 4, info) ; cbSize, rcMonitor, rcWork, dwFlags
+    monitor := DllCall(
+        "MonitorFromWindow",
+        "Ptr", hwnd,
+        "UInt", MONITOR_DEFAULTTONEAREST,
+        "Ptr",
+    )
+    DllCall(
+        "GetMonitorInfo",
+        "Ptr", monitor,
+        "Ptr", info,
+        "Int",
+    )
+    rcWorkLeft   := NumGet(info, 5 * 4, "Int")
+    rcWorkTop    := NumGet(info, 6 * 4, "Int")
+    rcWorkRight  := NumGet(info, 7 * 4, "Int")
+    rcWorkBottom := NumGet(info, 8 * 4, "Int")
+    x := (rcWorkRight - width) / 2
+    y := (rcWorkBottom - height) / 2
+    WinMove(x, y, , , "ahk_id" hwnd)
+}
+
+ResizeWindow(hwnd, delta := 0) {
+    WinGetPos(&x, &y, &width, &height, "ahk_id" hwnd)
+    WinMove(
+        x - delta,
+        y - delta,
+        width + delta * 2,
+        height + delta * 2,
+        "ahk_id" hwnd,
+    )
+}
