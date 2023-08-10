@@ -49,11 +49,17 @@ class HazeOver {
             g.BackColor := this._color
             WinSetTransparent(this._transparency, g.Hwnd)
 
-            g.Show("Hide"
-                " X" m.WorkArea.Left
-                " Y" m.WorkArea.Top
-                " W" m.WorkArea.Width
-                " H" m.WorkArea.Height
+            g.Show("Hide")
+            DllCall(
+                "SetWindowPos",
+                "Ptr", g.Hwnd,
+                "Ptr", HWND_TOP,
+                "Int", m.WorkArea.Left,
+                "Int", m.WorkArea.Top,
+                "Int", m.WorkArea.Width,
+                "Int", m.WorkArea.Height,
+                "UInt", SWP_NOACTIVATE,
+                "Int",
             )
 
             this._guis[m.Handle] := g

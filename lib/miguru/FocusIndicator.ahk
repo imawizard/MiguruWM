@@ -13,6 +13,7 @@ class FocusIndicator {
             " -Caption"
             " -SysMenu"
         )
+        this._gui.Show("Hide")
 
         this.Color := opts.color
         this._thickness := opts.thickness
