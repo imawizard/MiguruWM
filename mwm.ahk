@@ -65,6 +65,7 @@ mwm := MiguruWM({
         windowHidden: 400,
         onDisplayChange: 1000,
         sendMonitorRetile: 100,
+        retile2ndTime: 200,
     },
 
     showPopup: (text, opts) => Popup(text, opts),

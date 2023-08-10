@@ -91,6 +91,7 @@ class MiguruWM extends WMEvents {
                 windowHidden: 400,
                 onDisplayChange: 1000,
                 sendMonitorRetile: 100,
+                retile2ndTime: 200,
             },
         }, opts)
 
@@ -263,7 +264,13 @@ class MiguruWM extends WMEvents {
                 }
 
                 ws := window.workspace
-                ws.AddIfNew(hwnd)
+                if ws.AddIfNew(hwnd) {
+                    this._delayed.Add(
+                        ws.Retile.Bind(ws),
+                        this._opts.delays.retile2ndTime,
+                        "retile-2nd-time",
+                    )
+                }
             } catch as err {
                 warn("Dropping window: {} {}", err.Message, WinInfo(hwnd))
                 this._drop(hwnd)
@@ -633,6 +640,11 @@ class MiguruWM extends WMEvents {
             this._opts.showPopup.Call(ws.Layout.DisplayName, {
                 activeMonitor: this.activeMonitor.Index,
             })
+            this._delayed.Add(
+                ws.Retile.Bind(ws),
+                this._opts.delays.retile2ndTime,
+                "retile-2nd-time",
+            )
 
         case "get-master-count":
             return -getWorkspace().MasterCount
