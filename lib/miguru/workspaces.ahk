@@ -49,6 +49,7 @@ class WorkspaceList {
             this._active := ""
             this._mruTile := ""
             this._opts := opts
+            this._delayed := Timeouts()
 
             this._tileInsertion := Map(
                 "first",      INSERT_FIRST,
@@ -444,12 +445,25 @@ class WorkspaceList {
                 this._monitor.Index, this._index,
                 this._tiled.Count, this._opts.layout.DisplayName)
 
+            if this._opts.focusIndicator.UpdateOnRetile
+                && this._opts.focusIndicator.HideWhenPositioning {
+                this._opts.focusIndicator.Hide()
+            }
+
             try {
                 RunDpiAware(() => this._opts.layout.Retile(this))
             } catch WindowError as err {
                 warn("Removing window: {} {}",
                     err.cause.Message, WinInfo(err.hwnd))
                 this.Remove(err.hwnd)
+            }
+
+            if this._opts.focusIndicator.UpdateOnRetile {
+                this._delayed.Replace(
+                    () => this._opts.focusIndicator.Show(WinExist("A")),
+                    200,
+                    "indicate-focus",
+                )
             }
         }
 

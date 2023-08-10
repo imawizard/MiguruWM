@@ -32,6 +32,10 @@ class FocusIndicator {
         get => this._inlay !== true
     }
 
+    UpdateOnRetile {
+        get => true
+    }
+
     SetMonitorList(monitors) {
         ;; Do nothing
     }

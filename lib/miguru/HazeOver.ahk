@@ -29,6 +29,10 @@ class HazeOver {
         get => true
     }
 
+    UpdateOnRetile {
+        get => false
+    }
+
     SetMonitorList(monitors) {
         RunDpiAware(() => this._setMonitorList(monitors))
     }

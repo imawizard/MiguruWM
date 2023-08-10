@@ -84,6 +84,7 @@ class MiguruWM extends WMEvents {
                 SetMonitorList: (*) =>,
                 HideWhenPositioning: false,
                 ShowOnFocusRequest: false,
+                UpdateOnRetile: false,
             },
 
             delays: {
@@ -303,7 +304,6 @@ class MiguruWM extends WMEvents {
                     monitor.Index, ws.Index, WinInfo(hwnd)])
 
                 ws.Retile()
-                this._opts.focusIndicator.Show(hwnd)
             }
 
         case EV_WINDOW_POSITIONING:
@@ -580,13 +580,11 @@ class MiguruWM extends WMEvents {
             ws := getWorkspace()
             hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
             ws.Swap(hwnd, req.with, this._opts.mouseFollowsFocus)
-            this._opts.focusIndicator.Show(WinExist("A"))
 
         case "float-window":
             ws := getWorkspace()
             hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
             ws.Float(hwnd, req.value)
-            this._opts.focusIndicator.Show(WinExist("A"))
 
         case "cycle-layout":
             ws := getWorkspace()
@@ -718,7 +716,7 @@ class MiguruWM extends WMEvents {
 
         default:
             throw "Unknown request: " req.type
-       }
+        }
     }
 
     _focusMonitor(monitor) {
