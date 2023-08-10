@@ -222,7 +222,8 @@ class MiguruWM extends WMEvents {
             ;; creation, add new windows on any event.
             window := this._manage(event, hwnd)
             if !window {
-                if event == EV_WINDOW_FOCUSED {
+                if event == EV_WINDOW_FOCUSED
+                    && !WinExist("ahk_id" hwnd " ahk_group MIGURU_IGNORE") {
                     debug("Set active to non-managed {}", WinInfo(hwnd))
                     this._maybeActiveWindow := hwnd
                     this._opts.focusIndicator.Unmanaged(hwnd)
