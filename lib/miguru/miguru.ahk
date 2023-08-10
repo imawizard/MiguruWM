@@ -185,7 +185,10 @@ class MiguruWM extends WMEvents {
             focusFollowsMouse: false,
             mouseFollowsFocus: false,
 
+            followWindowToWorkspace: false,
             followWindowToMonitor: false,
+
+            focusWorkspaceByWindow: false,
 
             showPopup: (*) =>,
             focusIndicator: {
@@ -643,6 +646,37 @@ class MiguruWM extends WMEvents {
         }
 
         switch req.type {
+        case "focus-workspace":
+            ws := getWorkspace()
+            if this._opts.focusWorkspaceByWindow
+                && ws.WindowCount > 0
+                && !this._pinned.Has(ws.ActiveWindow) {
+                this._focusWindow(ws.ActiveWindow)
+            } else {
+                this.VD.FocusDesktop(ws.Index)
+            }
+
+        case "send-to-workspace":
+            ws := getWorkspace()
+            hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
+            this.VD.SendWindowToDesktop(hwnd, ws.Index)
+
+            follow := req.HasProp("follow")
+                ? req.follow
+                : this._opts.followWindowToWorkspace
+
+            if follow {
+                this.VD.FocusDesktop(ws.Index)
+            } else {
+                window := this._managed.Get(hwnd, 0)
+                next := window.workspace.Remove(hwnd)
+                ws.AddIfNew(hwnd)
+                ws.ActiveWindow := hwnd
+                if next {
+                    this._focusWindow(next, false)
+                }
+            }
+
         case "focus-monitor":
             monitor := getMonitor()
             ws := this._workspaces[monitor, this.activeWsIdx]
@@ -673,6 +707,7 @@ class MiguruWM extends WMEvents {
             if follow {
                 this.lastMonitor := this.activeMonitor
                 this.activeMonitor := monitor
+                this._opts.focusIndicator.Show(hwnd)
             } else {
                 ws := this._workspaces[this.activeMonitor, this.activeWsIdx]
                 this._focusWorkspace(ws)

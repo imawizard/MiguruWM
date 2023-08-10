@@ -55,7 +55,10 @@ mwm := MiguruWM({
     focusFollowsMouse: false,
     mouseFollowsFocus: false,
 
+    followWindowToWorkspace: false,
     followWindowToMonitor: false,
+
+    focusWorkspaceByWindow: false,
 
     delays: {
         retryManage: 100,
@@ -75,15 +78,15 @@ mod1 := "Alt"
 
 #Hotif GetKeyState(mod1, "P") and !GetKeyState("Shift", "P")
 
-*1::mwm.VD.FocusDesktop(1)
-*2::mwm.VD.FocusDesktop(2)
-*3::mwm.VD.FocusDesktop(3)
-*4::mwm.VD.FocusDesktop(4)
-*5::mwm.VD.FocusDesktop(5)
-*6::mwm.VD.FocusDesktop(6)
-*7::mwm.VD.FocusDesktop(7)
-*8::mwm.VD.FocusDesktop(8)
-*9::mwm.VD.FocusDesktop(9)
+*1::mwm.Do("focus-workspace", { workspace: 1 })
+*2::mwm.Do("focus-workspace", { workspace: 2 })
+*3::mwm.Do("focus-workspace", { workspace: 3 })
+*4::mwm.Do("focus-workspace", { workspace: 4 })
+*5::mwm.Do("focus-workspace", { workspace: 5 })
+*6::mwm.Do("focus-workspace", { workspace: 6 })
+*7::mwm.Do("focus-workspace", { workspace: 7 })
+*8::mwm.Do("focus-workspace", { workspace: 8 })
+*9::mwm.Do("focus-workspace", { workspace: 9 })
 
 *w::mwm.Do("focus-monitor", { monitor: 1 })
 *e::mwm.Do("focus-monitor", { monitor: 2 })
@@ -111,15 +114,15 @@ mod1 := "Alt"
 
 #Hotif GetKeyState(mod1, "P") and GetKeyState("Shift", "P")
 
-*1::mwm.VD.SendWindowToDesktop(WinExist("A"), 1), mwm.VD.FocusDesktop(1)
-*2::mwm.VD.SendWindowToDesktop(WinExist("A"), 2), mwm.VD.FocusDesktop(2)
-*3::mwm.VD.SendWindowToDesktop(WinExist("A"), 3), mwm.VD.FocusDesktop(3)
-*4::mwm.VD.SendWindowToDesktop(WinExist("A"), 4), mwm.VD.FocusDesktop(4)
-*5::mwm.VD.SendWindowToDesktop(WinExist("A"), 5), mwm.VD.FocusDesktop(5)
-*6::mwm.VD.SendWindowToDesktop(WinExist("A"), 6), mwm.VD.FocusDesktop(6)
-*7::mwm.VD.SendWindowToDesktop(WinExist("A"), 7), mwm.VD.FocusDesktop(7)
-*8::mwm.VD.SendWindowToDesktop(WinExist("A"), 8), mwm.VD.FocusDesktop(8)
-*9::mwm.VD.SendWindowToDesktop(WinExist("A"), 9), mwm.VD.FocusDesktop(9)
+*1::mwm.Do("send-to-workspace", { workspace: 1 })
+*2::mwm.Do("send-to-workspace", { workspace: 2 })
+*3::mwm.Do("send-to-workspace", { workspace: 3 })
+*4::mwm.Do("send-to-workspace", { workspace: 4 })
+*5::mwm.Do("send-to-workspace", { workspace: 5 })
+*6::mwm.Do("send-to-workspace", { workspace: 6 })
+*7::mwm.Do("send-to-workspace", { workspace: 7 })
+*8::mwm.Do("send-to-workspace", { workspace: 8 })
+*9::mwm.Do("send-to-workspace", { workspace: 9 })
 
 *w::mwm.Do("send-to-monitor", { monitor: 1 })
 *e::mwm.Do("send-to-monitor", { monitor: 2 })
