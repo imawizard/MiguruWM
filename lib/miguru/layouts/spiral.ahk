@@ -3,7 +3,7 @@ class SpiralLayout {
         this._opts := ObjMerge({
             displayName: "Spiral",
             masterCountMax: -1,
-            ratio: 1.0
+            ratio: 1.0,
         }, opts)
     }
 
@@ -57,7 +57,7 @@ class SpiralLayout {
                 workArea.top + opts.padding.top,
                 slaveWidth - opts.spacing // 2,
                 usableHeight,
-                "down"
+                "down",
             )
         } else {
             this._tallRetilePane(
@@ -72,45 +72,97 @@ class SpiralLayout {
         }
     }
 
-    _spiralRetilePane(ws, tile, count, x, y, totalWidth, totalHeight, splitDirection){
+    _spiralRetilePane(ws, tile, count, x, y, totalWidth, totalHeight, splitDirection) {
         spacing := ws._opts.spacing > 0 && count > 1
             ? ws._opts.spacing // 2
             : 0
         height := Round((totalHeight - spacing * Max(count - 2, 0)) / count)
         ratio := this._opts.ratio
 
-        get_sub_container(cur_window){
-            dir := cur_window[1]
+        get_sub_container(cur_window) {
+            dir :=
             x := cur_window[2], y := cur_window[3]
             w := cur_window[4], h := cur_window[5]
-            if dir=="right"
-                return ["down", x + w + spacing * 2, y, Round(w/ratio), h]
-            if dir=="down"
-                return ["left", x, y + h + spacing * 2, w, Round(h/ratio)]
-            if dir=="left"
-                return ["up"  , x - spacing * 2 - Round(w/ratio), y, Round(w/ratio), h]
-            if dir=="up"
-                return ["right",x, y - spacing * 2 - Round(h/ratio) , w, Round(h/ratio)]
+            switch cur_window[1] {
+            case "right":
+                return [
+                    "down",
+                    x + w + spacing * 2,
+                    y,
+                    Round(w / ratio),
+                    h,
+                ]
+            case "down":
+                return [
+                    "left",
+                    x,
+                    y + h + spacing * 2,
+                    w,
+                    Round(h / ratio),
+                ]
+            case "left":
+                return [
+                    "up",
+                    x - spacing * 2 - Round(w / ratio),
+                    y,
+                    Round(w / ratio),
+                    h,
+                ]
+            case "up":
+                return [
+                    "right",
+                    x,
+                    y - spacing * 2 - Round(h / ratio),
+                    w,
+                    Round(h / ratio),
+                ]
+            }
         }
 
-        get_first_window_in_container(cur_container){
-            dir := cur_container[1]
+        get_first_window_in_container(cur_container) {
+            dir :=
             x := cur_container[2], y := cur_container[3]
             w := cur_container[4], h := cur_container[5]
-            if dir=="right"
-                return ["right", x, y, Round((w-spacing*2)*ratio/(ratio+1)), h]
-            if dir=="down"
-                return ["down" , x, y, w, Round((h-spacing*2)*ratio/(ratio+1))]
-            if dir=="left"
-                return ["left" , x + Round((w-spacing*2)/(ratio+1)) + spacing*2, y, Round((w-spacing*2)*ratio/(ratio+1)), h]
-            if dir=="up"
-                return ["up"   , x, y + Round((h-spacing*2)/(ratio+1)) + spacing*2, w, Round((h-spacing*2)*ratio/(ratio+1))]
+            switch cur_container[1] {
+            case "right":
+                return [
+                    "right",
+                    x,
+                    y,
+                    Round((w - spacing * 2) * ratio / (ratio + 1)),
+                    h,
+                ]
+            case "down":
+                return [
+                    "down",
+                    x,
+                    y,
+                    w,
+                    Round((h - spacing * 2) * ratio / (ratio + 1)),
+                ]
+            case "left":
+                return [
+                    "left",
+                    x + Round((w - spacing * 2)/(ratio+1)) + spacing*2,
+                    y,
+                    Round((w - spacing * 2) * ratio / (ratio + 1)),
+                    h,
+                ]
+            case "up":
+                return [
+                    "up",
+                    x,
+                    y + Round((h - spacing * 2) / (ratio + 1)) + spacing * 2,
+                    w,
+                    Round((h - spacing * 2) * ratio / (ratio + 1)),
+                ]
+            }
         }
 
-        cur_container := [splitDirection,x,y,totalWidth,totalHeight]
+        cur_container := [splitDirection, x, y, totalWidth, totalHeight]
 
         try {
-        Loop count {
+            loop count {
                 cur_window := get_first_window_in_container(cur_container)
                 cur_x := (A_Index == count) ? cur_container[2] : cur_window[2]
                 cur_y := (A_Index == count) ? cur_container[3] : cur_window[3]
@@ -142,7 +194,7 @@ class SpiralLayout {
         y := startY
 
         try {
-            Loop count {
+            loop count {
                 ws._moveWindow(
                     tile.data,
                     x,

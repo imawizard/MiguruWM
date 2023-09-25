@@ -4,10 +4,10 @@
 #include workspaces.ahk
 #include layouts\floating.ahk
 #include layouts\fullscreen.ahk
-#include layouts\tall.ahk
-#include layouts\wide.ahk
-#include layouts\threeColumns.ahk
 #include layouts\spiral.ahk
+#include layouts\tall.ahk
+#include layouts\threeColumns.ahk
+#include layouts\wide.ahk
 #include FocusIndicator.ahk
 #include HazeOver.ahk
 

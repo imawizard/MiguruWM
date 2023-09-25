@@ -79,7 +79,7 @@ class TallLayout {
         y := startY
 
         try {
-            Loop count {
+            loop count {
                 ws._moveWindow(
                     tile.data,
                     x,

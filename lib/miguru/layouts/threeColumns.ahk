@@ -1,7 +1,7 @@
 class ThreeColumnsLayout {
     __New(opts := {}) {
         this._opts := ObjMerge({
-            displayName: "Three Columns",
+            displayName: "Three-Columns",
             masterPos: "mid",
             masterCountMax: -1,
             masterExtraSize: 1.3,
@@ -42,9 +42,9 @@ class ThreeColumnsLayout {
             masterWidth := Round(usableWidth * opts.masterSize * this._opts.masterExtraSize)
             slaveWidth := usableWidth - masterWidth
             if slaveCount == 1 {
-                this.retileTwoWindows(ws, masterWidth, slaveWidth, usableWidth, usableHeight)
-            } else{
-                this.retileMoreThanTwo(ws, masterWidth, slaveWidth, usableWidth, usableHeight)
+                this._retileTwoWindows(ws, masterWidth, slaveWidth, usableWidth, usableHeight)
+            } else {
+                this._retileMoreThanTwo(ws, masterWidth, slaveWidth, usableWidth, usableHeight)
             }
         } else {
             this._tallRetilePane(
@@ -58,7 +58,6 @@ class ThreeColumnsLayout {
             )
         }
     }
-
 
     _threeColumnsRetilePane(ws, tile, count, colFirst_x, colFirst_y, colSecond_x, colSecond_y, totalWidth, totalHeight) {
         spacing := ws._opts.spacing > 0 && count > 1
@@ -80,9 +79,9 @@ class ThreeColumnsLayout {
 
         whichColNum := this._opts.slaveReverse = true ? -1 : 1
         try {
-            Loop count {
+            loop count {
                 if this._opts.slaveReverse = false {
-                    if A_Index <= colSecond_slave_num{
+                    if A_Index <= colSecond_slave_num {
                         ws._moveWindow(
                             tile.data,
                             colSecond_x,
@@ -91,8 +90,7 @@ class ThreeColumnsLayout {
                             colSecond_height - colSecond_spacing,
                         )
                         colSecond_y += colSecond_height + colSecond_spacing
-                    }
-                    else{
+                    } else {
                         ws._moveWindow(
                             tile.data,
                             colFirst_x,
@@ -102,8 +100,8 @@ class ThreeColumnsLayout {
                         )
                         colFirst_y += colFirst_height + colFirst_spacing
                     }
-                } else{
-                    if A_Index <= colSecond_slave_num{
+                } else {
+                    if A_Index <= colSecond_slave_num {
                         ws._moveWindow(
                             tile.data,
                             colFirst_x,
@@ -112,8 +110,7 @@ class ThreeColumnsLayout {
                             colSecond_height - colFirst_spacing,
                         )
                         colFirst_y += colSecond_height + colFirst_spacing
-                    }
-                    else{
+                    } else {
                         ws._moveWindow(
                             tile.data,
                             colSecond_x,
@@ -142,7 +139,7 @@ class ThreeColumnsLayout {
         y := startY
 
         try {
-            Loop count {
+            loop count {
                 ws._moveWindow(
                     tile.data,
                     x,
@@ -161,10 +158,7 @@ class ThreeColumnsLayout {
         return tile
     }
 
-
-
-
-    retileTwoWindows(ws, masterWidth, slaveWidth, usableWidth, usableHeight) {
+    _retileTwoWindows(ws, masterWidth, slaveWidth, usableWidth, usableHeight) {
         opts := ws._opts
         masterCount := Min(opts.masterCount, ws._tiled.Count)
         slaveCount := ws._tiled.Count - masterCount
@@ -186,7 +180,7 @@ class ThreeColumnsLayout {
                 workArea.left + opts.padding.left
                     + masterWidth + opts.spacing // 2,
                 workArea.top + opts.padding.top,
-                slaveWidth -  opts.spacing // 2,
+                slaveWidth - opts.spacing // 2,
                 usableHeight,
             )
         } else if this._opts.masterPos = "right" {
@@ -205,15 +199,15 @@ class ThreeColumnsLayout {
                 slaveCount,
                 workArea.left + opts.padding.left,
                 workArea.top + opts.padding.top,
-                slaveWidth -  opts.spacing // 2,
+                slaveWidth - opts.spacing // 2,
                 usableHeight,
             )
-        } else{
+        } else {
             throw WindowError(tile.data, Error("Invalid option: masterPos"))
         }
     }
 
-    retileMoreThanTwo(ws, masterWidth, slaveWidth, usableWidth, usableHeight){
+    _retileMoreThanTwo(ws, masterWidth, slaveWidth, usableWidth, usableHeight) {
         opts := ws._opts
         masterCount := Min(opts.masterCount, ws._tiled.Count)
         slaveCount := ws._tiled.Count - masterCount
@@ -221,73 +215,73 @@ class ThreeColumnsLayout {
 
         masterWidth := Round(usableWidth * opts.masterSize * this._opts.masterExtraSize)
         slaveWidth := Round((usableWidth - masterWidth) // 2)
-        switch this._opts.masterPos{
-            case "left":
-                firstSlave := this._tallRetilePane(
-                    ws,
-                    ws._tiled.First,
-                    masterCount,
-                    workArea.left + opts.padding.left,
-                    workArea.top + opts.padding.top,
-                    masterWidth - opts.spacing,
-                    usableHeight,
-                )
-                this._threeColumnsRetilePane(
-                    ws,
-                    firstSlave,
-                    slaveCount,
-                    workArea.right - opts.padding.right - slaveWidth + opts.spacing // 2,
-                    workArea.top + opts.padding.top,
-                    workArea.left + opts.padding.left + masterWidth + opts.spacing // 2,
-                    workArea.top + opts.padding.top,
-                    slaveWidth - opts.spacing // 2,
-                    usableHeight,
-                )
-            case "mid":
-                firstSlave := this._tallRetilePane(
-                    ws,
-                    ws._tiled.First,
-                    masterCount,
-                    workArea.left + opts.padding.left
-                        + slaveWidth + opts.spacing // 2,
-                    workArea.top + opts.padding.top,
-                    masterWidth - opts.spacing,
-                    usableHeight,
-                )
-                this._threeColumnsRetilePane(
-                    ws,
-                    firstSlave,
-                    slaveCount,
-                    workArea.left + opts.padding.left,
-                    workArea.top + opts.padding.top,
-                    workArea.right - opts.padding.right - slaveWidth + opts.spacing // 2,
-                    workArea.top + opts.padding.top,
-                    slaveWidth - opts.spacing // 2,
-                    usableHeight,
-                )
-            case "right":
-                firstSlave := this._tallRetilePane(
-                    ws,
-                    ws._tiled.First,
-                    masterCount,
-                    workArea.right - opts.padding.right - masterWidth + opts.spacing // 2,
-                    workArea.top + opts.padding.top,
-                    masterWidth - opts.spacing,
-                    usableHeight,
-                )
-                this._threeColumnsRetilePane(
-                    ws,
-                    firstSlave,
-                    slaveCount,
-                    workArea.left + opts.padding.left,
-                    workArea.top + opts.padding.top,
-                    workArea.left + opts.padding.left + slaveWidth + opts.spacing // 2,
-                    workArea.top + opts.padding.top,
-                    slaveWidth - opts.spacing // 2,
-                    usableHeight,
-                )
-            default:
-                throw WindowError(tile.data, Error("Invalid option: masterPos"))
+        switch opts.masterPos {
+        case "left":
+            firstSlave := this._tallRetilePane(
+                ws,
+                ws._tiled.First,
+                masterCount,
+                workArea.left + opts.padding.left,
+                workArea.top + opts.padding.top,
+                masterWidth - opts.spacing,
+                usableHeight,
+            )
+            this._threeColumnsRetilePane(
+                ws,
+                firstSlave,
+                slaveCount,
+                workArea.right - opts.padding.right - slaveWidth + opts.spacing // 2,
+                workArea.top + opts.padding.top,
+                workArea.left + opts.padding.left + masterWidth + opts.spacing // 2,
+                workArea.top + opts.padding.top,
+                slaveWidth - opts.spacing // 2,
+                usableHeight,
+            )
+        case "mid":
+            firstSlave := this._tallRetilePane(
+                ws,
+                ws._tiled.First,
+                masterCount,
+                workArea.left + opts.padding.left
+                    + slaveWidth + opts.spacing // 2,
+                workArea.top + opts.padding.top,
+                masterWidth - opts.spacing,
+                usableHeight,
+            )
+            this._threeColumnsRetilePane(
+                ws,
+                firstSlave,
+                slaveCount,
+                workArea.left + opts.padding.left,
+                workArea.top + opts.padding.top,
+                workArea.right - opts.padding.right - slaveWidth + opts.spacing // 2,
+                workArea.top + opts.padding.top,
+                slaveWidth - opts.spacing // 2,
+                usableHeight,
+            )
+        case "right":
+            firstSlave := this._tallRetilePane(
+                ws,
+                ws._tiled.First,
+                masterCount,
+                workArea.right - opts.padding.right - masterWidth + opts.spacing // 2,
+                workArea.top + opts.padding.top,
+                masterWidth - opts.spacing,
+                usableHeight,
+            )
+            this._threeColumnsRetilePane(
+                ws,
+                firstSlave,
+                slaveCount,
+                workArea.left + opts.padding.left,
+                workArea.top + opts.padding.top,
+                workArea.left + opts.padding.left + slaveWidth + opts.spacing // 2,
+                workArea.top + opts.padding.top,
+                slaveWidth - opts.spacing // 2,
+                usableHeight,
+            )
+        default:
+            throw WindowError(tile.data, Error("Invalid option: masterPos"))
         }
     }
 }
