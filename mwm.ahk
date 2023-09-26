@@ -34,7 +34,7 @@ fullscreen := FullscreenLayout({ nativeMaximize: false })
 floating := FloatingLayout()
 columns := WideLayout({ displayName: "Columns", masterCountMax: 0 })
 rows := TallLayout({ displayName: "Rows", masterCountMax: 0 })
-threecolumn := ThreeColumnsLayout({ masterPos: "mid", slaveReverse: true})
+threecolumn := ThreeColumnLayout()
 spiral := SpiralLayout({ ratio: 1.618 })
 
 mwm := MiguruWM({
