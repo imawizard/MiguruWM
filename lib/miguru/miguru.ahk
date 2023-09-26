@@ -204,6 +204,14 @@ class MiguruWM extends WMEvents {
 
         switch event {
         case EV_WINDOW_FOCUSED:
+            if WinExist("ahk_id" hwnd
+                " ahk_exe explorer.exe ahk_class VirtualDesktopGestureSwitcher")
+             || WinExist("ahk_id" hwnd
+                " ahk_exe explorer.exe ahk_class ForegroundStaging") {
+                this.activeWsMonitors[this.activeWsIdx] := this.activeMonitor
+                goto fallthrough
+            }
+
             monitor := this._monitors.ByWindow(hwnd)
 
             ;; Set currently active monitor if changed.
@@ -475,11 +483,23 @@ class MiguruWM extends WMEvents {
 
         switch req.type {
         case "focus-workspace":
+            this.activeWsMonitors[this.activeWsIdx] := this.activeMonitor
             ws := getWorkspace()
-            if this._opts.focusWorkspaceByWindow
-                && ws.WindowCount > 0
-                && !this._pinned.Has(ws.ActiveWindow) {
-                this._focusWindow(ws.ActiveWindow)
+
+            if this._opts.focusWorkspaceByWindow {
+                if !req.HasProp("monitor") {
+                    monitor := this.activeWsMonitors.Get(ws.Index, "")
+                    if monitor {
+                        ws := this._workspaces[monitor, ws.Index]
+                    }
+                }
+
+                if ws.WindowCount > 0 && ws.ActiveWindow
+                    && !this._pinned.Has(ws.ActiveWindow) {
+                    this._focusWindow(ws.ActiveWindow)
+                } else {
+                    this.VD.FocusDesktop(ws.Index)
+                }
             } else {
                 this.VD.FocusDesktop(ws.Index)
             }
@@ -500,6 +520,7 @@ class MiguruWM extends WMEvents {
                 next := window.workspace.Remove(hwnd)
                 ws.AddIfNew(hwnd)
                 ws.ActiveWindow := hwnd
+                this.activeWsMonitors[ws.Index] := ws._monitor
                 if next {
                     this._focusWindow(next, false)
                 }
@@ -801,6 +822,7 @@ class MiguruWM extends WMEvents {
         this.lastMonitor := ""
         this.activeWsIdx := this.VD.CurrentDesktop()
         this.lastWsIdx := 0
+        this.activeWsMonitors := Map()
 
         old := A_DetectHiddenWindows
         DetectHiddenWindows(false)
