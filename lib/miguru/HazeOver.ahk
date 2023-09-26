@@ -161,7 +161,8 @@ class HazeOver {
             || (WinExist("ahk_id" hwnd " ahk_class WorkerW")
             && WinGetTitle("ahk_id" hwnd) == "") {
             this.Hide()
-        } else {
+        } else if !WinExist("ahk_id" hwnd " ahk_class VirtualDesktopGestureSwitcher")
+            && !WinExist("ahk_id" hwnd " ahk_exe explorer.exe ahk_class ForegroundStaging") {
             this.Show(hwnd)
         }
     }

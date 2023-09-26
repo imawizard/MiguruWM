@@ -121,10 +121,11 @@ class FocusIndicator {
         if WinExist("ahk_id" hwnd " ahk_class Shell_TrayWnd")
             || WinExist("ahk_id" hwnd " ahk_class Shell_SecondaryTrayWnd")
             || WinExist("ahk_id" hwnd " ahk_class Progman")
+            || WinExist("ahk_id" hwnd " ahk_exe explorer.exe ahk_class ForegroundStaging")
             || (WinExist("ahk_id" hwnd " ahk_class WorkerW")
             && WinGetTitle("ahk_id" hwnd) == "") {
             this.Hide()
-        } else {
+        } else if !WinExist("ahk_id" hwnd " ahk_class VirtualDesktopGestureSwitcher") {
             this.Show(hwnd)
         }
     }
