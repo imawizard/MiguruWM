@@ -35,7 +35,7 @@ floating := FloatingLayout()
 columns := WideLayout({ displayName: "Columns", masterCountMax: 0 })
 rows := TallLayout({ displayName: "Rows", masterCountMax: 0 })
 threecolumn := ThreeColumnLayout()
-spiral := SpiralLayout({ ratio: 1.618 })
+spiral := SpiralLayout()
 
 mwm := MiguruWM({
     layout: tall,

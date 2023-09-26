@@ -1,4 +1,4 @@
-class SpiralLayout {
+class SpiralLayout extends TallLayout {
     __New(opts := {}) {
         this._opts := ObjMerge({
             displayName: "Spiral",
@@ -37,9 +37,8 @@ class SpiralLayout {
             - opts.padding.bottom
 
         if masterCount >= 1 && slaveCount >= 1 {
-            ; currently, masterSize will be ignored
-            masterWidth := Round((usableWIdth - ws._opts.spacing)* this._opts.ratio / (this._opts.ratio+1))
-            firstSlave := this._tallRetilePane(
+            masterWidth := Round(usableWidth * this._opts.ratio / (this._opts.ratio + 1))
+            firstSlave := this._retilePane(
                 ws,
                 ws._tiled.First,
                 masterCount,
@@ -48,8 +47,9 @@ class SpiralLayout {
                 masterWidth - opts.spacing // 2,
                 usableHeight,
             )
+
             slaveWidth := usableWidth - masterWidth
-            this._spiralRetilePane(
+            this._retileSpiralPane(
                 ws,
                 firstSlave,
                 slaveCount,
@@ -60,7 +60,7 @@ class SpiralLayout {
                 "down",
             )
         } else {
-            this._tallRetilePane(
+            this._retilePane(
                 ws,
                 ws._tiled.First,
                 masterCount || ws._tiled.Count,
@@ -72,18 +72,18 @@ class SpiralLayout {
         }
     }
 
-    _spiralRetilePane(ws, tile, count, x, y, totalWidth, totalHeight, splitDirection) {
+    _retileSpiralPane(ws, tile, count, x, y, totalWidth, totalHeight, splitDirection) {
         spacing := ws._opts.spacing > 0 && count > 1
             ? ws._opts.spacing // 2
             : 0
         height := Round((totalHeight - spacing * Max(count - 2, 0)) / count)
+
         ratio := this._opts.ratio
 
-        get_sub_container(cur_window) {
-            dir :=
-            x := cur_window[2], y := cur_window[3]
-            w := cur_window[4], h := cur_window[5]
-            switch cur_window[1] {
+        get_sub_container(w) {
+            x := window[2], y := window[3]
+            w := window[4], h := window[5]
+            switch window[1] {
             case "right":
                 return [
                     "down",
@@ -119,11 +119,10 @@ class SpiralLayout {
             }
         }
 
-        get_first_window_in_container(cur_container) {
-            dir :=
-            x := cur_container[2], y := cur_container[3]
-            w := cur_container[4], h := cur_container[5]
-            switch cur_container[1] {
+        get_first_window_in_container(container) {
+            x := container[2], y := container[3]
+            w := container[4], h := container[5]
+            switch container[1] {
             case "right":
                 return [
                     "right",
@@ -159,56 +158,33 @@ class SpiralLayout {
             }
         }
 
-        cur_container := [splitDirection, x, y, totalWidth, totalHeight]
+        container := [splitDirection, x, y, totalWidth, totalHeight]
 
         try {
-            loop count {
-                cur_window := get_first_window_in_container(cur_container)
-                cur_x := (A_Index == count) ? cur_container[2] : cur_window[2]
-                cur_y := (A_Index == count) ? cur_container[3] : cur_window[3]
-                cur_w := (A_Index == count) ? cur_container[4] : cur_window[4]
-                cur_h := (A_Index == count) ? cur_container[5] : cur_window[5]
+            loop count - 1 {
+                window := get_first_window_in_container(container)
                 ws._moveWindow(
                     tile.data,
-                    cur_x,
-                    cur_y,
-                    cur_w,
-                    cur_h,
+                    window[2],
+                    window[3],
+                    window[4],
+                    window[5],
                 )
+                container := get_sub_container(window)
                 tile := tile.next
-                cur_container := get_sub_container(cur_window)
             }
+
+            ws._moveWindow(
+                tile.data,
+                container[2],
+                container[3],
+                container[4],
+                container[5],
+            )
         } catch TargetError as err {
             throw WorkspaceList.Workspace.WindowError(tile.data, err)
         } catch OSError as err {
             throw WorkspaceList.Workspace.WindowError(tile.data, err)
-        }
-        return tile
-    }
-
-    _tallRetilePane(ws, tile, count, x, startY, totalWidth, totalHeight) {
-        spacing := ws._opts.spacing > 0 && count > 1
-            ? ws._opts.spacing // 2
-            : 0
-        height := Round((totalHeight - spacing * Max(count - 2, 0)) / count)
-        y := startY
-
-        try {
-            loop count {
-                ws._moveWindow(
-                    tile.data,
-                    x,
-                    y,
-                    totalWidth,
-                    height - spacing,
-                )
-                y += height + spacing
-                tile := tile.next
-            }
-        } catch TargetError as err {
-            throw WindowError(tile.data, err)
-        } catch OSError as err {
-            throw WindowError(tile.data, err)
         }
         return tile
     }
