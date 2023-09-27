@@ -570,6 +570,13 @@ class MiguruWM extends WMEvents {
                 this._opts.delays.sendMonitorRetile,
                 "send-monitor-retile",
             )
+            if follow {
+                this._delayed.Add(
+                    ((this, ws) => this._focusWindow(ws.ActiveWindow)).Bind(this, newWs),
+                    this._opts.delays.sendMonitorRetile + 50,
+                    "send-monitor-retile",
+                )
+            }
 
         case "focus-window":
             ws := getWorkspace()
