@@ -523,6 +523,8 @@ class MiguruWM extends WMEvents {
                 this.activeWsMonitors[ws.Index] := ws._monitor
                 if next {
                     this._focusWindow(next, false)
+                } else if window.workspace.WindowCount == 0 {
+                    this._focusWorkspace(window.workspace)
                 }
             }
 
