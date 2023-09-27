@@ -16,6 +16,10 @@ class FullscreenLayout {
 
     Init(ws) {
         first := ws._tiled.First
+        if !first {
+            return
+        }
+
         current := first
         loop {
             this._resizeWindow(ws, current.data)
@@ -24,6 +28,23 @@ class FullscreenLayout {
     }
 
     Retile(ws) {
+        ;; Reposition windows that lie outside of the current monitor.
+        tile := ws._tiled.First
+        loop ws._tiled.Count {
+            try {
+                handle := DllCall(
+                    "MonitorFromWindow",
+                    "Ptr", tile.data,
+                    "UInt", MONITOR_DEFAULTTONEAREST,
+                    "Ptr",
+                )
+                if handle !== ws._monitor.Handle {
+                    this._resizeWindow(ws, tile.data)
+                }
+            }
+            tile := tile.next
+        }
+
         if ws._mruTile {
             hwnd := ws._mruTile.data
 
