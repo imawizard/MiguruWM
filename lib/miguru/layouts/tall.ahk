@@ -3,6 +3,7 @@ class TallLayout {
         this._opts := ObjMerge({
             displayName: "Tall",
             masterCountMax: -1,
+            flipped: false,
         }, opts)
     }
 
@@ -36,26 +37,39 @@ class TallLayout {
             - opts.padding.bottom
 
         if masterCount >= 1 && slaveCount >= 1 {
+            tile := ws._tiled.First
             masterWidth := Round(usableWidth * opts.masterSize)
-            firstSlave := this._retilePane(
+            slaveWidth := usableWidth - masterWidth
+
+            if !this._opts.flipped {
+                counts := [masterCount, slaveCount]
+                widths := [masterWidth, slaveWidth]
+            } else {
+                loop masterCount {
+                    tile := tile.next
+                }
+                counts := [slaveCount, masterCount]
+                widths := [slaveWidth, masterWidth]
+            }
+
+            next := this._retilePane(
                 ws,
-                ws._tiled.First,
-                masterCount,
-                workArea.left + opts.padding.left,
-                workArea.top + opts.padding.top,
-                masterWidth - opts.spacing // 2,
+                tile,
+                counts[1],
+                workArea.Left + opts.padding.left,
+                workArea.Top + opts.padding.top,
+                widths[1] - opts.spacing // 2,
                 usableHeight,
             )
 
-            slaveWidth := usableWidth - masterWidth
             this._retilePane(
                 ws,
-                firstSlave,
-                slaveCount,
-                workArea.left + opts.padding.left
-                    + masterWidth + opts.spacing // 2,
-                workArea.top + opts.padding.top,
-                slaveWidth - opts.spacing // 2,
+                next,
+                counts[2],
+                workArea.Left + opts.padding.left
+                    + widths[1] + opts.spacing // 2,
+                workArea.Top + opts.padding.top,
+                widths[2] - opts.spacing // 2,
                 usableHeight,
             )
         } else {

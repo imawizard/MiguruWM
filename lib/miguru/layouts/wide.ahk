@@ -3,6 +3,7 @@ class WideLayout {
         this._opts := ObjMerge({
             displayName: "Wide",
             masterCountMax: -1,
+            flipped: false,
         }, opts)
     }
 
@@ -36,35 +37,47 @@ class WideLayout {
             - opts.padding.bottom
 
         if masterCount >= 1 && slaveCount >= 1 {
+            tile := ws._tiled.First
             masterHeight := Round(usableHeight * opts.masterSize)
-            firstSlave := this._retilePane(
-                ws,
-                ws._tiled.First,
-                masterCount,
-                workArea.left + opts.padding.left,
-                workArea.top + opts.padding.top,
-                usableWidth,
-                masterHeight - opts.spacing // 2,
-            )
-
             slaveHeight := usableHeight - masterHeight
+
+            if !this._opts.flipped {
+                counts := [masterCount, slaveCount]
+                heights := [masterHeight, slaveHeight]
+            } else {
+                loop masterCount {
+                    tile := tile.next
+                }
+                counts := [slaveCount, masterCount]
+                heights := [slaveHeight, masterHeight]
+            }
+
+            next := this._retilePane(
+                ws,
+                tile,
+                counts[1],
+                workArea.Left + opts.padding.left,
+                workArea.Top + opts.padding.top,
+                usableWidth,
+                heights[1] - opts.spacing // 2,
+            )
             this._retilePane(
                 ws,
-                firstSlave,
-                slaveCount,
-                workArea.left + opts.padding.left,
-                workArea.top + opts.padding.top
+                next,
+                counts[2],
+                workArea.Left + opts.padding.left,
+                workArea.Top + opts.padding.top
                     + masterHeight + opts.spacing // 2,
                 usableWidth,
-                slaveHeight - opts.spacing // 2,
+                heights[2] - opts.spacing // 2,
             )
         } else {
             this._retilePane(
                 ws,
                 ws._tiled.First,
                 masterCount || ws._tiled.Count,
-                workArea.left + opts.padding.left,
-                workArea.top + opts.padding.top,
+                workArea.Left + opts.padding.left,
+                workArea.Top + opts.padding.top,
                 usableWidth,
                 usableHeight,
             )
