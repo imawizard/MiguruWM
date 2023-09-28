@@ -69,7 +69,7 @@ class VD {
     AllDesktops() {
         res := []
         desktops := this.managerInternal.GetDesktops()
-        Loop desktops.GetCount() {
+        loop desktops.GetCount() {
             desktop := desktops.GetAt(A_Index)
             res.Push({
                 guid: StringifyGUID(desktop.GetId()),
@@ -307,7 +307,7 @@ class VD {
         }
 
         last := false
-        Loop index - desktops.GetCount() {
+        loop index - desktops.GetCount() {
             last := this.managerInternal.CreateDesktop()
         }
         return last
@@ -315,7 +315,7 @@ class VD {
 
     _desktopIndexById(needle) {
         desktops := this.managerInternal.GetDesktops()
-        Loop desktops.GetCount() {
+        loop desktops.GetCount() {
             desktop := desktops.GetAt(A_Index)
             if desktop.GetId() == needle {
                 return A_Index

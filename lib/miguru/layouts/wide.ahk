@@ -79,7 +79,7 @@ class WideLayout {
         x := startX
 
         try {
-            Loop count {
+            loop count {
                 ws._moveWindow(
                     tile.data,
                     x,
