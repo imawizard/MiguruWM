@@ -83,7 +83,7 @@ class WorkspaceList {
             get => this._opts.layout
             set {
                 this._opts.layout := value
-                value.Init(this)
+                RunDpiAware(() => value.Init(this))
                 this.Retile()
             }
         }
@@ -100,7 +100,8 @@ class WorkspaceList {
                 if window.type == TILED {
                     this._mruTile := window.node
                 }
-                this._opts.layout.ActiveWindowChanged(this)
+                RunDpiAware(() =>
+                    this._opts.layout.ActiveWindowChanged(this))
             }
         }
 
