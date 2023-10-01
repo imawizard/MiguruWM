@@ -598,6 +598,11 @@ class MiguruWM extends WMEvents {
                         hwnd := GetNextWindowOfApp(active, fn.Bind(this))
                     }
                 }
+            case "master-or-mru":
+                hwnd := ws.GetWindow("master")
+                if active == hwnd {
+                    hwnd := ws.LastWindow || ws.GetWindow("next", active)
+                }
             default:
                 hwnd := ws.GetWindow(req.target)
             }

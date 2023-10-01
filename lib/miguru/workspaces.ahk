@@ -48,6 +48,7 @@ class WorkspaceList {
 
             this._active := ""
             this._mruTile := ""
+            this._mruHwnd := ""
             this._opts := opts
             this._delayed := Timeouts()
 
@@ -96,6 +97,9 @@ class WorkspaceList {
                     return
                 }
 
+                if this._active !== value {
+                    this._mruHwnd := this._active
+                }
                 this._active := value
                 if window.type == TILED {
                     this._mruTile := window.node
@@ -103,6 +107,10 @@ class WorkspaceList {
                 RunDpiAware(() =>
                     this._opts.layout.ActiveWindowChanged(this))
             }
+        }
+
+        LastWindow {
+            get => this._mruHwnd
         }
 
         AddIfNew(hwnd) {
