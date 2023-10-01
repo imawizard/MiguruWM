@@ -95,6 +95,7 @@ class MiguruWM extends WMEvents {
                 onDisplayChange: 1000,
                 sendMonitorRetile: 100,
                 retile2ndTime: 200,
+                pinnedWindowFocused: 100,
             },
         }, opts)
 
@@ -297,23 +298,17 @@ class MiguruWM extends WMEvents {
             }
 
             if event == EV_WINDOW_FOCUSED || hwnd == this._maybeActiveWindow {
-                debug(() => ["Focused: D={} WS={} {}",
-                    monitor.Index, ws.Index, WinInfo(hwnd)])
-
-                ws.ActiveWindow := hwnd
-                this._maybeActiveWindow := ""
-                this._opts.focusIndicator.Show(hwnd)
-
-                ;; If it's an explorer window, focus the content panel.
-                if WinExist("ahk_id" hwnd
-                    " ahk_exe explorer.exe ahk_class CabinetWClass") {
-                    try {
-                        ControlFocus("DirectUIHWND2", "ahk_id" hwnd)
-                    } catch TargetError {
-                        ;; Do nothing
-                    } catch OSError {
-                        ;; Do nothing
-                    }
+                this._delayed.Drop("pinned-window-focused")
+                if !this._pinned.Has(hwnd) {
+                    this._focus(hwnd, monitor, ws)
+                } else {
+                    debug(() => ["Delay focus: D={} WS={} {}",
+                        monitor.Index, ws.Index, WinInfo(hwnd)])
+                    this._delayed.Replace(
+                        this._focus.Bind(this, hwnd, monitor),
+                        this._opts.delays.pinnedWindowFocused,
+                        "pinned-window-focused",
+                    )
                 }
 
             } else if event == EV_WINDOW_REPOSITIONED {
@@ -1045,6 +1040,32 @@ class MiguruWM extends WMEvents {
             window.workspace.Remove(hwnd)
         } else {
             this._removePinnedWindow(hwnd, window)
+        }
+    }
+
+    _focus(hwnd, monitor, ws := "") {
+        if !ws {
+            window := this._managed[hwnd]
+            ws := window.workspace
+        }
+
+        debug(() => ["Focused: D={} WS={} {}",
+            monitor.Index, ws.Index, WinInfo(hwnd)])
+
+        ws.ActiveWindow := hwnd
+        this._maybeActiveWindow := ""
+        this._opts.focusIndicator.Show(hwnd)
+
+        ;; If it's an explorer window, focus the content panel.
+        if WinExist("ahk_id" hwnd
+            " ahk_exe explorer.exe ahk_class CabinetWClass") {
+            try {
+                ControlFocus("DirectUIHWND2", "ahk_id" hwnd)
+            } catch TargetError {
+                ;; Do nothing
+            } catch OSError {
+                ;; Do nothing
+            }
         }
     }
 }
