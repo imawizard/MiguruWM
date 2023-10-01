@@ -59,7 +59,7 @@ A_SystemDPI := A_ScreenDPI
 class MiguruWM extends WMEvents {
     __New(opts := {}) {
         this._opts := ObjMerge({
-            layout: "tall",
+            layout: "",
             masterSize: 0.5,
             masterCount: 1,
             padding: { left: 0, top: 0, right: 0, bottom: 0 },
@@ -112,6 +112,9 @@ class MiguruWM extends WMEvents {
             this._oldFFM := windowTracking
             SetSpiInt(SPI_SETACTIVEWINDOWTRACKING, this._opts.focusFollowsMouse)
         }
+
+        this.activeMonitor := 1
+        this.activeWsIdx := 1
 
         super.__New()
         this._initWithCurrentDesktopAndWindows()
@@ -868,8 +871,7 @@ class MiguruWM extends WMEvents {
             } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_DECOLESS") {
                 ;; Do nothing
             } else if WinGetStyle("ahk_id" hwnd) & WS_CAPTION == 0 {
-                ;; NOTE: Would it make sense to auto-float these windows?
-                debug(() => ["Ignoring: no titlebar {}", WinInfo(hwnd)])
+                trace(() => ["Ignoring: no titlebar {}", WinInfo(hwnd)])
                 return ""
             } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_IGNORE") {
                 trace(() => ["Ignoring: ahk_group {}", WinInfo(hwnd)])

@@ -794,7 +794,7 @@ StringifySL(self) {
 
 Stringify(self, visited := Map()) {
     if self is String {
-        return '"' self '"'
+        return '"' StrReplace(self, '"', '``"') '"'
     } else if self is Primitive {
         return String(self)
     } else if self is Func {
