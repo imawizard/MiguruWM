@@ -306,13 +306,14 @@ class WorkspaceList {
             }
         }
 
-        GetWindow(target := "") {
+        GetWindow(target := "", origin := "") {
             if this.WindowCount < 1 {
                 return ""
             }
 
             ;; Start with the active, the mru or the first floating window.
-            hwnd := this._active ||
+            hwnd := this._windows.Get(origin, "") && origin ||
+                this._active ||
                 this._mruTile && this._mruTile.data ||
                 this._floating.Get(1, "")
 
