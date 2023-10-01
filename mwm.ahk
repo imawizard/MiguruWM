@@ -38,6 +38,7 @@ threecolumn := ThreeColumnLayout()
 twopane := TwoPaneLayout()
 spiral := SpiralLayout()
 
+mwm := { __Call: (name, params*) => } ; Ignore requests while mwm isn't ready yet
 mwm := MiguruWM({
     layout: tall,
     masterSize: 0.5,
