@@ -160,9 +160,10 @@ class SpiralLayout extends TallLayout {
 
         container := [splitDirection, x, y, totalWidth, totalHeight]
 
-        try {
-            loop count - 1 {
-                window := get_first_window_in_container(container)
+        loop count - 1 {
+            window := get_first_window_in_container(container)
+
+            try {
                 ws._moveWindow(
                     tile.data,
                     window[2],
@@ -170,10 +171,18 @@ class SpiralLayout extends TallLayout {
                     window[4],
                     window[5],
                 )
-                container := get_sub_container(window)
-                tile := tile.next
+            } catch TargetError as err {
+                throw WindowError(tile.data, err)
+            } catch OSError as err {
+                if !DllCall("IsHungAppWindow", "Ptr", tile.data, "Int") {
+                    throw WindowError(tile.data, err)
+                }
             }
+            container := get_sub_container(window)
+            tile := tile.next
+        }
 
+        try {
             ws._moveWindow(
                 tile.data,
                 container[2],
@@ -182,9 +191,11 @@ class SpiralLayout extends TallLayout {
                 container[5],
             )
         } catch TargetError as err {
-            throw WorkspaceList.Workspace.WindowError(tile.data, err)
+            throw WindowError(tile.data, err)
         } catch OSError as err {
-            throw WorkspaceList.Workspace.WindowError(tile.data, err)
+            if !DllCall("IsHungAppWindow", "Ptr", tile.data, "Int") {
+                throw WindowError(tile.data, err)
+            }
         }
         return tile
     }

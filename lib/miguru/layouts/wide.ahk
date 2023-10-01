@@ -91,8 +91,8 @@ class WideLayout {
         width := Round((totalWidth - spacing * Max(count - 2, 0)) / count)
         x := startX
 
-        try {
-            loop count {
+        loop count {
+            try {
                 ws._moveWindow(
                     tile.data,
                     x,
@@ -100,13 +100,15 @@ class WideLayout {
                     width - spacing,
                     totalHeight,
                 )
-                x += width + spacing
-                tile := tile.next
+            } catch TargetError as err {
+                throw WindowError(tile.data, err)
+            } catch OSError as err {
+                if !DllCall("IsHungAppWindow", "Ptr", tile.data, "Int") {
+                    throw WindowError(tile.data, err)
+                }
             }
-        } catch TargetError as err {
-            throw WindowError(tile.data, err)
-        } catch OSError as err {
-            throw WindowError(tile.data, err)
+            x += width + spacing
+            tile := tile.next
         }
         return tile
     }

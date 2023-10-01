@@ -78,7 +78,9 @@ class FullscreenLayout {
         } catch TargetError as err {
             throw WindowError(hwnd, err)
         } catch OSError as err {
-            throw WindowError(hwnd, err)
+            if !DllCall("IsHungAppWindow", "Ptr", hwnd, "Int") {
+                throw WindowError(hwnd, err)
+            }
         }
     }
 }

@@ -287,8 +287,12 @@ class MiguruWM extends WMEvents {
                     )
                 }
             } catch as err {
-                warn("Dropping window: {} {}", err.Message, WinInfo(hwnd))
-                this._drop(hwnd)
+                if !DllCall("IsHungAppWindow", "Ptr", hwnd, "Int") {
+                    warn("Dropping window: {} {}", err.Message, WinInfo(hwnd))
+                    this._drop(hwnd)
+                } else {
+                    warn("Window is hung: {}", WinInfo(hwnd))
+                }
                 return
             }
 
