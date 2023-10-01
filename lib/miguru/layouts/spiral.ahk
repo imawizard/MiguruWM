@@ -74,9 +74,9 @@ class SpiralLayout extends TallLayout {
 
     _retileSpiralPane(ws, tile, count, x, y, totalWidth, totalHeight, splitDirection) {
         spacing := ws._opts.spacing > 0 && count > 1
-            ? ws._opts.spacing // 2
+            ? ws._opts.spacing
             : 0
-        height := Round((totalHeight - spacing * Max(count - 2, 0)) / count)
+        height := Round((totalHeight - spacing // 2 * Max(count - 2, 0)) / count)
 
         ratio := this._opts.ratio
 
@@ -87,7 +87,7 @@ class SpiralLayout extends TallLayout {
             case "right":
                 return [
                     "down",
-                    x + w + spacing * 2,
+                    x + w + spacing,
                     y,
                     Round(w / ratio),
                     h,
@@ -96,14 +96,14 @@ class SpiralLayout extends TallLayout {
                 return [
                     "left",
                     x,
-                    y + h + spacing * 2,
+                    y + h + spacing,
                     w,
                     Round(h / ratio),
                 ]
             case "left":
                 return [
                     "up",
-                    x - spacing * 2 - Round(w / ratio),
+                    x - spacing - Round(w / ratio),
                     y,
                     Round(w / ratio),
                     h,
@@ -112,7 +112,7 @@ class SpiralLayout extends TallLayout {
                 return [
                     "right",
                     x,
-                    y - spacing * 2 - Round(h / ratio),
+                    y - spacing - Round(h / ratio),
                     w,
                     Round(h / ratio),
                 ]
@@ -128,7 +128,7 @@ class SpiralLayout extends TallLayout {
                     "right",
                     x,
                     y,
-                    Round((w - spacing * 2) * ratio / (ratio + 1)),
+                    Round((w - spacing) * ratio / (ratio + 1)),
                     h,
                 ]
             case "down":
@@ -137,23 +137,23 @@ class SpiralLayout extends TallLayout {
                     x,
                     y,
                     w,
-                    Round((h - spacing * 2) * ratio / (ratio + 1)),
+                    Round((h - spacing) * ratio / (ratio + 1)),
                 ]
             case "left":
                 return [
                     "left",
-                    x + Round((w - spacing * 2)/(ratio+1)) + spacing*2,
+                    x + Round((w - spacing) / (ratio + 1)) + spacing,
                     y,
-                    Round((w - spacing * 2) * ratio / (ratio + 1)),
+                    Round((w - spacing) * ratio / (ratio + 1)),
                     h,
                 ]
             case "up":
                 return [
                     "up",
                     x,
-                    y + Round((h - spacing * 2) / (ratio + 1)) + spacing * 2,
+                    y + Round((h - spacing) / (ratio + 1)) + spacing,
                     w,
-                    Round((h - spacing * 2) * ratio / (ratio + 1)),
+                    Round((h - spacing) * ratio / (ratio + 1)),
                 ]
             }
         }

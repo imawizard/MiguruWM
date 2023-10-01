@@ -434,13 +434,13 @@ class WorkspaceList {
         }
 
         Spacing {
-            get => this._opts.spacing // 2
+            get => this._opts.spacing
             set {
                 if !IsInteger(value) {
                     throw "Must be an integer"
                 }
                 if value >= 0 {
-                    this._opts.spacing := Integer(value) * 2
+                    this._opts.spacing := Integer(value)
                     this.Retile()
                 }
             }
