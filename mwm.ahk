@@ -35,6 +35,7 @@ floating := FloatingLayout()
 columns := WideLayout({ displayName: "Columns", masterCountMax: 0 })
 rows := TallLayout({ displayName: "Rows", masterCountMax: 0 })
 threecolumn := ThreeColumnLayout()
+twopane := TwoPaneLayout()
 spiral := SpiralLayout()
 
 mwm := MiguruWM({
@@ -110,7 +111,7 @@ mod1 := "Alt"
 *q::Reload()
 
 *Enter::mwm.Do("swap-window", { with: "master" })
-*Space::mwm.Do("cycle-layout", { value: [tall, fullscreen, wide, floating, columns, rows, threecolumn, spiral] })
+*Space::mwm.Do("cycle-layout", { value: [tall, fullscreen, wide, floating, columns, rows, threecolumn, twopane, spiral] })
 
 *vk01::MoveActiveWindow()
 *vk02::ResizeActiveWindow()
