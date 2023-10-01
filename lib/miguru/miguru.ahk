@@ -626,6 +626,9 @@ class MiguruWM extends WMEvents {
             ws := getWorkspace()
             hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
             ws.Float(hwnd, req.value)
+            if !this._opts.focusIndicator.UpdateOnRetile {
+                this._opts.focusIndicator.Show(WinExist("A"))
+            }
 
         case "cycle-layout":
             ws := getWorkspace()
