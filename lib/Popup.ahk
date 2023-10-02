@@ -24,9 +24,11 @@ class Popup {
         fontWeight        := o.Get("fontWeight",        700)
         fontColor         := o.Get("fontColor",         "0xffffff")
         backgroundColor   := o.Get("backgroundColor",   "0x1f1f1f")
+        transparency      := o.Get("transparency",      255)
         duration          := o.Get("duration",          1000)
-        horzPadding       := o.Get("horzPadding",       100)
-        vertPadding       := o.Get("vertPadding",       60)
+        horzPadding       := o.Get("horzPadding",       80)
+        vertPadding       := o.Get("vertPadding",       40)
+        showIcon          := o.Get("showIcon",          false)
         activeMonitor     := o.Get("activeMonitor",     MonitorGetPrimary())
         showOnAllMonitors := o.Get("showOnAllMonitors", false)
         closeOtherPopups  := o.Get("closeOtherPopups",  true)
@@ -46,6 +48,12 @@ class Popup {
             }
         }
 
+        if transparency == 255 {
+            this.anim := AW_BLEND
+        } else {
+            this.anim := AW_CENTER
+        }
+
         this.guis := []
         for monitor in monitors {
             g := Gui("+ToolWindow +AlwaysOnTop -Caption")
@@ -59,31 +67,54 @@ class Popup {
             ;; Create window hidden to get text width and height.
             g.Show("Hide")
 
+            if showIcon {
+                icon := g.Add("Picture", "Icon1", A_IconFile)
+                icon.GetPos(, , &iconWidth, &iconHeight)
+            } else {
+                iconWidth := 0
+                iconHeight := 0
+            }
+
             ;; Resize window to message plus padding.
+            msgX := Max(horzPadding // 2 + iconWidth / 1.5, horzPadding // 4 + iconWidth)
             msg.GetPos(, , &msgWidth, &msgHeight)
-            guiWidth := msgWidth + horzPadding
-            guiHeight := msgHeight + vertPadding
+            guiWidth := msgWidth + horzPadding + iconWidth // 2
+            if msgX + msgWidth > guiWidth {
+                guiWidth := msgX + msgWidth + horzPadding // 2
+            }
+            guiHeight := Max(msgHeight, iconHeight) + vertPadding
             g.Move(, , guiWidth, guiHeight)
 
             ;; Center message within window.
             msg.Move(
-                (guiWidth - msgWidth) / 2 - 1,
-                (guiHeight - msgHeight) / 2 - 1,
+                msgX,
+                (guiHeight - msgHeight) // 2,
             )
+
+            if showIcon {
+                icon.Move(
+                    horzPadding / 4.5,
+                    (guiHeight - iconHeight) // 2,
+                )
+            }
 
             ;; Center window with WinGetPos and Show, because GetPos and Move
             ;; are DPI-scaled.
             MonitorGetWorkArea(monitor, &left, &top, &right, &bottom)
             WinGetPos(, , &guiWidth, &guiHeight, "ahk_id" g.Hwnd)
-            centerX := (right + left - guiWidth) / 2
-            centerY := (bottom + top - guiHeight) / 2
+            centerX := (right + left - guiWidth) // 2
+            centerY := (bottom + top - guiHeight) // 2
             g.Show(Format("Hide X{} Y{}", centerX, centerY))
+
+            if transparency < 255 {
+                WinSetTransparent(transparency, "ahk_id" g.Hwnd)
+            }
 
             DllCall(
                 "AnimateWindow",
                 "Ptr", g.Hwnd,
                 "Int", 50,
-                "UInt", AW_BLEND,
+                "UInt", this.anim,
                 "Int",
             )
         }
@@ -117,7 +148,7 @@ class Popup {
                 "AnimateWindow",
                 "Ptr", g.Hwnd,
                 "Int", 100,
-                "UInt", AW_BLEND | AW_HIDE,
+                "UInt", this.anim | AW_HIDE,
                 "Int",
             )
             g.Destroy()
