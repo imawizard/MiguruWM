@@ -39,6 +39,10 @@ class Popup {
             }
         }
 
+        if !message {
+            return
+        }
+
         monitors := [activeMonitor]
         if showOnAllMonitors {
             loop MonitorGetCount() {

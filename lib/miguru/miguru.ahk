@@ -342,9 +342,6 @@ class MiguruWM extends WMEvents {
 
             this.lastWsIdx := this.activeWsIdx
             this.activeWsIdx := args.now
-            this._opts.showPopup.Call(this.VD.DesktopName(args.now), {
-                activeMonitor: this.activeMonitor.Index,
-            })
 
             oldWs := this._workspaces[this.activeMonitor, args.was]
             newWs := this._workspaces[this.activeMonitor, args.now]
@@ -355,6 +352,10 @@ class MiguruWM extends WMEvents {
             } else {
                 this._opts.focusIndicator.Show(newWs.ActiveWindow)
             }
+
+            this._opts.showPopup.Call(this.VD.DesktopName(args.now), {
+                activeMonitor: this.activeMonitor.Index,
+            })
 
             ;; Add pinned windows to the newly active workspace or retile.
             if this._pinned.Count > 0 {
@@ -1056,6 +1057,7 @@ class MiguruWM extends WMEvents {
 
         ws.ActiveWindow := hwnd
         this._maybeActiveWindow := ""
+        this._opts.showPopup.Call("", {})
         this._opts.focusIndicator.Show(hwnd)
 
         ;; If it's an explorer window, focus the content panel.
