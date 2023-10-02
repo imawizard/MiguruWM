@@ -118,7 +118,7 @@ class MonitorList {
 
         monitors := qsort(
             MonitorList.QueryAll(),
-            (a, b) => a.area.left - b.area.left,
+            (a, b) => a.Area.Left - b.Area.Left,
         )
 
         handles := Map()

@@ -63,8 +63,8 @@ class ThreeColumnLayout extends TallLayout {
                     ws,
                     tile,
                     masterCount,
-                    workArea.left + opts.padding.left,
-                    workArea.top + opts.padding.top,
+                    workArea.Left + opts.padding.left,
+                    workArea.Top + opts.padding.top,
                     masterWidth - spacing,
                     usableHeight,
                 )
@@ -74,9 +74,9 @@ class ThreeColumnLayout extends TallLayout {
                     ws,
                     next,
                     slaveCount,
-                    workArea.left + opts.padding.left
+                    workArea.Left + opts.padding.left
                         + masterWidth + spacing,
-                    workArea.top + opts.padding.top,
+                    workArea.Top + opts.padding.top,
                     slaveWidth - spacing,
                     usableHeight,
                 )
@@ -106,39 +106,39 @@ class ThreeColumnLayout extends TallLayout {
                         ws,
                         tile,
                         masterCount,
-                        workArea.left + opts.padding.left,
-                        workArea.top + opts.padding.top,
+                        workArea.Left + opts.padding.left,
+                        workArea.Top + opts.padding.top,
                         masterWidth - spacing,
                         usableHeight,
                     )
-                    x1 := workArea.left + opts.padding.left + masterWidth + spacing
+                    x1 := workArea.Left + opts.padding.left + masterWidth + spacing
                     x2 := x1 + slaveWidth + spacing
                 case "mid":
                     next := this._retilePane(
                         ws,
                         tile,
                         masterCount,
-                        workArea.left + opts.padding.left
+                        workArea.Left + opts.padding.left
                             + slaveWidth + spacing,
-                        workArea.top + opts.padding.top,
+                        workArea.Top + opts.padding.top,
                         masterWidth - spacing * 2,
                         usableHeight,
                     )
-                    x1 := workArea.left + opts.padding.left
+                    x1 := workArea.Left + opts.padding.left
                     x2 := x1 + slaveWidth + masterWidth + spacing
                 case "right":
                     next := this._retilePane(
                         ws,
                         tile,
                         masterCount,
-                        workArea.left + opts.padding.left
+                        workArea.Left + opts.padding.left
                             + slaveWidth * 2 + spacing * 2,
-                        workArea.top + opts.padding.top,
+                        workArea.Top + opts.padding.top,
                         masterWidth - spacing,
                         usableHeight,
                     )
-                    x1 := workArea.left + opts.padding.left
-                    x2 := workArea.left + opts.padding.left + slaveWidth + spacing
+                    x1 := workArea.Left + opts.padding.left
+                    x2 := workArea.Left + opts.padding.left + slaveWidth + spacing
                 }
 
                 if positioning[2] == "right" || positioning[3] == "left" {
@@ -152,7 +152,7 @@ class ThreeColumnLayout extends TallLayout {
                     secondary.First,
                     secondary.Count,
                     x1,
-                    workArea.top + opts.padding.top,
+                    workArea.Top + opts.padding.top,
                     slaveWidth - spacing,
                     usableHeight,
                 )
@@ -163,7 +163,7 @@ class ThreeColumnLayout extends TallLayout {
                         tertiary.First,
                         tertiary.Count,
                         x2,
-                        workArea.top + opts.padding.top,
+                        workArea.Top + opts.padding.top,
                         slaveWidth - spacing,
                         usableHeight,
                     )
@@ -174,8 +174,8 @@ class ThreeColumnLayout extends TallLayout {
                 ws,
                 ws._tiled.First,
                 masterCount || ws._tiled.Count,
-                workArea.left + opts.padding.left,
-                workArea.top + opts.padding.top,
+                workArea.Left + opts.padding.left,
+                workArea.Top + opts.padding.top,
                 usableWidth,
                 usableHeight,
             )

@@ -77,8 +77,8 @@ class TallLayout {
                 ws,
                 ws._tiled.First,
                 masterCount || ws._tiled.Count,
-                workArea.left + opts.padding.left,
-                workArea.top + opts.padding.top,
+                workArea.Left + opts.padding.left,
+                workArea.Top + opts.padding.top,
                 usableWidth,
                 usableHeight,
             )

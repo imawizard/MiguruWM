@@ -665,8 +665,8 @@ class MiguruWM extends WMEvents {
 
                 ws._moveWindow(
                     hwnd,
-                    workArea.left + opts.padding.left,
-                    workArea.top + opts.padding.top,
+                    workArea.Left + opts.padding.left,
+                    workArea.Top + opts.padding.top,
                     workArea.Width - opts.padding.left - opts.padding.right,
                     workArea.Height - opts.padding.top - opts.padding.bottom,
                 )
