@@ -2,15 +2,7 @@
 #include monitors.ahk
 #include utils.ahk
 #include workspaces.ahk
-#include layouts\floating.ahk
-#include layouts\fullscreen.ahk
-#include layouts\spiral.ahk
-#include layouts\tall.ahk
-#include layouts\threecolumn.ahk
-#include layouts\twopane.ahk
-#include layouts\wide.ahk
-#include FocusIndicator.ahk
-#include HazeOver.ahk
+#include layouts.ahk
 
 WS_THICKFRAME       := 0x00040000
 WS_SYSMENU          := 0x00080000
