@@ -556,6 +556,45 @@ Stringify(self, visited := Map()) {
     }
 }
 
+InSet(v1, set*) {
+    for v2 in set {
+        if v1 == v2 {
+            return true
+        }
+    }
+    return false
+}
+
+ExpectInSet(m, k, set*) {
+    v := m.%k%
+    if v is Array {
+        for i, v in v {
+            if !InSet(v, set*) {
+                throw "Invalid value for '" k "[" i "]': " v
+            }
+        }
+    } else {
+        if !InSet(v, set*) {
+            throw "Invalid value for '" k "': " v
+        }
+    }
+}
+
+ExpectInRange(m, k, min, max) {
+    v := m.%k%
+    if v is Array {
+        for i, v in v {
+            if v < min || v > max {
+                throw "Value for '" k "[" i "]' must be between " min " and " max
+            }
+        }
+    } else {
+        if v < min || v > max {
+            throw "Value for '" k "' must be between " min " and " max
+        }
+    }
+}
+
 time(since := 0) {
     ticks := 0
     DllCall(

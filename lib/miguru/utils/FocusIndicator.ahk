@@ -6,6 +6,12 @@ class FocusIndicator {
             inlay: "alwaysOnTop",
         }, opts)
 
+        ExpectInSet(opts, "inlay",
+            true,
+            false,
+            "alwaysOnTop",
+        )
+
         this._gui := Gui(
             " +ToolWindow"
             " +E" WS_EX_NOACTIVATE

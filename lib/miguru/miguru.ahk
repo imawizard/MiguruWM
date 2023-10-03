@@ -99,6 +99,14 @@ class MiguruWM extends WMEvents {
             },
         }, opts)
 
+        ExpectInSet(this._opts, "tilingInsertion",
+            "before-mru",
+            "after-mru",
+            "first",
+            "last",
+        )
+        ExpectInRange(this._opts, "masterSize", 0.0, 1.0)
+
         this._monitors := MonitorList()
         this._workspaces := WorkspaceList(this._monitors, ObjClone(this._opts))
         this._managed := Map()

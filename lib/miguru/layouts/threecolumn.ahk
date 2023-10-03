@@ -7,6 +7,15 @@ class ThreeColumnLayout extends TallLayout {
             masterCountMax: -1,
             showEmptyTertiary: true,
         }, opts)
+
+        ExpectInSet(this._opts, "positioning", "mid", "left", "right")
+        m := Map()
+        for pos in this._opts.positioning {
+            m[pos] := ""
+        }
+        if m.Count !== 3 {
+            throw "'positioning' must contain distinct values"
+        }
     }
 
     DisplayName {
