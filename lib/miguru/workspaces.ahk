@@ -27,6 +27,9 @@ INSERT_LAST       := 1
 INSERT_BEFORE_MRU := 2
 INSERT_AFTER_MRU  := 3
 
+INDICATE_FOCUS       := 1
+INDICATE_FOCUS_DELAY := 200
+
 SWP_FLAGS := 0
     | SWP_ASYNCWINDOWPOS
     | SWP_FRAMECHANGED
@@ -471,8 +474,8 @@ class WorkspaceList {
             if this._opts.focusIndicator.UpdateOnRetile {
                 this._delayed.Replace(
                     () => this._opts.focusIndicator.Show(WinExist("A")),
-                    200,
-                    "indicate-focus",
+                    INDICATE_FOCUS_DELAY,
+                    INDICATE_FOCUS,
                 )
             }
         }

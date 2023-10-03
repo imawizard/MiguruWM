@@ -49,6 +49,13 @@ DetectHiddenWindows(true)
 ;; Built-in constant isn't updated when dpi changes.
 A_SystemDPI := A_ScreenDPI
 
+RETRY_MANAGE          := 1
+RETILE_2ND_TIME       := 2
+WINDOW_HIDDEN         := 3
+SEND_MONITOR_RETILE   := 4
+PINNED_WINDOW_FOCUSED := 5
+ON_DISPLAY_CHANGE     := 6
+
 class MiguruWM extends WMEvents {
     __New(opts := {}) {
         this._opts := ObjMerge({
@@ -84,11 +91,11 @@ class MiguruWM extends WMEvents {
 
             delays: {
                 retryManage: 100,
-                windowHidden: 400,
-                onDisplayChange: 1000,
-                sendMonitorRetile: 100,
                 retile2ndTime: 200,
+                windowHidden: 400,
+                sendMonitorRetile: 100,
                 pinnedWindowFocused: 100,
+                onDisplayChange: 1000,
             },
         }, opts)
 
@@ -277,7 +284,7 @@ class MiguruWM extends WMEvents {
                     this._delayed.Add(
                         ws.Retile.Bind(ws),
                         this._opts.delays.retile2ndTime,
-                        "retile-2nd-time",
+                        RETILE_2ND_TIME,
                     )
                 }
             } catch as err {
@@ -291,7 +298,7 @@ class MiguruWM extends WMEvents {
             }
 
             if event == EV_WINDOW_FOCUSED || hwnd == this._maybeActiveWindow {
-                this._delayed.Drop("pinned-window-focused")
+                this._delayed.Drop(PINNED_WINDOW_FOCUSED)
                 if !this._pinned.Has(hwnd) {
                     this._focus(hwnd, monitor, ws)
                 } else {
@@ -300,7 +307,7 @@ class MiguruWM extends WMEvents {
                     this._delayed.Replace(
                         this._focus.Bind(this, hwnd, monitor),
                         this._opts.delays.pinnedWindowFocused,
-                        "pinned-window-focused",
+                        PINNED_WINDOW_FOCUSED,
                     )
                 }
 
@@ -335,7 +342,7 @@ class MiguruWM extends WMEvents {
         case EV_DESKTOP_CHANGED:
 
             ;; Discard pending window removals.
-            this._delayed.Drop("window-hidden")
+            this._delayed.Drop(WINDOW_HIDDEN)
 
             debug(() => ["Active Desktop: {} -> {}",
                 this.VD.DesktopName(args.was), this.VD.DesktopName(args.now)])
@@ -564,13 +571,13 @@ class MiguruWM extends WMEvents {
             this._delayed.Add(
                 newWs.Retile.Bind(newWs),
                 this._opts.delays.sendMonitorRetile,
-                "send-monitor-retile",
+                SEND_MONITOR_RETILE,
             )
             if follow {
                 this._delayed.Add(
                     ((this, ws) => this._focusWindow(ws.ActiveWindow)).Bind(this, newWs),
                     this._opts.delays.sendMonitorRetile + 50,
-                    "send-monitor-retile",
+                    SEND_MONITOR_RETILE,
                 )
             }
 
@@ -679,7 +686,7 @@ class MiguruWM extends WMEvents {
             this._delayed.Add(
                 ws.Retile.Bind(ws),
                 this._opts.delays.retile2ndTime,
-                "retile-2nd-time",
+                RETILE_2ND_TIME,
             )
 
         case "get-master-count":
@@ -810,7 +817,7 @@ class MiguruWM extends WMEvents {
             this._delayed.Replace(
                 this._onDisplayChange.Bind(this, false),
                 this._opts.delays.onDisplayChange,
-                "on-display-change",
+                ON_DISPLAY_CHANGE,
             )
             return
         }
@@ -934,7 +941,7 @@ class MiguruWM extends WMEvents {
             this._delayed.Add(
                 this._retryManage.Bind(this, event, hwnd, retrycnt, false),
                 this._opts.delays.retryManage,
-                "retry-manage",
+                RETRY_MANAGE,
             )
             return
         }
@@ -1033,7 +1040,7 @@ class MiguruWM extends WMEvents {
             this._delayed.Replace(
                 this._hide.Bind(this, event, hwnd, false),
                 this._opts.delays.windowHidden,
-                "window-hidden",
+                WINDOW_HIDDEN,
             )
             return
         }

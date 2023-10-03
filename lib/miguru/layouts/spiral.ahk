@@ -1,3 +1,8 @@
+SPIRAL_UP    := 1
+SPIRAL_DOWN  := 2
+SPIRAL_LEFT  := 3
+SPIRAL_RIGHT := 4
+
 class SpiralLayout extends TallLayout {
     __New(opts := {}) {
         this._opts := ObjMerge({
@@ -57,7 +62,7 @@ class SpiralLayout extends TallLayout {
                 workArea.Top + opts.padding.top,
                 slaveWidth - opts.spacing // 2,
                 usableHeight,
-                "down",
+                SPIRAL_DOWN,
             )
         } else {
             this._retilePane(
@@ -84,33 +89,33 @@ class SpiralLayout extends TallLayout {
             x := window[2], y := window[3]
             w := window[4], h := window[5]
             switch window[1] {
-            case "right":
+            case SPIRAL_RIGHT:
                 return [
-                    "down",
+                    SPIRAL_DOWN,
                     x + w + spacing,
                     y,
                     Round(w / ratio),
                     h,
                 ]
-            case "down":
+            case SPIRAL_DOWN:
                 return [
-                    "left",
+                    SPIRAL_LEFT,
                     x,
                     y + h + spacing,
                     w,
                     Round(h / ratio),
                 ]
-            case "left":
+            case SPIRAL_LEFT:
                 return [
-                    "up",
+                    SPIRAL_UP,
                     x - spacing - Round(w / ratio),
                     y,
                     Round(w / ratio),
                     h,
                 ]
-            case "up":
+            case SPIRAL_UP:
                 return [
-                    "right",
+                    SPIRAL_RIGHT,
                     x,
                     y - spacing - Round(h / ratio),
                     w,
@@ -123,33 +128,33 @@ class SpiralLayout extends TallLayout {
             x := container[2], y := container[3]
             w := container[4], h := container[5]
             switch container[1] {
-            case "right":
+            case SPIRAL_RIGHT:
                 return [
-                    "right",
+                    SPIRAL_RIGHT,
                     x,
                     y,
                     Round((w - spacing) * ratio / (ratio + 1)),
                     h,
                 ]
-            case "down":
+            case SPIRAL_DOWN:
                 return [
-                    "down",
+                    SPIRAL_DOWN,
                     x,
                     y,
                     w,
                     Round((h - spacing) * ratio / (ratio + 1)),
                 ]
-            case "left":
+            case SPIRAL_LEFT:
                 return [
-                    "left",
+                    SPIRAL_LEFT,
                     x + Round((w - spacing) / (ratio + 1)) + spacing,
                     y,
                     Round((w - spacing) * ratio / (ratio + 1)),
                     h,
                 ]
-            case "up":
+            case SPIRAL_UP:
                 return [
-                    "up",
+                    SPIRAL_UP,
                     x,
                     y + Round((h - spacing) / (ratio + 1)) + spacing,
                     w,
