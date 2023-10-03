@@ -116,6 +116,20 @@ class WorkspaceList {
             get => this._mruHwnd
         }
 
+        IsTiled(hwnd) {
+            window := this._windows.Get(hwnd, "")
+            return window
+                ? window.type == TILED
+                : ""
+        }
+
+        IsFloating(hwnd) {
+            window := this._windows.Get(hwnd, "")
+            return window
+                ? window.type == FLOATING
+                : ""
+        }
+
         AddIfNew(hwnd) {
             if this._windows.Has(hwnd) {
                 trace(() => ["Ignoring: already added {}", WinInfo(hwnd)])

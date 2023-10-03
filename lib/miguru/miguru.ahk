@@ -652,14 +652,18 @@ class MiguruWM extends WMEvents {
         case "center-window":
             ws := getWorkspace()
             hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
-            ws.Float(hwnd, true)
+            if !ws.IsFloating(hwnd) {
+                return
+            }
             CenterWindow(hwnd)
             this._opts.focusIndicator.Show(WinExist("A"))
 
         case "resize-window":
             ws := getWorkspace()
             hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
-            ws.Float(hwnd, true)
+            if !ws.IsFloating(hwnd) {
+                return
+            }
             value := req.HasProp("value") ? req.value : 0
             if this._opts.focusIndicator.HideWhenPositioning {
                 this._opts.focusIndicator.Hide()
