@@ -434,7 +434,7 @@ class WorkspaceList {
         }
 
         MasterSize {
-            get => Round(this._opts.masterSize, 2)
+            get => Round(this._opts.masterSize, 3)
             set {
                 if !IsNumber(value) {
                     throw "Must be a number"

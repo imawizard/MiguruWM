@@ -16,9 +16,15 @@ GroupAdd("MIGURU_AUTOFLOAT",                                    " ahk_exe explor
 GroupAdd("MIGURU_AUTOFLOAT",                                    " ahk_exe taskmgr.exe"                                                )
 GroupAdd("MIGURU_AUTOFLOAT", "Calculator"                       " ahk_exe ApplicationFrameHost.exe"                                   )
 GroupAdd("MIGURU_AUTOFLOAT",                                    " ahk_exe zeal.exe"                                                   )
+GroupAdd("MIGURU_AUTOFLOAT", "Window Spy for AHKv2"                                                                                   )
+GroupAdd("MIGURU_AUTOFLOAT", "WinMerge"                                                                                               )
 
 GroupAdd("MIGURU_DECOLESS",                                     " ahk_exe qutebrowser.exe"                                            )
 GroupAdd("MIGURU_DECOLESS",                                     " ahk_exe alacritty.exe"                                              )
+GroupAdd("MIGURU_DECOLESS",                                     " ahk_exe msrdc.exe"                " ahk_class RAIL_WINDOW"          )
+
+GroupAdd("MIGURU_IGNORE",                                       " ahk_exe msrdc.exe"                                                  )
+GroupAdd("MIGURU_IGNORE",    "WinUI Desktop"                    " ahk_exe PowerToys.Peek.UI.exe"    " ahk_class WinUIDesktopWin32WindowClass")
 
 if !IsSet(MiguruWM) {
     prog := RegExReplace(A_ScriptName, "i)\.ahk$", ".exe")
@@ -28,19 +34,21 @@ if !IsSet(MiguruWM) {
     ExitApp()
 }
 
-tall := TallLayout()
-wide := WideLayout()
-fullscreen := FullscreenLayout({ nativeMaximize: false })
-floating := FloatingLayout()
-columns := ColumnLayout()
-rows := RowLayout()
-threecolumn := ThreeColumnLayout()
-twopane := TwoPaneLayout()
-spiral := SpiralLayout()
+layouts := [
+    TallLayout(),
+    WideLayout(),
+    FullscreenLayout(),
+    FloatingLayout(),
+    ColumnLayout(),
+    RowLayout(),
+    ThreeColumnLayout(),
+    TwoPaneLayout(),
+    SpiralLayout(),
+]
 
 mwm := { __Call: (name, params*) => } ; Ignore requests while mwm isn't ready yet
 mwm := MiguruWM({
-    layout: tall,
+    layout: layouts[1],
     masterSize: 0.5,
     masterCount: 1,
     padding: {
@@ -53,7 +61,7 @@ mwm := MiguruWM({
 
     tilingMinWidth: 0,
     tilingMinHeight: 0,
-    tilingInsertion: "before-mru",
+    tilingInsertion: "last",
     floatingAlwaysOnTop: false,
 
     focusFollowsMouse: false,
@@ -62,7 +70,7 @@ mwm := MiguruWM({
     followWindowToWorkspace: false,
     followWindowToMonitor: false,
 
-    focusWorkspaceByWindow: false,
+    focusWorkspaceByWindow: true,
 
     delays: {
         retryManage: 100,
@@ -72,7 +80,9 @@ mwm := MiguruWM({
         retile2ndTime: 200,
     },
 
-    showPopup: (text, opts) => Popup(text, opts),
+    showPopup: (text, opts) => Popup(text, ObjMerge({
+        showIcon: true,
+    }, opts)),
 })
 
 MiguruWM.SetupTrayMenu()
@@ -99,20 +109,20 @@ mod1 := "Alt"
 
 *j::mwm.Do("focus-window", { target: "next"     })
 *k::mwm.Do("focus-window", { target: "previous" })
-*m::mwm.Do("focus-window", { target: "master"   })
+*m::mwm.Do("focus-window", { target: "master-or-mru" })
 
-*l::mwm.Set("master-size", { delta:  0.01 })
-*h::mwm.Set("master-size", { delta: -0.01 })
+*l::mwm.Set("master-size", { delta:  0.025 })
+*h::mwm.Set("master-size", { delta: -0.025 })
 
 *,::mwm.Set("master-count", { delta:  1 })
 *.::mwm.Set("master-count", { delta: -1 })
 
-*t::mwm.Do("float-window", { value: false })
+*t::mwm.Do("float-window", { value: "toggle" }), mwm.Do("center-window")
 *p::OpenSearch()
 *q::Reload()
 
-*Enter::mwm.Do("swap-window", { with: "master" })
-*Space::mwm.Do("cycle-layout", { value: [tall, fullscreen, wide, floating, columns, rows, threecolumn, twopane, spiral] })
+*Enter::mwm.Do("swap-window", { with: "master-or-mru" })
+*Space::mwm.Do("cycle-layout", { value: layouts })
 
 *vk01::MoveActiveWindow()
 *vk02::ResizeActiveWindow()
