@@ -26,7 +26,7 @@ class TwoPaneLayout extends TallLayout {
             - opts.padding.bottom
 
         if ws._tiled.Count > 1 {
-            tile := ws._tiled.First
+            master := ws._tiled.First
             masterWidth := Round(usableWidth * opts.masterSize)
             slaveWidth := usableWidth - masterWidth
 
@@ -38,7 +38,7 @@ class TwoPaneLayout extends TallLayout {
 
             next := this._retilePane(
                 ws,
-                tile,
+                master,
                 1,
                 lefts[1] + workArea.Left + opts.padding.left,
                 workArea.Top + opts.padding.top,
@@ -46,7 +46,14 @@ class TwoPaneLayout extends TallLayout {
                 usableHeight,
             )
 
-            while next !== ws._tiled.First {
+            if this._secondWindow == master {
+                window := ws._windows.Get(ws._mruHwnd, "")
+                if window && window.type == TILED {
+                    this._secondWindow := window.node
+                }
+            }
+
+            loop ws._tiled.Count - 1 {
                 if next !== this._secondWindow {
                     this._retilePane(
                         ws,
