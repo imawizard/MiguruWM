@@ -628,6 +628,13 @@ class MiguruWM extends WMEvents {
         case "swap-window":
             ws := getWorkspace()
             hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
+            if req.with == "master-or-mru" {
+                master := ws.GetWindow("master")
+                if hwnd == master {
+                    hwnd := ws.LastWindow
+                }
+                req.with := "master"
+            }
             ws.Swap(hwnd, req.with, this._opts.mouseFollowsFocus)
 
         case "float-window":

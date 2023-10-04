@@ -393,6 +393,10 @@ class WorkspaceList {
                 )
             }
 
+            if a.data == this._active {
+                this._mruHwnd := b.data
+            }
+
             this._tiled.Swap(a, b)
             this.Retile()
         }
