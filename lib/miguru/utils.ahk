@@ -556,6 +556,20 @@ Stringify(self, visited := Map()) {
     }
 }
 
+ExpectType(m, k, type_) {
+    v := m.%k%
+    if !(v is type_) {
+        throw "Invalid type for '" k "': " Type(v)
+    }
+}
+
+ExpectFunc(m, k) {
+    v := m.%k%
+    if !(v is Func) && !(v is Closure) {
+        throw "Invalid type for '" k "': " Type(v)
+    }
+}
+
 InSet(v1, set*) {
     for v2 in set {
         if v1 == v2 {
@@ -584,12 +598,16 @@ ExpectInRange(m, k, min, max) {
     v := m.%k%
     if v is Array {
         for i, v in v {
-            if v < min || v > max {
+            if !(v is Number) {
+                throw "Invalid type for '" k "[" i "]': " Type(v)
+            } else if v < min || v > max {
                 throw "Value for '" k "[" i "]' must be between " min " and " max
             }
         }
     } else {
-        if v < min || v > max {
+        if !(v is Number) {
+            throw "Invalid type for '" k "': " Type(v)
+        } else if v < min || v > max {
             throw "Value for '" k "' must be between " min " and " max
         }
     }

@@ -99,13 +99,7 @@ class MiguruWM extends WMEvents {
             },
         }, opts)
 
-        ExpectInSet(this._opts, "tilingInsertion",
-            "before-mru",
-            "after-mru",
-            "first",
-            "last",
-        )
-        ExpectInRange(this._opts, "masterSize", 0.0, 1.0)
+        this._validateOpts()
 
         this._monitors := MonitorList()
         this._workspaces := WorkspaceList(this._monitors, ObjClone(this._opts))
@@ -127,6 +121,32 @@ class MiguruWM extends WMEvents {
 
         super.__New()
         this._initWithCurrentDesktopAndWindows()
+    }
+
+    _validateOpts() {
+        o := this._opts
+        ExpectType(o, "layout", Object)
+        ExpectType(o, "masterSize", Number)
+        ExpectInRange(o, "masterSize", 0.0, 1.0)
+        ExpectType(o, "masterCount", Number)
+        ExpectType(o, "padding", Object)
+        ExpectType(o, "spacing", Number)
+        ExpectType(o, "tilingMinWidth", Number)
+        ExpectType(o, "tilingMinHeight", Number)
+        ExpectInSet(o, "tilingInsertion",
+            "before-mru",
+            "after-mru",
+            "first",
+            "last",
+        )
+        ExpectInSet(o, "floatingAlwaysOnTop", true, false)
+        ExpectInSet(o, "focusFollowsMouse", true, false)
+        ExpectInSet(o, "mouseFollowsFocus", true, false)
+        ExpectInSet(o, "followWindowToWorkspace", true, false)
+        ExpectInSet(o, "followWindowToMonitor", true, false)
+        ExpectFunc(o, "showPopup")
+        ExpectType(o, "focusIndicator", Object)
+        ExpectType(o, "delays", Object)
     }
 
     Do(what, opts := {}) {
