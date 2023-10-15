@@ -70,7 +70,35 @@ class WorkspaceList {
         MruTile     => this._mruTile
 
         ToString() {
-            return Stringify(this)
+            tiles := []
+            current := this._tiled.First
+
+            loop {
+                tiles.Push(WinInfo(current.data))
+                current := current.next
+            } until current == this._tiled.First
+
+            floating := []
+            for hwnd in this._floating {
+                floating.Push(WinInfo(hwnd))
+            }
+
+            return Type(this) "(" SubStr(Stringify({
+                Index: this._index,
+                Monitor: this._monitor.Index,
+                Windows: {
+                    Active: {
+                        Got: WinInfo(this._active),
+                        Actual: WinInfo(WinExist("A")),
+                    },
+                    Tiles: {
+                        All: tiles,
+                        Mru: WinInfo(this._mruTile.data),
+                    },
+                    Floating: floating,
+                    Mru: WinInfo(this._mruHwnd),
+                },
+            }), 2, -1) ")"
         }
 
         Hwnds {

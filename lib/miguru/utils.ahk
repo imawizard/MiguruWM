@@ -691,6 +691,11 @@ WinInfo(hwnd) {
     try {
         info := info " T=`"" WinGetTitle("ahk_id" hwnd) "`""
     }
+    try {
+        left := 0, top := 0, width := 0, height := 0
+        RunDpiAware(() => WinGetPos(&left, &top, &width, &height, "ahk_id" hwnd))
+        info := info " (" width "x" height " @ " left "/" top ")"
+    }
     return info
 }
 
