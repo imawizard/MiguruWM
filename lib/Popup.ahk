@@ -72,9 +72,19 @@ class Popup {
             g.Show("Hide")
 
             if showIcon {
-                icon := g.Add("Picture", "Icon1", A_IconFile)
-                icon.GetPos(, , &iconWidth, &iconHeight)
+                file := A_IconFile
+                if !file {
+                    path := RegExReplace(A_ScriptFullPath, "i)\.ahk$", ".exe")
+                    if FileExist(path) {
+                        file := path
+                    }
+                }
+                if file {
+                    icon := g.Add("Picture", "Icon1", file)
+                    icon.GetPos(, , &iconWidth, &iconHeight)
+                }
             } else {
+                icon := ""
                 iconWidth := 0
                 iconHeight := 0
             }
@@ -95,7 +105,7 @@ class Popup {
                 (guiHeight - msgHeight) // 2,
             )
 
-            if showIcon {
+            if icon {
                 icon.Move(
                     horzPadding / 4.5,
                     (guiHeight - iconHeight) // 2,
