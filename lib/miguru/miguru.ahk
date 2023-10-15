@@ -527,7 +527,10 @@ class MiguruWM extends WMEvents {
             if follow {
                 this.VD.FocusDesktop(ws.Index)
             } else {
-                window := this._managed.Get(hwnd, 0)
+                window := this._managed.Get(hwnd, "")
+                if !window {
+                    return
+                }
                 next := window.workspace.Remove(hwnd)
                 ws.AddIfNew(hwnd)
                 ws.ActiveWindow := hwnd
@@ -546,7 +549,7 @@ class MiguruWM extends WMEvents {
 
         case "send-to-monitor":
             hwnd := req.HasProp("hwnd") ? req.hwnd : WinExist("A")
-            window := this._managed.Get(hwnd, 0)
+            window := this._managed.Get(hwnd, "")
             if !window {
                 return
             }
