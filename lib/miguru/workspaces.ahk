@@ -329,10 +329,10 @@ class WorkspaceList {
             }
 
             ;; Start with the active, the mru or the first floating window.
-            hwnd := this._windows.Get(origin, "") && origin ||
-                this._active ||
-                this._mruTile && this._mruTile.data ||
-                this._floating.Get(1, "")
+            hwnd := this._windows.Get(origin, "") ? origin
+                : this._active
+                || this._mruTile && this._mruTile.data
+                || this._floating.Get(1, "")
 
             switch target {
             case "master":
@@ -374,8 +374,8 @@ class WorkspaceList {
                 throw "Incorrect swap parameter: " with
             }
 
-            if mouseFollowsFocus &&
-                (a.data == this._active || b.data == this._active) {
+            if mouseFollowsFocus
+                && (a.data == this._active || b.data == this._active) {
 
                 hwnd := b.data == this._active
                     ? a.data

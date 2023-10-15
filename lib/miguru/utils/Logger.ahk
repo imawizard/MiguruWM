@@ -61,8 +61,8 @@ class Logger {
                 con := DllCall("GetConsoleWindow", "Ptr")
 
                 ;; and there is no cmd window associated,
-                if DllCall("IsWindow", "Ptr", con, "Int") &&
-                    !DllCall("IsWindowVisible", "Ptr", con, "Int") {
+                if DllCall("IsWindow", "Ptr", con, "Int")
+                    && !DllCall("IsWindowVisible", "Ptr", con, "Int") {
 
                     ;; then undo AttachConsole.
                     DllCall("FreeConsole", "Int")

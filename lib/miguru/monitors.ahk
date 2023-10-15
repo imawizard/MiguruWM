@@ -49,8 +49,8 @@ class MonitorList {
                     WinGetPos(&x, &y, &width, &height, "ahk_id" v)
                 )
 
-                if x >= this._area.Left && x + width <= this._area.Right &&
-                    y >= this._area.Top && y + height <= this._area.Bottom {
+                if x >= this._area.Left && x + width <= this._area.Right
+                    && y >= this._area.Top && y + height <= this._area.Bottom {
                     return hwnd
                 }
             }

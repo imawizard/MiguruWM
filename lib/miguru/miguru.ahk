@@ -275,8 +275,8 @@ class MiguruWM extends WMEvents {
             }
 
             ;; Adjust when a window changed desktop or monitor.
-            if monitor !== window.monitor ||
-                wsIdx > 0 && wsIdx !== window.workspace.Index {
+            if monitor !== window.monitor
+                || wsIdx > 0 && wsIdx !== window.workspace.Index {
                 idx := wsIdx > 0 ? wsIdx : this.activeWsIdx
                 ws := this._workspaces[monitor, idx]
                 this._reassociate(hwnd, window, monitor, ws)
@@ -897,8 +897,8 @@ class MiguruWM extends WMEvents {
             ;; Throws if window needs elevated access.
             WinGetProcessName("ahk_id" hwnd)
 
-            if !DllCall("IsWindowVisible", "Ptr", hwnd, "Int") ||
-                IsWindowCloaked(hwnd) {
+            if !DllCall("IsWindowVisible", "Ptr", hwnd, "Int")
+                || IsWindowCloaked(hwnd) {
                 trace(() => ["Ignoring: hidden {}", WinInfo(hwnd)])
                 return ""
             } else if WinExist("ahk_id" hwnd " ahk_group MIGURU_DECOLESS") {
