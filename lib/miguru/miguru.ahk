@@ -665,7 +665,7 @@ class MiguruWM extends WMEvents {
             if !ws.IsFloating(hwnd) {
                 return
             }
-            CenterWindow(hwnd)
+            RunDpiAware(() => CenterWindow(hwnd))
             this._opts.focusIndicator.Show(WinExist("A"))
 
         case "resize-window":
@@ -685,15 +685,17 @@ class MiguruWM extends WMEvents {
                 opts := ws._opts
                 workArea := ws._monitor.WorkArea
 
-                ws._moveWindow(
-                    hwnd,
-                    workArea.Left + opts.padding.left,
-                    workArea.Top + opts.padding.top,
-                    workArea.Width - opts.padding.left - opts.padding.right,
-                    workArea.Height - opts.padding.top - opts.padding.bottom,
+                RunDpiAware(() =>
+                    ws._moveWindow(
+                        hwnd,
+                        workArea.Left + opts.padding.left,
+                        workArea.Top + opts.padding.top,
+                        workArea.Width - opts.padding.left - opts.padding.right,
+                        workArea.Height - opts.padding.top - opts.padding.bottom,
+                    )
                 )
             default:
-                ResizeWindow(hwnd, value)
+                RunDpiAware(() => ResizeWindow(hwnd, value))
             }
             this._opts.focusIndicator.Show(WinExist("A"))
 

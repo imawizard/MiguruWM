@@ -693,18 +693,22 @@ CenterWindow(hwnd) {
     rcWorkTop    := NumGet(info, 6 * 4, "Int")
     rcWorkRight  := NumGet(info, 7 * 4, "Int")
     rcWorkBottom := NumGet(info, 8 * 4, "Int")
-    x := (rcWorkRight - width) / 2
-    y := (rcWorkBottom - height) / 2
+    x := rcWorkLeft + (rcWorkRight - rcWorkLeft - width) / 2
+    y := rcWorkTop + (rcWorkBottom - rcWorkTop - height) / 2
     WinMove(x, y, , , "ahk_id" hwnd)
 }
 
 ResizeWindow(hwnd, delta := 0) {
     WinGetPos(&x, &y, &width, &height, "ahk_id" hwnd)
-    WinMove(
-        x - delta,
-        y - delta,
-        width + delta * 2,
-        height + delta * 2,
-        "ahk_id" hwnd,
+    DllCall(
+        "SetWindowPos",
+        "Ptr", hwnd,
+        "Ptr", HWND_TOP,
+        "Int", x - delta,
+        "Int", y - delta,
+        "Int", width + delta * 2,
+        "Int", height + delta * 2,
+        "UInt", SWP_NOACTIVATE,
+        "Int",
     )
 }
