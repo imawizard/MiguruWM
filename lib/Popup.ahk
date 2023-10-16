@@ -71,6 +71,9 @@ class Popup {
             ;; Create window hidden to get text width and height.
             g.Show("Hide")
 
+            icon := ""
+            iconWidth := 0
+            iconHeight := 0
             if showIcon {
                 file := A_IconFile
                 if !file {
@@ -83,14 +86,13 @@ class Popup {
                     icon := g.Add("Picture", "Icon1", file)
                     icon.GetPos(, , &iconWidth, &iconHeight)
                 }
-            } else {
-                icon := ""
-                iconWidth := 0
-                iconHeight := 0
             }
 
             ;; Resize window to message plus padding.
-            msgX := Max(horzPadding // 2 + iconWidth / 1.5, horzPadding // 4 + iconWidth)
+            msgX := Max(
+                horzPadding // 2 + iconWidth / 1.5,
+                horzPadding // 4 + iconWidth,
+            )
             msg.GetPos(, , &msgWidth, &msgHeight)
             guiWidth := msgWidth + horzPadding + iconWidth // 2
             if msgX + msgWidth > guiWidth {
