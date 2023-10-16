@@ -21,7 +21,7 @@ The goal is a basic but hopefully stable window manager that should behave somew
 - *No binary space partitioning, no moving in specific directions*, just the basics of xmonad:
     - Divide screen into master and secondary pane
     - Cycle through windows forwards/backwards
-    - Layouts: tall, wide, fullscreen (aka monocle) and floating (i.e. no tiling)
+    - Layouts: tall, wide, fullscreen (aka monocle) and floating (i.e. no tiling), and [a few others](https://github.com/imawizard/MiguruWM/wiki/Layouts)
 
 - Tested on Win10 Build 19042-19045, *Windows 11 is currently not supported*
     - Particularly the GUIDs for the virtual desktop COM interfaces are missing/untested

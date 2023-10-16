@@ -3,6 +3,8 @@ class TwoPaneLayout extends TallLayout {
         this._opts := ObjMerge({
             displayName: "Two-Panes",
             flipped: false,
+            focusMasterOrMRU: true,
+            dontCycleMaster: false,
         }, opts)
         this._secondWindow := ""
     }

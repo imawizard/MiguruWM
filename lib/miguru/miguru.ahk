@@ -65,9 +65,9 @@ class MiguruWM extends WMEvents {
             padding: { left: 0, top: 0, right: 0, bottom: 0 },
             spacing: 0,
 
-            tilingMinWidth: 0,
-            tilingMinHeight: 0,
-            tilingInsertion: "before-mru",
+            tilingMinWidth: 400,
+            tilingMinHeight: 400,
+            tilingInsertion: "last",
             floatingAlwaysOnTop: false,
 
             focusFollowsMouse: false,
@@ -76,7 +76,7 @@ class MiguruWM extends WMEvents {
             followWindowToWorkspace: false,
             followWindowToMonitor: false,
 
-            focusWorkspaceByWindow: false,
+            focusWorkspaceByWindow: true,
 
             showPopup: (*) =>,
             focusIndicator: {
@@ -92,7 +92,7 @@ class MiguruWM extends WMEvents {
             delays: {
                 retryManage: 100,
                 retile2ndTime: 200,
-                windowHidden: 400,
+                windowHidden: 200,
                 sendMonitorRetile: 100,
                 pinnedWindowFocused: 100,
                 onDisplayChange: 1000,
@@ -144,6 +144,7 @@ class MiguruWM extends WMEvents {
         ExpectInSet(o, "mouseFollowsFocus", true, false)
         ExpectInSet(o, "followWindowToWorkspace", true, false)
         ExpectInSet(o, "followWindowToMonitor", true, false)
+        ExpectInSet(o, "focusWorkspaceByWindow", true, false)
         ExpectFunc(o, "showPopup")
         ExpectType(o, "focusIndicator", Object)
         ExpectType(o, "delays", Object)
@@ -617,6 +618,12 @@ class MiguruWM extends WMEvents {
             active := ""
             try active := WinExist("A")
 
+            if ws.Layout is TwoPaneLayout {
+                if ws.Layout._opts.focusMasterOrMRU && req.target == "master" {
+                    req.target := "master-or-mru"
+                }
+            }
+
             switch req.target {
             case "next-of-same-app":
                 if active {
@@ -641,6 +648,17 @@ class MiguruWM extends WMEvents {
             if !hwnd {
                 warn("Nothing to focus")
                 return
+            }
+
+            if ws.Layout is TwoPaneLayout {
+                if ws.Layout._opts.dontCycleMaster && hwnd == ws.GetWindow("master") {
+                    switch req.target {
+                    case "next":
+                        hwnd := ws.GetWindow("next", hwnd)
+                    case "previous":
+                        hwnd := ws.GetWindow("previous", hwnd)
+                    }
+                }
             }
 
             if this._opts.focusIndicator.ShowOnFocusRequest {

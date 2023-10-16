@@ -49,45 +49,19 @@ layouts := [
 mwm := { __Call: (name, params*) => } ; Ignore requests while mwm isn't ready yet
 mwm := MiguruWM({
     layout: layouts[1],
-    masterSize: 0.5,
-    masterCount: 1,
-    padding: {
-        left: 0,
-        top: 0,
-        right: 0,
-        bottom: 0,
-    },
-    spacing: 0,
-
-    tilingMinWidth: 0,
-    tilingMinHeight: 0,
-    tilingInsertion: "last",
-    floatingAlwaysOnTop: false,
-
-    focusFollowsMouse: false,
-    mouseFollowsFocus: false,
-
-    followWindowToWorkspace: false,
-    followWindowToMonitor: false,
-
-    focusWorkspaceByWindow: true,
-
-    delays: {
-        retryManage: 100,
-        windowHidden: 400,
-        onDisplayChange: 1000,
-        sendMonitorRetile: 100,
-        retile2ndTime: 200,
-    },
-
     showPopup: (text, opts) => Popup(text, ObjMerge({
+        duration: 500,
         showIcon: true,
     }, opts)),
+    focusIndicator: HazeOver(),
+    ;; …see https://github.com/imawizard/MiguruWM/wiki/Configuration
 })
 
 MiguruWM.SetupTrayMenu()
 
+; Use Alt as modifier but disable it if pressed alone
 mod1 := "Alt"
+Alt::return
 
 ; Keybindings .............................................................{{{1
 
@@ -109,7 +83,7 @@ mod1 := "Alt"
 
 *j::mwm.Do("focus-window", { target: "next"     })
 *k::mwm.Do("focus-window", { target: "previous" })
-*m::mwm.Do("focus-window", { target: "master-or-mru" })
+*m::mwm.Do("focus-window", { target: "master" })
 
 *l::mwm.Set("master-size", { delta:  0.025 })
 *h::mwm.Set("master-size", { delta: -0.025 })
@@ -121,7 +95,7 @@ mod1 := "Alt"
 *p::OpenSearch()
 *q::Reload()
 
-*Enter::mwm.Do("swap-window", { with: "master-or-mru" })
+*Enter::mwm.Do("swap-window", { with: "master" })
 *Space::mwm.Do("cycle-layout", { value: layouts })
 
 *vk01::MoveActiveWindow()

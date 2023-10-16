@@ -154,20 +154,12 @@ class WorkspaceList {
             } else {
                 width := 0, height := 0
 
-                RunDpiAware(() =>
-                    WinGetPos(, , &width, &height, "ahk_id" hwnd)
-                )
-
-                if width < this._opts.tilingMinWidth {
-                    info(() => ["Floating: width {}<{} {}",
-                        width, this._opts.tilingMinWidth,
-                        WinInfo(hwnd)])
-
-                    shouldTile := false
-                } else if height < this._opts.tilingMinHeight {
-                    info(() => ["Floating: height {}<{} {}",
-                        height, this._opts.tilingMinHeight,
-                        WinInfo(hwnd)])
+                ;; Float if client area is too small.
+                WinGetClientPos(, , &width, &height, "ahk_id" hwnd)
+                if width < this._opts.tilingMinWidth
+                    && height < this._opts.tilingMinHeight {
+                    info(() => ["Floating: Below threshold ({}x{}) {}",
+                        width, height, WinInfo(hwnd)])
 
                     shouldTile := false
                 } else {
