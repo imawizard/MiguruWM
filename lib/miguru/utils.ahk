@@ -624,10 +624,8 @@ measure(cb, iterations := 1) {
     return time(tc)
 }
 
-RemoveWinDecoration(hwnd) {
-    style := WinGetStyle("ahk_id" hwnd)
-    WinSetStyle(style & ~WS_DLGFRAME, "ahk_id" hwnd)
-
+RemoveWinDecoration(hwnd, style := WS_BORDER | WS_DLGFRAME | WS_THICKFRAME) {
+    WinSetStyle("-" style, "ahk_id" hwnd)
     DllCall(
         "SetWindowPos",
         "Ptr", hwnd,
@@ -639,6 +637,29 @@ RemoveWinDecoration(hwnd) {
         "UInt", SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED,
         "Int",
     )
+}
+
+ShowWinDecoration(hwnd, style := WS_BORDER | WS_DLGFRAME | WS_THICKFRAME) {
+    WinSetStyle("+" style, "ahk_id" hwnd)
+    DllCall(
+        "SetWindowPos",
+        "Ptr", hwnd,
+        "Ptr", HWND_TOP,
+        "Int", 0,
+        "Int", 0,
+        "Int", 0,
+        "Int", 0,
+        "UInt", SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED,
+        "Int",
+    )
+}
+
+ToggleWinDecoration(hwnd, style := WS_BORDER | WS_DLGFRAME | WS_THICKFRAME) {
+    if WinGetStyle("ahk_id" hwnd) & style {
+        RemoveWinDecoration(hwnd, style)
+    } else {
+        ShowWinDecoration(hwnd, style)
+    }
 }
 
 WinInfo(hwnd) {

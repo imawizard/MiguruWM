@@ -137,12 +137,13 @@ class WorkspaceList {
             }
 
             shouldTile := true
+            decoless := WinExist("ahk_id" hwnd " ahk_group MIGURU_DECOLESS")
             exstyle := WinGetExStyle("ahk_id" hwnd)
-            if exstyle & WS_EX_WINDOWEDGE == 0 {
+            if !decoless && exstyle & WS_EX_WINDOWEDGE == 0 {
                 info(() => ["Floating: no WS_EX_WINDOWEDGE {}", WinInfo(hwnd)])
 
                 shouldTile := false
-            } else if exstyle & WS_EX_DLGMODALFRAME !== 0 {
+            } else if !decoless && exstyle & WS_EX_DLGMODALFRAME !== 0 {
                 info(() => ["Floating: WS_EX_DLGMODALFRAME {}", WinInfo(hwnd)])
 
                 shouldTile := false
