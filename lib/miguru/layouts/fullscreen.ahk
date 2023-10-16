@@ -38,7 +38,7 @@ class FullscreenLayout {
                     "UInt", MONITOR_DEFAULTTONEAREST,
                     "Ptr",
                 )
-                if handle !== ws._monitor.Handle {
+                if handle !== 0 && handle !== ws._monitor.Handle {
                     this._resizeWindow(ws, tile.data)
                 }
             }

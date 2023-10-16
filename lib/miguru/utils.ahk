@@ -722,12 +722,14 @@ CenterWindow(hwnd) {
         "UInt", MONITOR_DEFAULTTONEAREST,
         "Ptr",
     )
-    DllCall(
+    if monitor == 0 || !DllCall(
         "GetMonitorInfo",
         "Ptr", monitor,
         "Ptr", info,
         "Int",
-    )
+    ) {
+        return
+    }
     rcWorkLeft   := NumGet(info, 5 * 4, "Int")
     rcWorkTop    := NumGet(info, 6 * 4, "Int")
     rcWorkRight  := NumGet(info, 7 * 4, "Int")
