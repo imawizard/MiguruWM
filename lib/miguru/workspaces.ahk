@@ -634,7 +634,12 @@ class WorkspaceList {
 
     __Item[monitor, index] {
         get {
-            workspaces := this._workspaces[monitor.Handle]
+            workspaces := this._workspaces.Get(monitor.Handle, "")
+            if !workspaces {
+                ;; FIXME: Apparent race condition, sometimes workspaces has no monitor.Handle
+                dummy := WorkspaceList.Workspace(monitor, index, {})
+                return dummy
+            }
             ws := workspaces.Get(index, "")
             if !ws {
                 opts := ObjClone(this._defaults)

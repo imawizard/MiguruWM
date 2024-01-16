@@ -116,7 +116,7 @@ class MiguruWM extends WMEvents {
             SetSpiInt(SPI_SETACTIVEWINDOWTRACKING, this._opts.focusFollowsMouse)
         }
 
-        this.activeMonitor := 1
+        this.activeMonitor := this._monitors.Primary
         this.activeWsIdx := 1
 
         super.__New()
