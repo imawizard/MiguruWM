@@ -99,6 +99,8 @@ class HazeOver {
             return
         }
 
+        debug(() => ["Show HazeOver for {}", WinInfo(hwnd)])
+
         exstyle := WinGetExStyle("ahk_id" hwnd)
         if exstyle & WS_EX_TOPMOST == 0 {
             WinSetAlwaysOnTop(true, "ahk_id" hwnd)
@@ -140,6 +142,7 @@ class HazeOver {
     }
 
     _hide() {
+        debug("Hide HazeOver")
         for , v in this._guis {
             v.Show("Hide")
         }
@@ -147,9 +150,12 @@ class HazeOver {
 
     Unmanaged(hwnd) {
         if WinExist("ahk_id" hwnd " ahk_class Shell_TrayWnd")
-            || WinExist("ahk_id" hwnd " ahk_class Shell_SecondaryTrayWnd") {
+            || WinExist("ahk_id" hwnd " ahk_class Shell_SecondaryTrayWnd")
+            || WinExist("ahk_id" hwnd " ahk_class Shell_CortanaProxy") {
             monitor := this._monitors.ByWindow(hwnd)
             RunDpiAware(() => this._guis[monitor.Handle].Show("Hide"))
+
+            debug("Show HazeOver for monitor #{}", monitor.Index)
 
             for m in this._monitors {
                 if m != monitor {
@@ -159,10 +165,13 @@ class HazeOver {
             }
         } else if WinExist("ahk_id" hwnd " ahk_class Progman")
             || (WinExist("ahk_id" hwnd " ahk_class WorkerW")
-            && WinGetTitle("ahk_id" hwnd) == "") {
+                && WinGetTitle("ahk_id" hwnd) == "")
+            || WinExist("ahk_id" hwnd " ahk_exe powerpnt.exe ahk_class PodiumParent")
+            || WinExist("ahk_id" hwnd " ahk_exe powerpnt.exe ahk_class screenClass") {
             this.Hide()
         } else if !WinExist("ahk_id" hwnd " ahk_class VirtualDesktopGestureSwitcher")
             && !WinExist("ahk_id" hwnd " ahk_exe explorer.exe ahk_class ForegroundStaging") {
+            debug(() => ["Show HazeOver for unmanaged {}", WinInfo(hwnd)])
             this.Show(hwnd)
         }
     }

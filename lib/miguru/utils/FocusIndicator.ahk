@@ -60,6 +60,8 @@ class FocusIndicator {
             return
         }
 
+        debug(() => ["Show FocusIndicator for {}", WinInfo(hwnd)])
+
         WinGetPos(&left, &top, &width, &height, "ahk_id" hwnd)
         bounds := ExtendedFrameBounds(hwnd)
 
@@ -120,18 +122,23 @@ class FocusIndicator {
     }
 
     Hide() {
+        debug("Hide FocusIndicator")
         RunDpiAware(() => this._gui.Show("Hide"))
     }
 
     Unmanaged(hwnd) {
         if WinExist("ahk_id" hwnd " ahk_class Shell_TrayWnd")
             || WinExist("ahk_id" hwnd " ahk_class Shell_SecondaryTrayWnd")
+            || WinExist("ahk_id" hwnd " ahk_class Shell_CortanaProxy")
             || WinExist("ahk_id" hwnd " ahk_class Progman")
             || WinExist("ahk_id" hwnd " ahk_exe explorer.exe ahk_class ForegroundStaging")
             || (WinExist("ahk_id" hwnd " ahk_class WorkerW")
-            && WinGetTitle("ahk_id" hwnd) == "") {
+                && WinGetTitle("ahk_id" hwnd) == "")
+            || WinExist("ahk_id" hwnd " ahk_exe powerpnt.exe ahk_class PodiumParent")
+            || WinExist("ahk_id" hwnd " ahk_exe powerpnt.exe ahk_class screenClass") {
             this.Hide()
         } else if !WinExist("ahk_id" hwnd " ahk_class VirtualDesktopGestureSwitcher") {
+            debug(() => ["Show FocusIndicator for unmanaged {}", WinInfo(hwnd)])
             this.Show(hwnd)
         }
     }
