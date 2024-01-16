@@ -340,7 +340,8 @@ class MiguruWM extends WMEvents {
                 return
             }
 
-            if event == EV_WINDOW_FOCUSED || hwnd == this._maybeActiveWindow {
+            if event == EV_WINDOW_FOCUSED || hwnd == this._maybeActiveWindow
+                || event == EV_WINDOW_RESTORED && WinExist("A") == hwnd {
                 this._delayed.Drop(PINNED_WINDOW_FOCUSED)
                 if !this._pinned.Has(hwnd) {
                     this._focus(hwnd, monitor, ws)
