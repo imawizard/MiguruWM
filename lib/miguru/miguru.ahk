@@ -77,6 +77,7 @@ class MiguruWM extends WMEvents {
             followWindowToMonitor: false,
 
             focusWorkspaceByWindow: true,
+            rememberActiveMonitor: true,
 
             showPopup: (*) =>,
             focusIndicator: {
@@ -145,6 +146,7 @@ class MiguruWM extends WMEvents {
         ExpectInSet(o, "followWindowToWorkspace", true, false)
         ExpectInSet(o, "followWindowToMonitor", true, false)
         ExpectInSet(o, "focusWorkspaceByWindow", true, false)
+        ExpectInSet(o, "rememberActiveMonitor", true, false)
         ExpectFunc(o, "showPopup")
         ExpectType(o, "focusIndicator", Object)
         ExpectType(o, "delays", Object)
@@ -520,7 +522,7 @@ class MiguruWM extends WMEvents {
             ws := getWorkspace()
 
             if this._opts.focusWorkspaceByWindow {
-                if !req.HasProp("monitor") {
+                if !req.HasProp("monitor") && this._opts.rememberActiveMonitor {
                     monitor := this.activeWsMonitors.Get(ws.Index, "")
                     if monitor {
                         ws := this._workspaces[monitor, ws.Index]
