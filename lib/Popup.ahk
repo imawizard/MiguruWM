@@ -75,11 +75,23 @@ class Popup {
             iconWidth := 0
             iconHeight := 0
             if showIcon {
-                file := A_IconFile
+                file := showIcon == true ? A_IconFile : showIcon
                 if !file {
                     path := RegExReplace(A_ScriptFullPath, "i)\.ahk$", ".exe")
                     if FileExist(path) {
                         file := path
+                    }
+                } else {
+                    pos := InStr(file, "HICON:")
+                    if pos {
+                        file := SubStr(file, pos)
+                        handle := Integer(StrSplit(file, ":", , 2)[2])
+                        copy := DllCall(
+                            "CopyIcon",
+                            "Ptr", handle,
+                            "Ptr",
+                        )
+                        file := "HICON:" copy
                     }
                 }
                 if file {
@@ -110,7 +122,7 @@ class Popup {
             if icon {
                 icon.Move(
                     horzPadding / 4.5,
-                    (guiHeight - iconHeight) // 2,
+                    (guiHeight - iconHeight) // 2 , ; + 2,
                 )
             }
 
