@@ -120,14 +120,14 @@ class WorkspaceList {
             window := this._windows.Get(hwnd, "")
             return window
                 ? window.type == TILED
-                : ""
+                : false
         }
 
         IsFloating(hwnd) {
             window := this._windows.Get(hwnd, "")
             return window
                 ? window.type == FLOATING
-                : ""
+                : false
         }
 
         AddIfNew(hwnd) {
