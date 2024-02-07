@@ -503,7 +503,7 @@ class MiguruWM extends WMEvents {
                 case "first":
                     idx := 1
                 case "last":
-                    idx := this.VD.GetCount()
+                    idx := this.VD.Count()
                 case "mru":
                     if this.lastWsIdx {
                         idx := this.lastWsIdx
