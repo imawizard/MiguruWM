@@ -79,16 +79,8 @@ class MiguruWM extends WMEvents {
             focusWorkspaceByWindow: true,
             rememberActiveMonitor: true,
 
-            showPopup: (*) =>,
-            focusIndicator: {
-                Show: (*) =>,
-                Hide: (*) =>,
-                Unmanaged: (*) =>,
-                SetMonitorList: (*) =>,
-                HideWhenPositioning: false,
-                ShowOnFocusRequest: false,
-                UpdateOnRetile: false,
-            },
+            focusIndicator: EmptyFocusIndicator(),
+            workspaceIndicator: EmptyWorkspaceIndicator(),
 
             delays: {
                 retryManage: 100,
@@ -103,6 +95,7 @@ class MiguruWM extends WMEvents {
         this._validateOpts()
 
         this._focusIndicator := this._opts.focusIndicator
+        this._wsIndicator := this._opts.workspaceIndicator
         this._delays := this._opts.delays
 
         this._monitors := MonitorList()
@@ -150,8 +143,8 @@ class MiguruWM extends WMEvents {
         ExpectInSet(o, "followWindowToMonitor", true, false)
         ExpectInSet(o, "focusWorkspaceByWindow", true, false)
         ExpectInSet(o, "rememberActiveMonitor", true, false)
-        ExpectFunc(o, "showPopup")
         ExpectType(o, "focusIndicator", Object)
+        ExpectType(o, "workspaceIndicator", Object)
         ExpectType(o, "delays", Object)
     }
 
@@ -259,6 +252,7 @@ class MiguruWM extends WMEvents {
 
                 this.lastMonitor := this.activeMonitor
                 this.activeMonitor := monitor
+                this._wsIndicator.MonitorChanged(this.activeMonitor.Index)
             }
 
             goto fallthrough
@@ -384,9 +378,10 @@ class MiguruWM extends WMEvents {
 
             this.lastWsIdx := this.activeWsIdx
             this.activeWsIdx := args.now
-
             oldWs := this._workspaces[this.activeMonitor, args.was]
             newWs := this._workspaces[this.activeMonitor, args.now]
+
+            this._wsIndicator.WorkspaceChanged(newWs)
 
             oldWs.ActiveWindow := ""
             if newWs.WindowCount < 1 {
@@ -394,10 +389,6 @@ class MiguruWM extends WMEvents {
             } else {
                 this._focusIndicator.Show(newWs.ActiveWindow)
             }
-
-            this._opts.showPopup.Call(this.VD.DesktopName(args.now), {
-                activeMonitor: this.activeMonitor.Index,
-            })
 
             ;; Add pinned windows to the newly active workspace or retile.
             if this._pinned.Count > 0 {
@@ -419,12 +410,12 @@ class MiguruWM extends WMEvents {
             debug(() => ["Created Desktop: {}",
                 this.VD.DesktopName(args.desktop)])
 
-            ;; Do nothing
+            this._wsIndicator.WorkspaceCountChanged(this.VD.Count())
 
         case EV_DESKTOP_DESTROYED:
             debug("Destroyed Desktop: #{}", args.desktopId)
 
-            ;; Do nothing
+            this._wsIndicator.WorkspaceCountChanged(this.VD.Count())
 
         default:
             throw "Unknown desktop event: " event
@@ -600,6 +591,7 @@ class MiguruWM extends WMEvents {
                 this.lastMonitor := this.activeMonitor
                 this.activeMonitor := monitor
                 this._focusIndicator.Show(hwnd)
+                this._wsIndicator.MonitorChanged(this.activeMonitor.Index)
             } else {
                 ws := this._workspaces[this.activeMonitor, this.activeWsIdx]
                 this._focusWorkspace(ws)
@@ -748,9 +740,7 @@ class MiguruWM extends WMEvents {
         case "set-layout":
             ws := getWorkspace()
             ws.Layout := req.value
-            this._opts.showPopup.Call(ws.Layout.DisplayName, {
-                activeMonitor: this.activeMonitor.Index,
-            })
+            this._wsIndicator.LayoutChanged(ws)
             this._delayed.Add(
                 ws.Retile.Bind(ws),
                 this._delays.retile2ndTime,
@@ -904,6 +894,7 @@ class MiguruWM extends WMEvents {
         }
 
         this._initWithCurrentDesktopAndWindows()
+        this._wsIndicator.MonitorCountChanged(this._monitors.Count)
     }
 
     _initWithCurrentDesktopAndWindows() {
@@ -912,6 +903,12 @@ class MiguruWM extends WMEvents {
         this.activeWsIdx := this.VD.CurrentDesktop()
         this.lastWsIdx := 0
         this.activeWsMonitors := Map()
+
+        ws := this._workspaces[this.activeMonitor, this.activeWsIdx]
+        this._wsIndicator.MonitorCountChanged(this._monitors.Count)
+        this._wsIndicator.MonitorChanged(this.activeMonitor.Index)
+        this._wsIndicator.WorkspaceCountChanged(this.VD.Count())
+        this._wsIndicator.WorkspaceChanged(ws)
 
         old := A_DetectHiddenWindows
         DetectHiddenWindows(false)
@@ -1132,7 +1129,6 @@ class MiguruWM extends WMEvents {
 
         ws.ActiveWindow := hwnd
         this._maybeActiveWindow := ""
-        this._opts.showPopup.Call("", {})
         this._focusIndicator.Show(hwnd)
 
         ;; If it's an explorer window, focus the content panel.
