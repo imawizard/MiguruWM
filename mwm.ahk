@@ -46,18 +46,43 @@ layouts := [
     SpiralLayout(),
 ]
 
+MiguruWM.SetupTrayMenu()
+icon := A_IconFile
+
 mwm := { __Call: (name, params*) => } ; Ignore requests while mwm isn't ready yet
 mwm := MiguruWM({
     layout: layouts[1],
-    showPopup: (text, opts) => Popup(text, ObjMerge({
-        duration: 500,
-        showIcon: true,
-    }, opts)),
     focusIndicator: HazeOver(),
+    workspaceIndicator: WSIndicator(),
     ;; …see https://github.com/imawizard/MiguruWM/wiki/Configuration
 })
 
-MiguruWM.SetupTrayMenu()
+class WSIndicator extends WhichSpace {
+    __New(opts := {}) {
+        super.__New(opts)
+        this.activeMonitor := 1
+    }
+    MonitorChanged(idx) {
+        super.MonitorChanged(idx)
+        this.activeMonitor := idx
+    }
+    WorkspaceChanged(ws) {
+        super.WorkspaceChanged(ws)
+        this._popup(ws.Layout.DisplayName)
+    }
+    LayoutChanged(ws) {
+        super.LayoutChanged(ws)
+        this._popup(ws.Layout.DisplayName)
+    }
+    _popup(text) {
+        Popup("") ; Close any prior popup
+        Popup(text, {
+            duration: 500,
+            showIcon: icon,
+            activeMonitor: this.activeMonitor,
+        })
+    }
+}
 
 ; Use Alt as modifier but disable it if pressed alone
 mod1 := "Alt"

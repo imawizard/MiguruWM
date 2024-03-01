@@ -3,6 +3,7 @@
 #include utils\HazeOver.ahk
 #include utils\Logger.ahk
 #include utils\Timeouts.ahk
+#include utils\WhichSpace.ahk
 
 DPI_AWARENESS_CONTEXT                      := 0
 DPI_AWARENESS_CONTEXT_UNAWARE              := DPI_AWARENESS_CONTEXT - 1
@@ -752,4 +753,59 @@ ResizeWindow(hwnd, delta := 0) {
         "UInt", SWP_NOACTIVATE,
         "Int",
     )
+}
+
+class EmptyFocusIndicator {
+    __New() {
+    }
+
+    __Delete() {
+    }
+
+    Show(hwnd) {
+    }
+
+    Hide(hwnd) {
+    }
+
+    Unmanaged(hwnd) {
+    }
+
+    SetMonitorList(monitors) {
+    }
+
+    HideWhenPositioning {
+        get => false
+    }
+
+    ShowOnFocusRequest {
+        get => false
+    }
+
+    UpdateOnRetile {
+        get => false
+    }
+}
+
+class EmptyWorkspaceIndicator {
+    __New() {
+    }
+
+    __Delete() {
+    }
+
+    MonitorChanged(idx) {
+    }
+
+    MonitorCountChanged(count) {
+    }
+
+    WorkspaceChanged(ws) {
+    }
+
+    WorkspaceCountChanged(count) {
+    }
+
+    LayoutChanged(ws) {
+    }
 }

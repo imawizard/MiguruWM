@@ -12,6 +12,8 @@ There already are a bunch of really nice tiling window managers for Windows – 
 
 The goal is a basic but hopefully stable window manager that should behave somewhere close to Amethyst/xmonad.
 
+Additional features include a focus indicator similiar to [HazeOver](https://hazeover.com) and a tray icon similiar to [WhichSpace](https://github.com/gechr/WhichSpace)/[SpaceId](https://github.com/dshnkao/SpaceId).
+
 ## Caveats
 
 - Uses native virtual desktops as workspaces, *which can't be switched on per-monitor basis*, integrate however with:
