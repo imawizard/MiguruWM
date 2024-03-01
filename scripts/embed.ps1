@@ -1,9 +1,9 @@
 $ahk2exe = ![string]::IsNullOrEmpty($env:AHK2EXE) `
-  ? $env:AHK2EXE                                `
+  ? $env:AHK2EXE                                  `
   : ".\autohotkey\Compiler\Ahk2Exe.exe"
 
 $base = ![string]::IsNullOrEmpty($env:AHK_STUB) `
-  ? $env:AHK_STUB                             `
+  ? $env:AHK_STUB                               `
   : ".\autohotkey\AutoHotkey64.exe"
 
 $ico = ".\assets\togepī.ico"
@@ -14,7 +14,7 @@ New-Item -Type Directory $out -Force | Out-Null
 
 $date = $(git log -n1 --format='%cI')
 $version = $(if ($date -match '\d\d\d(\d)-(\d\d)-(\d\d)') {
-  $Matches[1]                `
+  $Matches[1]                         `
     + "."                             `
     + ($Matches[2] -replace "^0", "") `
     + "."                             `
