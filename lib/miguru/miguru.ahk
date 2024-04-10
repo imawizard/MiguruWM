@@ -96,6 +96,7 @@ class MiguruWM extends WMEvents {
                 sendMonitorRetile: 100,
                 pinnedWindowFocused: 100,
                 onDisplayChange: 1000,
+                hideCloseSequence: 200,
             },
         }, opts)
 
@@ -111,6 +112,7 @@ class MiguruWM extends WMEvents {
         this._delayed := Timeouts()
 
         this._maybeActiveWindow := ""
+        this._maybeClosed := {hwnd: 0, ticks: 0}
         this._focusIndicator.SetMonitorList(this._monitors)
 
         windowTracking := GetSpiInt(SPI_GETACTIVEWINDOWTRACKING)
@@ -1063,12 +1065,10 @@ class MiguruWM extends WMEvents {
 
         window := this._managed.Delete(hwnd)
         if !this._pinned.Has(hwnd) {
-            ;; FIXME: There seems to be cases where – when closing e.g. an
-            ;; explorer window – a "hidden" event occurs first, then a "focus"
-            ;; event according to z-order and lastly a "destroyed" event.
-            ;; Because of the focus-switch the destroyed window is not the
-            ;; active one anymore and Remove() won't return a window that were
-            ;; to be activated.
+            if this._maybeClosed.hwnd == hwnd
+                && A_TickCount - this._maybeClosed.ticks <= this._delays.hideCloseSequence {
+                window.workspace._active := hwnd
+            }
             next := window.workspace.Remove(hwnd)
             if next && window.workspace.Index == this.activeWsIdx {
                 this._focusWindow(next, false)
@@ -1111,7 +1111,15 @@ class MiguruWM extends WMEvents {
             return
         }
 
+        window := this._managed[hwnd]
+
         if wait {
+            if window.workspace.ActiveWindow == hwnd {
+                this._maybeClosed := {
+                    hwnd: hwnd,
+                    ticks: A_TickCount,
+                }
+            }
             this._delayed.Replace(
                 this._hide.Bind(this, event, hwnd, false),
                 this._delays.windowHidden,
@@ -1120,7 +1128,6 @@ class MiguruWM extends WMEvents {
             return
         }
 
-        window := this._managed[hwnd]
         if !this._pinned.Has(hwnd) {
             window.workspace.Remove(hwnd)
         } else {
