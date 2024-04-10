@@ -300,6 +300,11 @@ class MiguruWM extends WMEvents {
                     debug(() => ["Window got unpinned {}", WinInfo(hwnd)])
                     this._unpinWindow(hwnd, window, wsIdx)
                 }
+                ;; TODO: check ob wsIdx changed
+                ; else if focused
+                ; if monitorChanged {
+                ;     this._wsIndicator.WorkspaceChanged(this._workspaces[monitor, wsIdx])
+                ; }
             }
 
             ;; Adjust when a window changed desktop or monitor.
