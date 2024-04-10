@@ -604,6 +604,7 @@ class MiguruWM extends WMEvents {
                 this.activeMonitor := monitor
                 this._focusIndicator.Show(hwnd)
                 this._wsIndicator.MonitorChanged(this.activeMonitor.Index)
+                this._wsIndicator.WorkspaceChanged(newWs)
             } else {
                 ws := this._workspaces[this.activeMonitor, this.activeWsIdx]
                 this._focusWorkspace(ws)
