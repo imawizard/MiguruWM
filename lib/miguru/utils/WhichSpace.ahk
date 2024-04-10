@@ -39,17 +39,19 @@ class WhichSpace {
         while digit <= 9 {
             loop 3 {
                 bitmap := GdiBitmap(32, 32)
-                font := GdiFont("Times New Roman", 24)
-                bitmap.Canvas.RoundedRectangle(0, 0, 32, 32, 12, GdiPen(0xffffffff), GdiBrush(0xffffffff))
+                font := GdiFont("Segoe UI", 24)
+                bitmap.Canvas.RoundedRectangle(0, 0, 32, 32, 12, GdiPen(0xffe7e4f6), GdiBrush(0xffe7e4f6))
                 bitmap.Canvas.Text(digit, 0, 0, bitmap.Width, bitmap.Height, font, GdiPen(0xff000000), GdiBrush(0xff000000))
 
                 switch A_Index {
                 case 1:
                     dest := this._leftIcons
-                    bitmap.Canvas.Arc(0, 0, 5, 5, 0, 360, GdiPen(0), GdiBrush(0xffff0000))
+                    bitmap.Canvas.Arc(0, 32/2, 5, 5, 0, 360, GdiPen(0), GdiBrush(0xffff0000))
+                    ;; triangle
                 case 2:
                     dest := this._rightIcons
-                    bitmap.Canvas.Arc(0, 0, 5, 5, 0, 360, GdiPen(0), GdiBrush(0xffff0000))
+                    bitmap.Canvas.Arc(32-5, 32/2, 5, 5, 0, 360, GdiPen(0), GdiBrush(0xffff0000))
+                    ;; triangle
                 case 3:
                     dest := this._midIcons
                     bitmap.Canvas.Arc(0, bitmap.Height / 2 - 10 / 2 - 1, 10, 10, 0, 360, GdiPen(0xffff0000), GdiBrush(0xffff0000))
