@@ -94,6 +94,7 @@ class MiguruWM extends WMEvents {
         }, opts)
 
         this._validateOpts()
+        this.www := {hwnd: 0, ticks: 0}
 
         this._focusIndicator := this._opts.focusIndicator
         this._wsIndicator := this._opts.workspaceIndicator
@@ -346,7 +347,6 @@ class MiguruWM extends WMEvents {
                         PINNED_WINDOW_FOCUSED,
                     )
                 }
-
             } else if event == EV_WINDOW_REPOSITIONED {
                 debug(() => ["Repositioned: D={} WS={} {}",
                     monitor.Index, ws.Index, WinInfo(hwnd)])
@@ -1060,14 +1060,10 @@ class MiguruWM extends WMEvents {
 
         window := this._managed.Delete(hwnd)
         if !this._pinned.Has(hwnd) {
-            ;; FIXME: There seems to be cases where – when closing e.g. an
-            ;; explorer window – a "hidden" event occurs first, then a "focus"
-            ;; event according to z-order and lastly a "destroyed" event.
-            ;; Because of the focus-switch the destroyed window is not the
-            ;; active one anymore and Remove() won't return a window that were
-            ;; to be activated.
             ws := window.workspace
-            if ws.ActiveWindow == hwnd {
+            if ws.ActiveWindow == hwnd || this.www.hwnd == hwnd
+                && A_TickCount - this.www.ticks <= 1000
+            {
                 wasActive := true
                 next := ws.GetWindow(this._opts.focusAfterClose, hwnd)
             } else {
@@ -1120,6 +1116,13 @@ class MiguruWM extends WMEvents {
         }
 
         if wait {
+        window := this._managed[hwnd]
+            if window.workspace.ActiveWindow == hwnd {
+                this.www := {
+                    hwnd: hwnd,
+                    ticks: A_TickCount,
+                }
+            }
             this._delayed.Replace(
                 this._hide.Bind(this, event, hwnd, false),
                 this._delays.windowHidden,
