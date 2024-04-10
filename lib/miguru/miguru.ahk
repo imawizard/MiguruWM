@@ -68,6 +68,7 @@ class MiguruWM extends WMEvents {
             tilingMinWidth: 400,
             tilingMinHeight: 400,
             tilingInsertion: "last",
+            focusAfterClose: "previous",
             floatingAlwaysOnTop: false,
 
             focusFollowsMouse: false,
@@ -133,6 +134,12 @@ class MiguruWM extends WMEvents {
         ExpectInSet(o, "tilingInsertion",
             "before-mru",
             "after-mru",
+            "first",
+            "last",
+        )
+        ExpectInSet(o, "focusAfterClose",
+            "previous",
+            "next",
             "first",
             "last",
         )
@@ -1059,9 +1066,20 @@ class MiguruWM extends WMEvents {
             ;; Because of the focus-switch the destroyed window is not the
             ;; active one anymore and Remove() won't return a window that were
             ;; to be activated.
-            next := window.workspace.Remove(hwnd)
-            if next && window.workspace.Index == this.activeWsIdx {
-                this._focusWindow(next, false)
+            ws := window.workspace
+            if ws.ActiveWindow == hwnd {
+                wasActive := true
+                next := ws.GetWindow(this._opts.focusAfterClose, hwnd)
+            } else {
+                wasActive := false
+            }
+            ws.Remove(hwnd)
+            if wasActive {
+                if ws.Index == this.activeWsIdx {
+                    this._focusWindow(next, false)
+                } else {
+                    ws.ActiveWindow := next
+                }
             }
         } else {
             this._unpinWindow(hwnd, window)
