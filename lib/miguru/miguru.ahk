@@ -268,12 +268,23 @@ class MiguruWM extends WMEvents {
             ;; e.g. appear for the first time by unhiding instead of
             ;; creation, add new windows on any event.
             window := this._manage(event, hwnd)
+
             if !window {
+                ;; A new explorer window actually seems to get focused while
+                ;; still being invisible. So in case that same window is shown
+                ;; later on it should be additionally focused.
                 if event == EV_WINDOW_FOCUSED
                     && !WinExist("ahk_id" hwnd " ahk_group MIGURU_IGNORE") {
-                    debug("Set active to non-managed {}", WinInfo(hwnd))
+
+                    debug("Set maybe-active to non-managed {}", WinInfo(hwnd))
                     this._maybeActiveWindow := hwnd
-                    this._focusIndicator.Unmanaged(hwnd)
+
+                    ;; Only update the focus indicator for non-managed windows
+                    ;; that are visible, though.
+                    if DllCall("IsWindowVisible", "Ptr", hwnd, "Int")
+                        || !IsWindowCloaked(hwnd) {
+                        this._focusIndicator.Unmanaged(hwnd)
+                    }
                 }
                 return
             }
@@ -342,7 +353,6 @@ class MiguruWM extends WMEvents {
                         PINNED_WINDOW_FOCUSED,
                     )
                 }
-
             } else if event == EV_WINDOW_REPOSITIONED {
                 debug(() => ["Repositioned: D={} WS={} {}",
                     monitor.Index, ws.Index, WinInfo(hwnd)])
