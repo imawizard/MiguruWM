@@ -1,4 +1,4 @@
-name: mwm
+name: CI
 
 on:
   push:
