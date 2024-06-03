@@ -1,20 +1,21 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
-    - ahk-v2
+    - features/ci-wip
 
 env:
   AHK_V2_URL: https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.11/AutoHotkey_2.0.11.zip
   AHK2EXE_URL: https://github.com/AutoHotkey/Ahk2Exe/releases/download/Ahk2Exe1.1.37.02a0/Ahk2Exe1.1.37.02a0.zip
 
 jobs:
-  build:
+  prepare:
     runs-on: windows-2019
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Download and extract AutoHotkey
       run: |
@@ -22,6 +23,12 @@ jobs:
         unzip autohotkey.zip -d autohotkey
         irm -OutFile ahk2exe.zip $env:AHK2EXE_URL
         unzip ahk2exe.zip -d autohotkey\Compiler
+
+  build:
+    runs-on: windows-2019
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Embed script with Ahk2Exe
       run: .\scripts\embed.ps1
