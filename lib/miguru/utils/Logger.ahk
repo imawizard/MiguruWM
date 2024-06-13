@@ -71,19 +71,11 @@ class Logger {
                     Logger.NO_COLOR := true
                 }
             }
+        } else {
+            Logger.NO_COLOR := true
         }
 
         opts := StrLower(EnvGet("AHK_LOG"))
-        if (!attached && opts == "") || opts == "disable" {
-            Logger.Disabled := true
-            return
-        }
-
-        if !attached {
-            ;; If AHK_LOG was set but there's no attached console.
-            DllCall("AllocConsole", "Int")
-        }
-
         for part in StrSplit("debug," opts, ",") {
             if !part {
                 continue
@@ -106,6 +98,13 @@ class Logger {
             } else {
                 Logger.Levels[module] := 0
             }
+        }
+
+        if (!attached && opts == "") || opts == "disable" {
+            Logger.Disabled := true
+        } else if !attached {
+            ;; If AHK_LOG was set but there's no attached console.
+            DllCall("AllocConsole", "Int")
         }
     }
 
@@ -146,6 +145,28 @@ class Logger {
             }
 
             FileAppend(t "." A_MSec m " [" l "] " s "`n", "*")
+        }
+    }
+
+    static ToggleConsole() {
+        if !DllCall("GetConsoleWindow", "Ptr") {
+            Logger.OpenConsole()
+        } else {
+            Logger.CloseConsole()
+        }
+    }
+
+    static OpenConsole() {
+        if !DllCall("GetConsoleWindow", "Ptr") {
+            DllCall("AllocConsole", "Int")
+            Logger.Disabled := false
+        }
+    }
+
+    static CloseConsole() {
+        if DllCall("GetConsoleWindow", "Ptr") {
+            Logger.Disabled := true
+            DllCall("FreeConsole", "Int")
         }
     }
 }
