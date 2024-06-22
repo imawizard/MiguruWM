@@ -1,0 +1,32 @@
+# See https://docs.github.com/en/actions/creating-actions/creating-a-composite-action
+
+name: Install AHK
+
+inputs:
+  ahk-v2-url:
+    default: https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.11/AutoHotkey_2.0.11.zip
+  ahk2exe-url:
+    default: https://github.com/AutoHotkey/Ahk2Exe/releases/download/Ahk2Exe1.1.37.02a0/Ahk2Exe1.1.37.02a0.zip
+
+outputs:
+  ahk-path:
+    value: ${{ steps.extract.outputs.ahk-path }}
+  ahk2exe-path:
+    value: ${{ steps.extract.outputs.ahk2exe-path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Download and extract AutoHotkey
+      id: extract
+      shell: pwsh
+      run: |
+        irm -OutFile autohotkey.zip $env:AHK_V2_URL
+        unzip autohotkey.zip -d autohotkey
+        irm -OutFile ahk2exe.zip $env:AHK2EXE_URL
+        unzip ahk2exe.zip -d autohotkey\Compiler
+        echo "ahk-path=$(pwd)\\autohotkey\AutoHotkey64.exe" >>$env:GITHUB_OUTPUT
+        echo "ahk2exe-path=$(pwd)\\autohotkey\\Compiler\\Ahk2Exe.exe" >>$env:GITHUB_OUTPUT
+      env:
+        AHK_V2_URL: ${{ inputs.ahk-v2-url }}
+        AHK2EXE_URL: ${{ inputs.ahk2exe-url }}

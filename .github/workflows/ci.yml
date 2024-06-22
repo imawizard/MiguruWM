@@ -8,29 +8,25 @@ on:
     branches:
     - ahk-v2
 
-env:
-  AHK_V2_URL: https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.11/AutoHotkey_2.0.11.zip
-  AHK2EXE_URL: https://github.com/AutoHotkey/Ahk2Exe/releases/download/Ahk2Exe1.1.37.02a0/Ahk2Exe1.1.37.02a0.zip
-
 jobs:
   build:
-    runs-on: windows-2019
+    runs-on: windows-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Download and extract AutoHotkey
-      run: |
-        irm -OutFile autohotkey.zip $env:AHK_V2_URL
-        unzip autohotkey.zip -d autohotkey
-        irm -OutFile ahk2exe.zip $env:AHK2EXE_URL
-        unzip ahk2exe.zip -d autohotkey\Compiler
+    - name: Install AutoHotkey
+      id: install-ahk
+      uses: ./.github/actions/install-ahk
 
     - name: Embed script with Ahk2Exe
-      run: .\scripts\embed.ps1
+      run: ./scripts/embed.ps1
+      env:
+        AHK_STUB: ${{ steps.install-ahk.outputs.ahk-path }}
+        AHK2EXE: ${{ steps.install-ahk.outputs.ahk2exe-path }}
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: mwm
         path: |

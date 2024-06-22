@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version
+        required: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - name: Validate input
+      shell: bash
+      run: |
+        [[ $VERSION =~ v[0-9]+\.[0-9]+\.[0-9]+ ]]
+      env:
+        VERSION: ${{ inputs.version }}
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install AutoHotkey
+      id: install-ahk
+      uses: ./.github/actions/install-ahk
+
+    - name: Embed script with Ahk2Exe
+      run: ./scripts/embed.ps1
+      env:
+        AHK_STUB: ${{ steps.install-ahk.outputs.ahk-path }}
+        AHK2EXE: ${{ steps.install-ahk.outputs.ahk2exe-path }}
+        VERSION: ${{ inputs.version }}
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mwm
+        path: |
+          build/mwm.exe
+          build/mwm.ahk
+
+    - name: Tag commit
+      shell: bash
+      run: |
+        git tag $VERSION
+        git push origin $VERSION
+      env:
+        VERSION: ${{ inputs.version }}
+
+  publish:
+    runs-on: windows-latest
+    needs: build
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: mwm
+
+    - name: Zip artifact
+      shell: pwsh
+      run: |
+        Compress-Archive         `
+          -Path mwm.exe, mwm.ahk `
+          -DestinationPath mwm-$env:VERSION.zip
+      env:
+        VERSION: ${{ inputs.version }}
+
+    - name: Create release
+      uses: softprops/action-gh-release@v2
+      with:
+        draft: true
+        generate_release_notes: true
+        tag_name: ${{ inputs.version }}
+        files: |
+          mwm-*.zip
