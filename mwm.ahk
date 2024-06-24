@@ -62,6 +62,7 @@ MiguruWM.SetupTrayMenu()
 ; Use Alt as modifier but disable it if pressed alone
 mod1 := "Alt"
 Alt::return
+;;~Alt::Send("{Blind}{vkE8}") ; Disable alt if pressed alone.
 
 ; Keybindings .............................................................{{{1
 
