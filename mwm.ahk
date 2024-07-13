@@ -101,6 +101,10 @@ Alt::return
 *vk01::MoveActiveWindow()
 *vk02::ResizeActiveWindow()
 
+*F1::Logger.ToggleConsole()
+*F2::mwm.Do("get-workspace-info")
+*F3::mwm.Do("get-monitor-info")
+
 #Hotif GetKeyState(mod1, "P") and GetKeyState("Shift", "P")
 
 *1::mwm.Do("send-to-workspace", { workspace: 1 })
