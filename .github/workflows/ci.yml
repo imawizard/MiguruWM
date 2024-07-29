@@ -3,32 +3,32 @@ name: CI
 on:
   push:
     branches:
-    - ahk-v2
+      - ahk-v2
   pull_request:
     branches:
-    - ahk-v2
+      - ahk-v2
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Install AutoHotkey
-      id: install-ahk
-      uses: ./.github/actions/install-ahk
+      - name: Install AutoHotkey
+        id: install-ahk
+        uses: ./.github/actions/install-ahk
 
-    - name: Embed script with Ahk2Exe
-      run: ./scripts/embed.ps1
-      env:
-        AHK_STUB: ${{ steps.install-ahk.outputs.ahk-path }}
-        AHK2EXE: ${{ steps.install-ahk.outputs.ahk2exe-path }}
+      - name: Embed script with Ahk2Exe
+        run: ./scripts/embed.ps1
+        env:
+          AHK_STUB: ${{ steps.install-ahk.outputs.ahk-path }}
+          AHK2EXE: ${{ steps.install-ahk.outputs.ahk2exe-path }}
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: mwm
-        path: |
-          build/mwm.exe
-          build/mwm.ahk
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mwm
+          path: |
+            build/mwm.exe
+            build/mwm.ahk
