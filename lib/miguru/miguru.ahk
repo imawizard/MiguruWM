@@ -862,6 +862,7 @@ class MiguruWM extends WMEvents {
         return
     }
 
+    ;; TODO: target window not found
     _focusWindow(hwnd, mouseFollowsFocus := this._opts.mouseFollowsFocus) {
         if mouseFollowsFocus {
             RunDpiAware(() => (
