@@ -342,7 +342,7 @@ class MiguruWM extends WMEvents {
 
             if event == EV_WINDOW_FOCUSED || hwnd == this._maybeActiveWindow {
                 this._delayed.Drop(PINNED_WINDOW_FOCUSED)
-                if !this._pinned.Has(hwnd) {
+                if this._opts.focusWorkspaceByWindow || !this._pinned.Has(hwnd) {
                     this._focus(hwnd, monitor, ws)
                 } else {
                     debug(() => ["Delay focus: D={} WS={} {}",
