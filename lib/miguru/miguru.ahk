@@ -1084,7 +1084,10 @@ class MiguruWM extends WMEvents {
             }
             ws.Remove(hwnd)
             if wasActive {
-                if ws.Index == this.activeWsIdx {
+                if next == hwnd {
+                    warn("!!!KACKEEEEEEEEEE")
+                } else if ws.Index == this.activeWsIdx {
+                warn(">>>> focus {}", WinInfo(next))
                     this._focusWindow(next, false)
                 } else {
                     ws.ActiveWindow := next
@@ -1136,6 +1139,8 @@ class MiguruWM extends WMEvents {
                     hwnd: hwnd,
                     ticks: A_TickCount,
                 }
+                debug(() => ["Active window might have been closed {}",
+                    WinInfo(hwnd)])
             }
             this._delayed.Replace(
                 this._hide.Bind(this, event, hwnd, false),
