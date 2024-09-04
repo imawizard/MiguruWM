@@ -362,6 +362,12 @@ class WorkspaceList {
                 return this._nextWindow(hwnd)
             case "previous":
                 return this._previousWindow(hwnd)
+            case "first":
+                return this._tiled.First ? this._tiled.First.data
+                    : this._floating.Get(1, "")
+            case "last":
+                first := this._tiled.First ? this._tiled.First.data : ""
+                return this._previousWindow(first)
             case "":
                 return hwnd
             default:
