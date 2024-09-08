@@ -447,7 +447,9 @@ class MiguruWM extends WMEvents {
                 offset := 0
 
                 if req.monitor is Object {
-                    anchor := req.monitor.anchor
+                    anchor := req.monitor.HasProp("anchor")
+                        ? req.monitor.anchor
+                        : "current"
                     if req.monitor.HasProp("offset") {
                         offset := req.monitor.offset
                     }
@@ -480,20 +482,33 @@ class MiguruWM extends WMEvents {
                 }
                 idx += offset
             }
-            if idx < 1 || idx > this._monitors.Count {
-                throw "Monitor " idx " doesn't exist"
+            if idx < 1 {
+                if req.monitor.HasProp("wrap") && req.monitor.wrap {
+                    idx := this._monitors.Count
+                } else {
+                    idx := 1
+                }
+            } else if idx > this._monitors.Count {
+                if req.monitor.HasProp("wrap") && req.monitor.wrap {
+                    idx := 1
+                } else {
+                    idx := this._monitors.Count
+                }
             }
             return this._monitors.ByIndex(idx)
         }
 
         getWorkspace(monitor := getMonitor()) {
             idx := this.activeWsIdx
+            max := this.VD.Count()
             if req.HasProp("workspace") {
                 anchor := ""
                 offset := 0
 
                 if req.workspace is Object {
-                    anchor := req.workspace.anchor
+                    anchor := req.workspace.HasProp("anchor")
+                        ? req.workspace.anchor
+                        : "current"
                     if req.workspace.HasProp("offset") {
                         offset := req.workspace.offset
                     }
@@ -511,7 +526,7 @@ class MiguruWM extends WMEvents {
                 case "first":
                     idx := 1
                 case "last":
-                    idx := this.VD.Count()
+                    idx := max
                 case "mru":
                     if this.lastWsIdx {
                         idx := this.lastWsIdx
@@ -523,6 +538,19 @@ class MiguruWM extends WMEvents {
                     idx := anchor
                 }
                 idx += offset
+            }
+            if idx < 1 {
+                if req.workspace.HasProp("wrap") && req.workspace.wrap {
+                    idx := max
+                } else {
+                    idx := 1
+                }
+            } else if idx > max {
+                if req.workspace.HasProp("wrap") && req.workspace.wrap {
+                    idx := 1
+                } else {
+                    idx := max
+                }
             }
             return this._workspaces[monitor, idx]
         }
