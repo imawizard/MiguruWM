@@ -1,3 +1,27 @@
+TODO:
+; 1. `code .` falscher Fokus
+; 2.
+; WorkspaceList.Workspace(
+;   Index = 3
+;   Monitor = 2
+;   Windows {
+;     Active {
+;       Actual = "W=67752 P=zeal.exe C=Qt663QWindowIcon T=`"azurerm_role_assignment - Zeal Portable`" (916x639 @ 823/224)"
+;       Got = "W=34473588 P=Code.exe C=Chrome_WidgetWin_1 T=`"iam.tf - terraform-azurerm-container-registry [WSL: uitdeveloper] - Code`" (1280x1050 @ 0/30)"
+;     }
+;     Floating = []
+;     Mru = "W=67752 P=zeal.exe C=Qt663QWindowIcon T=`"azurerm_role_assignment - Zeal Portable`" (916x639 @ 823/224)"
+;     Tiles {
+;       All [
+;         "W=34473588 P=Code.exe C=Chrome_WidgetWin_1 T=`"iam.tf - terraform-azurerm-container-registry [WSL: uitdeveloper] - Code`" (1280x1050 @ 0/30)"
+;         "W=2230058 P=WindowsTerminal.exe C=CASCADIA_HOSTING_WINDOW_CLASS T=`"pwsh › wsl › tmux`" (1294x1057 @ 1273/30)"
+;       ]
+;       Mru = "W=34473588 P=Code.exe C=Chrome_WidgetWin_1 T=`"iam.tf - terraform-azurerm-container-registry [WSL: uitdeveloper] - Code`" (1280x1050 @ 0/30)"
+;     }
+;   }
+; )
+; 3. siehe Blatt
+
 #include events.ahk
 #include monitors.ahk
 #include utils.ahk
@@ -96,7 +120,7 @@ class MiguruWM extends WMEvents {
                 sendMonitorRetile: 100,
                 pinnedWindowFocused: 100,
                 onDisplayChange: 1000,
-                hideCloseSequence: 200,
+                hideCloseSequence: 2000,
             },
         }, opts)
 
@@ -1067,10 +1091,13 @@ class MiguruWM extends WMEvents {
         if !this._pinned.Has(hwnd) {
             if this._maybeClosed.hwnd == hwnd
                 && A_TickCount - this._maybeClosed.ticks <= this._delays.hideCloseSequence {
+                debug("Restore hidden window as active for close.")
                 window.workspace._active := hwnd
             }
             next := window.workspace.Remove(hwnd)
             if next && window.workspace.Index == this.activeWsIdx {
+                debug(() => ["Focus next window: {}",
+                    WinInfo(next)])
                 this._focusWindow(next, false)
             }
         } else {
@@ -1119,6 +1146,8 @@ class MiguruWM extends WMEvents {
                     hwnd: hwnd,
                     ticks: A_TickCount,
                 }
+                debug(() => ["Active window might have been closed: {}",
+                    WinInfo(hwnd)])
             }
             this._delayed.Replace(
                 this._hide.Bind(this, event, hwnd, false),
@@ -1129,7 +1158,10 @@ class MiguruWM extends WMEvents {
         }
 
         if !this._pinned.Has(hwnd) {
-            window.workspace.Remove(hwnd)
+            next := window.workspace.Remove(hwnd)
+            if this._maybeClosed {
+                this._maybeClosed.next := next
+            }
         } else {
             this._removePinnedWindow(hwnd, window)
         }
