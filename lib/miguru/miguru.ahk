@@ -68,6 +68,7 @@ class MiguruWM extends WMEvents {
             tilingMinWidth: 500,
             tilingMinHeight: 500,
             tilingInsertion: "last",
+            focusAfterClose: "previous",
             floatingAlwaysOnTop: false,
 
             focusFollowsMouse: false,
@@ -96,6 +97,7 @@ class MiguruWM extends WMEvents {
                 sendMonitorRetile: 100,
                 pinnedWindowFocused: 100,
                 onDisplayChange: 1000,
+                hideCloseSequence: 200,
             },
         }, opts)
 
@@ -111,6 +113,7 @@ class MiguruWM extends WMEvents {
         this._delayed := Timeouts()
 
         this._maybeActiveWindow := ""
+        this._maybeClosed := {hwnd: 0, ticks: 0}
         this._focusIndicator.SetMonitorList(this._monitors)
 
         windowTracking := GetSpiInt(SPI_GETACTIVEWINDOWTRACKING)
@@ -142,12 +145,18 @@ class MiguruWM extends WMEvents {
             "first",
             "last",
         )
+        ExpectInSet(o, "focusAfterClose",
+            "previous",
+            "next",
+            "first",
+            "last",
+        )
         ExpectInSet(o, "floatingAlwaysOnTop", true, false)
         ExpectInSet(o, "focusFollowsMouse", true, false)
         ExpectInSet(o, "mouseFollowsFocus", true, false)
         ExpectInSet(o, "followWindowToWorkspace", true, false)
         ExpectInSet(o, "followWindowToMonitor", true, false)
-        ExpectInSet(o, "focusWorkspaceByWindow", true, false)
+        ExpectInSet(o, "focusWorkspaceByWindow", true, false, "same-monitor")
         ExpectFunc(o, "showPopup")
         ExpectType(o, "focusIndicator", Object)
         ExpectType(o, "delays", Object)
@@ -533,7 +542,8 @@ class MiguruWM extends WMEvents {
             ws := getWorkspace()
 
             if this._opts.focusWorkspaceByWindow {
-                if !req.HasProp("monitor") {
+                if !req.HasProp("monitor")
+                    && this._opts.focusWorkspaceByWindow != "same-monitor" {
                     monitor := this.activeWsMonitors.Get(ws.Index, "")
                     if monitor {
                         ws := this._workspaces[monitor, ws.Index]
@@ -566,6 +576,7 @@ class MiguruWM extends WMEvents {
                 if !window {
                     return
                 }
+                ;; TODO: focusAfterClose
                 next := window.workspace.Remove(hwnd)
                 ws.AddIfNew(hwnd)
                 ws.ActiveWindow := hwnd
@@ -1064,15 +1075,24 @@ class MiguruWM extends WMEvents {
 
         window := this._managed.Delete(hwnd)
         if !this._pinned.Has(hwnd) {
-            ;; FIXME: There seems to be cases where – when closing e.g. an
-            ;; explorer window – a "hidden" event occurs first, then a "focus"
-            ;; event according to z-order and lastly a "destroyed" event.
-            ;; Because of the focus-switch the destroyed window is not the
-            ;; active one anymore and Remove() won't return a window that were
-            ;; to be activated.
-            next := window.workspace.Remove(hwnd)
-            if next && window.workspace.Index == this.activeWsIdx {
-                this._focusWindow(next, false)
+            ws := window.workspace
+            if ws.ActiveWindow == hwnd || this._maybeClosed.hwnd == hwnd
+                && A_TickCount - this._maybeClosed.ticks <= this._delays.hideCloseSequence {
+                wasActive := true
+                next := ws.GetWindow(this._opts.focusAfterClose, hwnd)
+            } else {
+                wasActive := false
+            }
+            ws.Remove(hwnd)
+            if wasActive {
+                if next == hwnd {
+                    warn("!!!KACKEEEEEEEEEE")
+                } else if ws.Index == this.activeWsIdx {
+                warn(">>>> focus {}", WinInfo(next))
+                    this._focusWindow(next, false)
+                } else {
+                    ws.ActiveWindow := next
+                }
             }
         } else {
             this._unpinWindow(hwnd, window)
@@ -1112,7 +1132,17 @@ class MiguruWM extends WMEvents {
             return
         }
 
+        window := this._managed[hwnd]
+
         if wait {
+            if window.workspace.ActiveWindow == hwnd {
+                this._maybeClosed := {
+                    hwnd: hwnd,
+                    ticks: A_TickCount,
+                }
+                debug(() => ["Active window might have been closed {}",
+                    WinInfo(hwnd)])
+            }
             this._delayed.Replace(
                 this._hide.Bind(this, event, hwnd, false),
                 this._delays.windowHidden,
@@ -1121,8 +1151,8 @@ class MiguruWM extends WMEvents {
             return
         }
 
-        window := this._managed[hwnd]
         if !this._pinned.Has(hwnd) {
+            ;; TODO: focusAfterClose
             window.workspace.Remove(hwnd)
         } else {
             this._removePinnedWindow(hwnd, window)
